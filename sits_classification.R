@@ -6,6 +6,7 @@ library(sf)
 library(tibble)
 library(dplyr)
 library(rstac)
+library(rgdal)
 
 
 # --- 2. Directories, folders and paths ---
