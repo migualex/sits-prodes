@@ -16,7 +16,6 @@ cube_mixture_path   <- "~/SITs/amazônia/imagens/mlme/"
 # ============================================================
 # 2. Load Sentinel-2 Data Cube
 # ============================================================
-
 cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
@@ -45,7 +44,6 @@ cube_select <- sits_select(
 # ============================================================
 # 3. Define Endmembers for Linear Spectral Mixture Model
 # ============================================================
-
 # Typical endmembers: soil, forest, and water (reflectance values)
 endmembers <- tibble::tribble(
   ~class,   ~B03, ~B04, ~B08, ~B11,
@@ -57,7 +55,6 @@ endmembers <- tibble::tribble(
 # ============================================================
 # 4. Apply Linear Mixture Model
 # ============================================================
-
 cube_mixture <- sits_mixture_model(
   data        = cube_select,
   endmembers  = endmembers,
@@ -70,7 +67,6 @@ cube_mixture <- sits_mixture_model(
 # ============================================================
 # 5. Select Fractional Endmember Bands
 # ============================================================
-
 cube_mixture_select <- sits_select(
   cube_mixture,
   bands       = c("FOREST", "SOIL", "WATER"),
@@ -83,7 +79,6 @@ cube_mixture_select <- sits_select(
 # ============================================================
 # 6. Visualization of Endmember Fractions
 # ============================================================
-
 # Plot FOREST fraction
 plot(cube_mixture, band = "FOREST", palette = "Greens")
 
@@ -93,7 +88,6 @@ plot(cube_mixture, band = "SOIL", palette = "OrRd")
 # ============================================================
 # 7. Image Segmentation (SLIC)
 # ============================================================
-
 segments_12014 <- sits_segment(
   cube        = cube_mixture_select,
   output_dir  = seg_path,
@@ -110,7 +104,6 @@ segments_12014 <- sits_segment(
 # ============================================================
 # 8. Visualize Segmented Result
 # ============================================================
-
 # Note: updated object name (corrected typo from 'segments_20LMR')
 plot(
   segments_12014,
