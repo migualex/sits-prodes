@@ -1,7 +1,7 @@
 # Satellite Image Time Series for Amazon Analysis
 
-The **sits** package uses satellite image time series for land classification through a **time-first, space-later** approach.  
-In the data preparation process, collections of large Earth observation images are organized into **data cubes**.  
+The sits package uses satellite image time series for land classification through a time-first, space-later approach.  
+In the data preparation process, collections of large Earth observation images are organized into data cubes.  
 Each spatial location in a data cube is associated with a time series. Locations with known labels are used to train a machine learning algorithm, which then classifies all time series within the cube, as illustrated below.
 
 <p align="center">
@@ -14,8 +14,8 @@ Each spatial location in a data cube is associated with a time series. Locations
 
 ---
 
-The **sits API** provides a set of functions that can be linked together to create an end-to-end workflow for land classification.  
-At its core, the sits package offers **eight main functions**, as illustrated in the figure below:
+The sits API provides a set of functions that can be linked together to create an end-to-end workflow for land classification.  
+At its core, the sits package offers eight main functions, as illustrated in the figure below:
 
 1. **sits_cube()** – Extract data from an analysis-ready data (ARD) collection, producing a *non-regular data cube* object.  
 2. **sits_regularize()** – Convert a non-regular data cube into a *regular* one, required for training machine learning algorithms.  
@@ -34,7 +34,6 @@ At its core, the sits package offers **eight main functions**, as illustrated in
   <em>Figure 3: Main functions of the sits API (source: authors).</em>
 </p>
 
-Special thanks to the **Brazil Data Cube** team for their support and training.
+Special thanks to the Brazil Data Cube team for their support and training.
 
-**Source:**  
-Rolf Simoes, Gilberto Camara, Gilberto Queiroz, Felipe Souza, Pedro R. Andrade, Lorena Santos, Alexandre Carvalho, and Karine Ferreira. Satellite Image Time Series Analysis for Big Earth Observation Data. Remote Sensing, 13, p. 2428, 2021.
+_Source: Rolf Simoes, Gilberto Camara, Gilberto Queiroz, Felipe Souza, Pedro R. Andrade, Lorena Santos, Alexandre Carvalho, and Karine Ferreira. Satellite Image Time Series Analysis for Big Earth Observation Data. Remote Sensing, 13, p. 2428, 2021._
