@@ -9,7 +9,7 @@ Each spatial location in a data cube is associated with a time series. Locations
 </p>
 
 <p align="center">
-  <em>Figure 2: General view of the sits workflow.</em>
+  <em>Figure 1: General view of the sits workflow.</em>
 </p>
 
 ---
@@ -31,7 +31,7 @@ At its core, the sits package offers eight main functions, as illustrated in the
 </p>
 
 <p align="center">
-  <em>Figure 3: Main functions of the sits API.</em>
+  <em>Figure 2: Main functions of the sits API.</em>
 </p>
 
 ---
