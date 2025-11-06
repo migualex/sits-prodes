@@ -47,6 +47,7 @@ plot(cube_select, red = "B11", green = "B8A", blue = "B02", date = "2025-06-10")
 # ============================================================
 # 3. Load and inspect training samples
 # ============================================================
+
 samples_sf  <- st_read(sample_path) 
 
 # Sample summary
@@ -63,7 +64,7 @@ sits_view(samples_sf)
 # 4. Sample analysis and preprocessing
 # ============================================================
 
-## 4.1 Extract time series for the sample points
+## Extract time series for the sample points
 samples_rondonia_2025 <- sits_get_data(
   cube        = cube_select,
   samples     = samples_sf,
@@ -74,10 +75,15 @@ samples_rondonia_2025 <- sits_get_data(
   progress    = TRUE
 )
 
-## 4.2 Visualize time series per class
-plot(samples_rondonia_2025)
+# Visualization of the temporal patterns of the classes
+samples_rondonia_2025 |> 
+  sits_select(bands = c("NDVI", "EVI"), start_date = '2024-07-01', end_date = '2025-08-20') |> 
+  sits_patterns() |> 
+  plot()
 
-## 4.3 Quality assessment using Self-Organizing Maps (SOM)
+# ============================================================
+# 5. Quality assessment using Self-Organizing Maps (SOM)
+# ============================================================
 # Cluster samples using SOM
 som_cluster <- sits_som_map(
   samples_rondonia_2025,
@@ -132,7 +138,7 @@ plot(som_eval_new)
 print(som_eval_new)
 
 # ============================================================
-# 5. Classification modeling
+# 6. Classification modeling
 # ============================================================
 set.seed(03022024)
 
@@ -146,7 +152,7 @@ rf_model <- sits_train(
 plot(rf_model)
 
 # ============================================================
-# 6. Classification and post-processing
+# 7. Classification and post-processing
 # ============================================================
 
 # Generate probability cube
@@ -161,7 +167,7 @@ class_prob <- sits_classify(
 )
 
 # ============================================================
-# 7. Variance and smoothing filters
+# 8. Variance and smoothing filters
 # ============================================================
 
 # Compute class variance
@@ -202,7 +208,7 @@ smooth_rondonia <- sits_smooth(
 )
 
 # ============================================================
-# 8. Generate final classification map
+# 9. Generate final classification map
 # ============================================================
 
 class_map <- sits_label_classification(
@@ -216,7 +222,7 @@ class_map <- sits_label_classification(
 sits_view(class_map)
 
 # ============================================================
-# 9. Model validation
+# 10. Model validation
 # ============================================================
 rfor_validate_mt <- sits_kfold_validate(
   samples     = samples_rondonia_2025,
