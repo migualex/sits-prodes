@@ -15,7 +15,6 @@ cube_path    <- "~/SITs/amazônia/imagens/merge"
 # ============================================================
 # 2. Define ROI (Region of Interest)
 # ============================================================
-
 # ROI: Tile 012014 (Rondônia)
 roi <- c(
   lon_min = -64.20726838394573,
@@ -27,7 +26,6 @@ roi <- c(
 # ============================================================
 # 3. Load Sentinel-1 (SAR) Cubes
 # ============================================================
-
 # Two temporal segments are used to ensure continuous coverage
 cube_s1_part1 <- sits_cube(
   source      = "MPC",
@@ -57,7 +55,6 @@ cube_s1 <- sits_merge(cube_s1_part1, cube_s1_part2)
 # ============================================================
 # 4. Load Sentinel-2 Cube
 # ============================================================
-
 cube_s2 <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
@@ -72,7 +69,6 @@ cube_s2 <- sits_cube(
 # ============================================================
 # 5. Regularize Sentinel-1 Cube to Match Sentinel-2 Temporal Grid
 # ============================================================
-
 cube_s1_reg <- sits_regularize(
   cube        = cube_s1,
   period      = "P16D",                # same temporal frequency as S2
@@ -91,7 +87,6 @@ plot(cube_s1_reg, band = "VH", palette = "Greys", scale = 0.7)
 # ============================================================
 # 6. Merge Sentinel-1 and Sentinel-2 Cubes
 # ============================================================
-
 cube_s1_s2 <- sits_merge(cube_s2, cube_s1_reg)
 
 # Confirm timeline alignment
@@ -100,6 +95,5 @@ sits_timeline(cube_s1_s2)
 # ============================================================
 # 7. Visualization
 # ============================================================
-
 # Plot RGB-like composite with both optical (B11, B8A) and SAR (VH) information
 plot(cube_s1_s2, red = "B11", green = "B8A", blue = "VH")
