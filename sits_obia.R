@@ -1,7 +1,6 @@
 # ============================================================
 #  Object-based Time Series Image Analysis
 # ============================================================
-
 ## 1. Load Required Libraries ----
 library(sits)
 library(sitsdata)
@@ -17,7 +16,6 @@ class_path    <- "~/SITs/amazônia/classificação"
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
-
 # Create a cube from the BDC (Brazil Data Cube) collection
 cube <- sits_cube(
   source      = "BDC",
@@ -47,7 +45,6 @@ sits_timeline(local_segs_cube)
 # ============================================================
 # 3. Load and Explore Sample Data
 # ============================================================
-
 # Load sample shapefile (reference samples)
 samples_sf  <- st_read(sample_path)
 
@@ -61,8 +58,6 @@ table(samples_sf$label)
 # ============================================================
 # 4. Extract Time Series from Samples
 # ============================================================
-
-# Note: 'sits_get_data' can be computationally expensive in local mode
 samples_rondonia_mlme <- sits_get_data(
   cube        = local_segs_cube,
   samples     = samples_sf,
@@ -74,14 +69,15 @@ samples_rondonia_mlme <- sits_get_data(
   progress    = TRUE
 )
 
-# Optional: Save and load extracted samples for reuse
-# saveRDS(samples_rondonia_mlme, "amazônia/rds/TS_12014.rds")
-# samples_rondonia_mlme <- readRDS("~/SITs/amazônia/rds/TS_12014.rds")
+# Visualization of the temporal patterns of the classes
+samples_rondonia_mlme |> 
+  sits_select(bands = c("NDVI", "EVI"), start_date = '2024-07-01', end_date = '2025-08-20') |> 
+  sits_patterns() |> 
+  plot()
 
 # ============================================================
 # 5. Train Classification Model
 # ============================================================
-
 set.seed(03022024)  # for reproducibility
 
 # Train Random Forest model
@@ -93,14 +89,9 @@ rf_model_MMv1 <- sits_train(
 # Plot variable importance
 plot(rf_model_MMv1)
 
-# Optional: Save trained model
-# saveRDS(rf_model_MMv1, "amazônia/rds/RF_12014.rds")
-# rf_model_MMv1 <- readRDS("~/SITs/amazônia/rds/RF_12014.rds")
-
 # ============================================================
 # 6. Classification and Probability Mapping
 # ============================================================
-
 # Apply model to cube (classification by object)
 class_prob <- sits_classify(
   data        = local_segs_cube,
@@ -126,7 +117,6 @@ vector_cube <- sits_cube(
 # ============================================================
 # 7. Generate Final Classified Map
 # ============================================================
-
 class_map <- sits_label_classification(
   cube        = class_prob,
   output_dir  = class_path,
