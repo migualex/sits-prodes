@@ -16,7 +16,6 @@ class_path    <- "~/SITs/amazônia/classificação"
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
-
 # Create a cube from the BDC (Brazil Data Cube) collection
 cube <- sits_cube(
   source      = "BDC",
@@ -47,7 +46,6 @@ plot(cube_select, red = "B11", green = "B8A", blue = "B02", date = "2025-06-10")
 # ============================================================
 # 3. Load and inspect training samples
 # ============================================================
-
 samples_sf  <- st_read(sample_path) 
 
 # Sample summary
@@ -63,7 +61,6 @@ sits_view(samples_sf)
 # ============================================================
 # 4. Sample analysis and preprocessing
 # ============================================================
-
 ## Extract time series for the sample points
 samples_rondonia_2025 <- sits_get_data(
   cube        = cube_select,
@@ -154,7 +151,6 @@ plot(rf_model)
 # ============================================================
 # 7. Classification and post-processing
 # ============================================================
-
 # Generate probability cube
 class_prob <- sits_classify(
   data        = cube_s1_s2, 
@@ -169,7 +165,6 @@ class_prob <- sits_classify(
 # ============================================================
 # 8. Variance and smoothing filters
 # ============================================================
-
 # Compute class variance
 rondonia_var <- sits_variance(
   cube          = class_prob,
@@ -210,7 +205,6 @@ smooth_rondonia <- sits_smooth(
 # ============================================================
 # 9. Generate final classification map
 # ============================================================
-
 class_map <- sits_label_classification(
   cube        = smooth_rondonia,
   memsize     = 50,
