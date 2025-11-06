@@ -37,5 +37,4 @@ At its core, the sits package offers **eight main functions**, as illustrated in
 Special thanks to the **Brazil Data Cube** team for their support and training.
 
 **Source:**  
-Rolf Simoes, Gilberto Camara, Gilberto Queiroz, Felipe Souza, Pedro R. Andrade, Lorena Santos, Alexandre Carvalho, and Karine Ferreira.  
-*Satellite Image Time Series Analysis for Big Earth Observation Data.**Remote Sensing**, 13, p. 2428, 2021.
+Rolf Simoes, Gilberto Camara, Gilberto Queiroz, Felipe Souza, Pedro R. Andrade, Lorena Santos, Alexandre Carvalho, and Karine Ferreira. Satellite Image Time Series Analysis for Big Earth Observation Data. Remote Sensing, 13, p. 2428, 2021.
