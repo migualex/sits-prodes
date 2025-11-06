@@ -10,6 +10,9 @@ library(tibble)     # Modern, tidy tables
 library(dplyr)      # Data manipulation (filter, mutate, summarize, etc.)
 library(rstac)      # Access to STAC catalogs (BDC, AWS, etc.)
 
+sample_path   <- "~/SITs/amazônia/amostras/amostras_refinadas_012014.shp"
+class_path    <- "~/SITs/amazônia/classificação"
+
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
@@ -29,10 +32,12 @@ cube <- sits_cube(
 # Select and filter data from cube
 cube_select <- sits_select(
   cube,
-  bands      = c("B02", "B03", "B04", "B8A", "B11", "B12"),
+  bands       = c("B02", "B03", "B04", "B08", "B11", "B12", 
+                  "NDVI", "EVI", "NBR", "CLOUD"),
   tiles       = "012014",
   start_date  = "2024-07-01",
-  end_date    = "2025-08-20"
+  end_date    = "2025-08-20",
+  progress    = TRUE
 )
 
 # Inspect available bands and visualize a composite
@@ -42,7 +47,6 @@ plot(cube_select, red = "B11", green = "B8A", blue = "B02", date = "2025-06-10")
 # ============================================================
 # 3. Load and inspect training samples
 # ============================================================
-sample_path <- "amazônia/amostras/Merge_dsm_Degrad_prog_Prodes2025_Mg_sitsbook.shp"
 samples_sf  <- st_read(sample_path) 
 
 # Sample summary
@@ -61,12 +65,12 @@ sits_view(samples_sf)
 
 ## 4.1 Extract time series for the sample points
 samples_rondonia_2025 <- sits_get_data(
-  cube        = reg_cube,
+  cube        = cube_select,
   samples     = samples_sf,
   start_date  = "2024-07-01",
   end_date    = "2025-08-20",
   label       = "label",
-  multicores  = 20,
+  multicores  = 50,
   progress    = TRUE
 )
 
@@ -151,8 +155,8 @@ class_prob <- sits_classify(
   ml_model    = rf_model,
   multicores  = 4,         
   memsize     = 50,            
-  output_dir  = "amazônia/classificação/",
-  version     = "vp",
+  output_dir  = class_path,
+  version     = "rev",
   progress    = TRUE
 )
 
@@ -165,7 +169,7 @@ rondonia_var <- sits_variance(
   cube          = class_prob,
   window_size   = 7,
   neigh_fraction= 0.50,
-  output_dir    = "~/SITs/amazônia/classificação",
+  output_dir    = class_path,
   multicores    = 4,
   memsize       = 50,
   version       = "rev", 
@@ -189,10 +193,10 @@ smooth_rondonia <- sits_smooth(
     "nf"            = 17.37,
     "wetlands"      = 16.06
   ),
-  multicores   = 6,
-  memsize      = 24,
-  data_dir     = "~/SITs/amazônia/classificação",
-  output_dir   = "~/SITs/amazônia/classificação",
+  multicores   = 4,
+  memsize      = 50,
+  data_dir     = class_path,
+  output_dir   = class_path,
   version      = "rev",
   progress     = TRUE
 )
@@ -204,9 +208,9 @@ smooth_rondonia <- sits_smooth(
 class_map <- sits_label_classification(
   cube        = smooth_rondonia,
   memsize     = 50,
-  multicores  = 20,
-  version     = "vp",
-  output_dir  = "amazônia/classificação/",
+  multicores  = 4,
+  version     = "rev",
+  output_dir  = class_path,
   progress    = TRUE
 )
 sits_view(class_map)
@@ -218,6 +222,6 @@ rfor_validate_mt <- sits_kfold_validate(
   samples     = samples_rondonia_2025,
   folds       = 5,
   ml_method   = sits_rfor(),
-  multicores  = 5
+  multicores  = 4
 )
 print(rfor_validate_mt)
