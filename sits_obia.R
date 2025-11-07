@@ -10,7 +10,7 @@ library(dplyr)
 library(rstac)
 
 vector_path   <- "~/SITs/amazônia/segmentação"
-sample_path   <- "~/SITs/amazônia/amostras/amostras_refinadas_012014.shp"
+sample_path   <- "~/SITs/amazônia/amostras/teste.gpkg"
 class_path    <- "~/SITs/amazônia/classificação"
 
 # ============================================================
@@ -44,7 +44,7 @@ cube_one <- sits_cube(
 local_segs_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
-  raster_cube = cube_all,
+  raster_cube = cube_one,
   vector_dir  = vector_path,
   vector_band = "segments",
   version     = "-step10-comp-10-mlme",
@@ -83,7 +83,7 @@ samples_rondonia <- sits_get_data(
 
 # Visualization of the temporal patterns of the classes
 samples_rondonia |> 
-  sits_select(bands = c("NDVI", "EVI"), start_date = '2024-07-01', end_date = '2025-08-20') |> 
+  sits_select(bands = c("NDVI", "EVI"), start_date = '2024-07-11', end_date = '2025-08-13') |> 
   sits_patterns() |> 
   plot()
 
@@ -106,7 +106,7 @@ plot(rf_model)
 # ============================================================
 # Apply model to cube (classification by object)
 class_prob <- sits_classify(
-  data        = cube_one, # only tile 12014
+  data        = local_segs_cube,
   ml_model    = rf_model,
   multicores  = 4,
   memsize     = 50,
@@ -119,7 +119,7 @@ class_prob <- sits_classify(
 vector_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
-  raster_cube = cube_all, # all tiles
+  raster_cube = cube_one,
   vector_dir  = class_path,
   vector_band = "probs",
   parse_info  = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
