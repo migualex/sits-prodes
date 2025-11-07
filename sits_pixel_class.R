@@ -97,7 +97,7 @@ samples_rondonia <- sits_get_data(
 
 # Visualization of the temporal patterns of the classes
 samples_rondonia |> 
-  sits_select(bands = c("NDVI", "EVI"), start_date = '2024-07-01', end_date = '2025-08-20') |> 
+  sits_select(bands = c("NDVI", "EVI"), start_date = '2024-07-11', end_date = '2025-08-13') |> 
   sits_patterns() |> 
   plot()
 
