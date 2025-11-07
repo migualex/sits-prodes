@@ -17,7 +17,19 @@ class_path    <- "~/SITs/amazônia/classificação"
 # 2. Define and Load Data Cubes
 # ============================================================
 # Create a cube from the BDC (Brazil Data Cube) collection
-cube <- sits_cube(
+cube_all <- sits_cube(
+  source      = "BDC",
+  collection  = "SENTINEL-2-16D",
+  bands       = c("B02", "B03", "B04", "B08", "B11", "B12", 
+                  "NDVI", "EVI", "NBR", "CLOUD"),
+  tiles       = c("012014", "12015", "13014", "13015"),
+  start_date  = "2024-07-01",
+  end_date    = "2025-08-20",
+  progress    = TRUE
+)
+
+# Create a cube from the BDC (Brazil Data Cube) collection
+cube_one <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   bands       = c("B02", "B03", "B04", "B08", "B11", "B12", 
@@ -32,7 +44,7 @@ cube <- sits_cube(
 local_segs_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
-  raster_cube = cube,
+  raster_cube = cube_all,
   vector_dir  = vector_path,
   vector_band = "segments",
   version     = "-step10-comp-10-mlme",
@@ -58,7 +70,7 @@ table(samples_sf$label)
 # ============================================================
 # 4. Extract Time Series from Samples
 # ============================================================
-samples_rondonia_mlme <- sits_get_data(
+samples_rondonia <- sits_get_data(
   cube        = local_segs_cube,
   samples     = samples_sf,
   start_date  = "2024-07-01",
@@ -70,7 +82,7 @@ samples_rondonia_mlme <- sits_get_data(
 )
 
 # Visualization of the temporal patterns of the classes
-samples_rondonia_mlme |> 
+samples_rondonia |> 
   sits_select(bands = c("NDVI", "EVI"), start_date = '2024-07-01', end_date = '2025-08-20') |> 
   sits_patterns() |> 
   plot()
@@ -81,21 +93,21 @@ samples_rondonia_mlme |>
 set.seed(03022024)  # for reproducibility
 
 # Train Random Forest model
-rf_model_MMv1 <- sits_train(
-  samples   = samples_rondonia_mlme,
+rf_model <- sits_train(
+  samples   = samples_rondonia,
   ml_method = sits_rfor()
 )
 
 # Plot variable importance
-plot(rf_model_MMv1)
+plot(rf_model)
 
 # ============================================================
 # 6. Classification and Probability Mapping
 # ============================================================
 # Apply model to cube (classification by object)
 class_prob <- sits_classify(
-  data        = local_segs_cube,
-  ml_model    = rf_model_MMv1,
+  data        = cube_one, # only tile 12014
+  ml_model    = rf_model,
   multicores  = 4,
   memsize     = 50,
   output_dir  = class_path,
@@ -107,7 +119,7 @@ class_prob <- sits_classify(
 vector_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
-  raster_cube = cube,
+  raster_cube = cube_all, # all tiles
   vector_dir  = class_path,
   vector_band = "probs",
   parse_info  = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
