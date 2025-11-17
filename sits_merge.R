@@ -10,7 +10,7 @@ library(tibble)
 library(dplyr)
 library(rstac)
 
-cube_path    <- "~/SITs/amazônia/imagens/merge"
+cube_path    <- "~/SITs/amazônia/imagens/s1/"
 
 # ============================================================
 # 2. Define ROI (Region of Interest)
@@ -58,8 +58,7 @@ cube_s1 <- sits_merge(cube_s1_part1, cube_s1_part2)
 cube_s2 <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
-  bands       = c("B02", "B03", "B04", "B08", "B8A", 
-                  "B11", "B12", "NDVI", "EVI", "NBR"),
+  bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
   tiles       = "012014",
   start_date  = "2024-07-01",
   end_date    = "2025-08-12",
@@ -82,7 +81,7 @@ cube_s1_reg <- sits_regularize(
 )
 
 # Quick visual check of SAR data
-plot(cube_s1_reg, band = "VH", palette = "Greys", scale = 0.7)
+# plot(cube_s1_reg, band = "VH", palette = "Greys", scale = 0.7)
 
 # ============================================================
 # 6. Merge Sentinel-1 and Sentinel-2 Cubes
@@ -90,7 +89,7 @@ plot(cube_s1_reg, band = "VH", palette = "Greys", scale = 0.7)
 cube_s1_s2 <- sits_merge(cube_s2, cube_s1_reg)
 
 # Confirm timeline alignment
-sits_timeline(cube_s1_s2)
+# sits_timeline(cube_s1_s2)
 
 # ============================================================
 # 7. Visualization
