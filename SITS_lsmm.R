@@ -6,7 +6,6 @@
 library(sits)
 library(tibble)
 
-
 ## II. Define the paths for files and folders needed in the processing
 mixture_path <- "~/SITs/amazonia/mlme"
 
