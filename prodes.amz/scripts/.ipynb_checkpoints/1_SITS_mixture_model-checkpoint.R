@@ -6,6 +6,7 @@
 library(sits)
 library(tibble)
 
+
 ## II. Define the paths for files and folders needed in the processing
 mixture_path <- "data/raw/mixture_model"
 
@@ -22,6 +23,7 @@ cube <- sits_cube(
   end_date = '2025-07-31',
   progress = TRUE)
 
+
 # ============================================================
 # 2. Creating Fractions Images features from mixture model cube
 # ============================================================
@@ -35,6 +37,7 @@ endmembers <- tibble::tribble(
   "veg",      827,  892,  410,  1070, 4206, 5646, 5495, 6236, 2101, 775,
   "water",    946,  739,  280,  208,  180,  167,  135,  129,  26,   14,      
 )
+
 
 # Step 2.2 -- Generate a mixture model cube and calculate the process duration 
 sits_mixture_model_start <- Sys.time()

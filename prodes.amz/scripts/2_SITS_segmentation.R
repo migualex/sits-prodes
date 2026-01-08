@@ -5,7 +5,6 @@
 ## I. Load Required Libraries
 library(sits)
 
-
 ## II. Define the paths for files and folders needed in the processing
 mixture_path <- "data/raw/mixture_model"
 segments_path <- "data/segments"

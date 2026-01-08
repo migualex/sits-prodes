@@ -63,7 +63,6 @@ local_segs_cube <- sits_cube(
   parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version")
 )
 
-
 # ============================================================
 # 5. Probability and Classification Mapping
 # ============================================================
@@ -91,7 +90,6 @@ sits_classify_end <- Sys.time()
 temp_process_sits_classify <- round(sits_classify_end-sits_classify_start,2)
 temp_process_sits_classify
 
-
 # Step 5.4 -- Reconstruct vector cube with classification probabilities 
 vector_cube <- sits_cube(
   source      = "BDC",
@@ -102,7 +100,6 @@ vector_cube <- sits_cube(
   version     = version, # do not use underline character
   parse_info  = c("X1", "X2", "tile", "start_date", "end_date", "band", "version")
 )
-
 
 # Step 5.5 -- Generate Final Classified Map of Segments
 class_map <- sits_label_classification(
