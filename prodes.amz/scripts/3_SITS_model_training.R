@@ -22,6 +22,7 @@ plots_path    <- "data/plots"
 
 ## IV. Define a list with preference colours for each class
 my_colours <- c(
+  "OOB"                       = "black",
   "AGUA"                      = "#191ad7",
   "DESMAT_ARVORE_REMANESCE"   = "#e56c35",
   "DESMAT_CORTE_RASO"         = "#f01304",
@@ -311,13 +312,39 @@ set.seed(88)
 # Step 4.2 -- Train the Random Forest model
 rf_model <- sits_train(
    samples   = clean_samples_balanced,
-   ml_method = sits_rfor()
+   ml_method = sits_rfor(num_trees = 200)
  )
 
-# Step 4.3 -- Plot the most important variables of the model
+# Step 4.3.1 -- Plot the most important variables of the model
 plot(rf_model)
 
 var <- stringr::str_extract(basename(sample_path), "_(with|no)_df_mask")
+
+# Step 4.3.2 -- Plot the Out of Box error by the number of trees 
+rf_model2 <- sits_model_export(rf_model)
+
+matplot(rf_model2$err.rate, 
+        type = "l", lty = 1, lwd = 2,
+        col = my_colours,           
+        main = "Out of Box error by the number of trees",
+        xlab = "Number of Trees (ntree)", ylab = "Out of Box Error")
+
+legend("topright", 
+       legend = nomes_classes, 
+       col = my_colours, 
+       lty = 1,      
+       cex = 1,    
+       bty = "n")
+
+ggsave(
+  filename = paste0(process_version, tiles_train, "", qtd_anos, "_", var, "oob_ntree.png"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
 
 # Step 4.4 -- Save the model to a R file
 saveRDS(rf_model,paste0(rds_path, "/model/random_forest/", process_version, "RF_", qtd_anos, "_", tiles_train, var,".rds"))
