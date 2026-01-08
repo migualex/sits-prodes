@@ -7,8 +7,8 @@ library(sits)
 
 
 ## II. Define the paths for files and folders needed in the processing
-mixture_path <- "~/SITs/amazonia/mlme"
-segments_path <- "~/SITs/amazonia/segments"
+mixture_path <- "~/data/raw/mixture_model"
+segments_path <- "~/data/segments"
 
 date_process <- format(Sys.Date(), "%Y-%m-%d")
 

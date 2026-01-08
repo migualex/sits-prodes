@@ -6,8 +6,8 @@
 library(sits)
 library(sf)
 library(tibble)
+library(dplyr)
 library(ggplot2)
-library(lubridate)
 
 ## II. Define the date and time for the start of processing
 date_process <- format(Sys.Date(), "/%Y_%m_%d_")
@@ -15,10 +15,10 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
-sample_path   <- "~/sits_amz/samples/AMOSTRAS.gpkg"
-rds_path      <- "~/sits_amz/rds/2025_12_15"
-mixture_path  <- "~/sits_amz/mixture/all_tiles_1y"
-plots_path    <- ""
+sample_path   <- "~/data/raw/samples/" #add the sample file to the path
+rds_path      <- "~/data/rds"
+mixture_path  <- "~/data/raw/mixture_model"
+plots_path    <- "~/data/plots"
 
 ## IV. Define a list with preference colours for each class
 my_colours <- c(
@@ -54,7 +54,7 @@ cube <- sits_cube(
 )
 
 datas <- sits_timeline(cube)
-qtd_anos <- paste0(floor(interval(datas[1], datas[length(datas)]) / years(1)), "y")
+qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / years(1)), "y")
 
 # Concatenates all the names of the training tiles into a single string separated by '_'
 tiles_train <- paste(cube$tile, collapse = "_")
@@ -107,7 +107,7 @@ samples |>
 
 
 # 2.4 -- Save the samples Time Series to a R file
-saveRDS(samples,paste0(rds_path, process_version, "TS_", tiles_train,".rds"))
+saveRDS(samples,paste0(rds_path, "/time_series/", process_version, "TS_", tiles_train,".rds"))
 
 
 # ============================================================
@@ -142,7 +142,7 @@ ggsave(
 )
 
 # 3.1.2 -- Save the samples Time Series to a R file
-saveRDS(som_cluster,paste0(rds_path, process_version, "SOM1_15x15_", tiles_train,".rds"))
+saveRDS(som_cluster,paste0(rds_path, "/som/", process_version, "SOM1_15x15_", tiles_train,".rds"))
 
 # 3.1.3 -- Produce a tibble with a summary of the mixed labels:
 som_eval <- sits_som_evaluate_cluster(som_cluster)
@@ -188,7 +188,7 @@ ggsave(
 clean_samples <- all_samples %>% filter(eval == "clean" | label == "DESMAT_DEGRAD_FOGO")
 
 # 3.3.1 -- Save the new_samples Time Series to a R file
-saveRDS(clean_samples,paste0(rds_path, process_version,"clean_samples_", tiles_train,".rds"))
+saveRDS(clean_samples,paste0(rds_path, "/som/", process_version,"clean_samples_", tiles_train,".rds"))
 
 
 # 3.4 -- Clustering new Time Series Samples and calculate the process duration
@@ -219,7 +219,7 @@ ggsave(
 )
 
 # 3.4.2 -- Save the new Time Series Samples to a R file
-saveRDS(som_cluster_clean,paste0(rds_path, process_version, "SOM2_15x15_", tiles_train,".rds"))
+saveRDS(som_cluster_clean,paste0(rds_path, "/som/", process_version, "SOM2_15x15_", tiles_train,".rds"))
 
 # 3.4.3 -- Produce a tibble with a summary of the mixed labels
 som_eval_clean <- sits_som_evaluate_cluster(som_cluster_clean)
@@ -257,7 +257,7 @@ process_duration_sits_reduce_imbalance
 clean_samples_balanced <- clean_samples_balanced[, colSums(is.na(clean_samples_balanced)) == 0]
 
 # 3.5.2 -- Save the new Time Series Samples Balanced to a R file
-saveRDS(clean_samples_balanced,paste0(rds_path, process_version,"clean_samples_balanced", tiles_train,".rds"))
+saveRDS(clean_samples_balanced,paste0(rds_path, "/time_series/", process_version, "clean_samples_balanced", tiles_train,".rds"))
 
 
 # 3.6 -- Clustering new Time Series Samples Balanced using SOM
@@ -329,6 +329,6 @@ plot(rf_model)
 var <- stringr::str_extract(basename(sample_path), "_(with|no)_df_mask")
 
 # Step 4.4 -- Save the model to a R file
-saveRDS(rf_model,paste0(rds_path, process_version,"RF_", qtd_anos, "_", tiles_train, var,".rds"))
+saveRDS(rf_model,paste0(rds_path, "/model/random_forest/", process_version, "RF_", qtd_anos, "_", tiles_train, var,".rds"))
 
 Print("Model has been trained!")

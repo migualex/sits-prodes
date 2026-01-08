@@ -6,7 +6,6 @@
 library(sits)
 library(tibble)
 library(ggplot2)
-library(lubridate)
 
 ## II. Define the date and time for the start of processing
 date_process <- format(Sys.Date(), "/%Y_%m_%d_")
@@ -14,10 +13,10 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
-vector_path   <- "~/sits_amz/segments/012014"
-class_path    <- "~/sits_amz/output/2025_12_15"
-rds_path      <- "~/sits_amz/rds/2025_12_15"
-mixture_path  <- "~/sits_amz/mixture/all_tiles_1y"
+vector_path   <- "~/data/segments"
+class_path    <- "~/data/class"
+rds_path      <- "~/data/rds"
+mixture_path  <- "~/data/raw/mixture_model"
 
 # ============================================================
 # 1. Define and Load Data Cubes
@@ -38,7 +37,7 @@ cube_class <- sits_cube(
 tiles_class <- paste(cube$tile, collapse = "_")
 
 datas <- sits_timeline(cube)
-qtd_anos <- paste0(floor(interval(datas[1], datas[length(datas)]) / years(1)), "y")
+qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / years(1)), "y")
 
 # Step 1.2 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
