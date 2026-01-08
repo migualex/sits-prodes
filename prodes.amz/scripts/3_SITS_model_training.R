@@ -326,8 +326,9 @@ rf_model <- sits_train(
 # Step 4.3 -- Plot the most important variables of the model
 plot(rf_model)
 
+var <- stringr::str_extract(basename(sample_path), "_(with|no)_df_mask")
 
 # Step 4.4 -- Save the model to a R file
-saveRDS(rf_model,paste0(rds_path, process_version,"RF_", qtd_anos, "_", tiles_train,".rds"))
+saveRDS(rf_model,paste0(rds_path, process_version,"RF_", qtd_anos, "_", tiles_train, var,".rds"))
 
 Print("Model has been trained!")
