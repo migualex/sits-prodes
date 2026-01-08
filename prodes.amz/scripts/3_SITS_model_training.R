@@ -37,7 +37,6 @@ my_colours <- c(
   "WETLANDS"                  = "#b779c6" 
 )
 
-
 # ============================================================
 # 1. Define and Load Data Cubes
 # ============================================================
@@ -79,7 +78,6 @@ cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 # 2.1 -- Load samples file (reference samples)
 samples_sf  <- sf::st_read(sample_path)
 
-
 # 2.2 -- Extract Time Series from samples_sf and calculate the process duration
 sits_get_data_start <- Sys.time()
 samples <- sits_get_data(
@@ -94,10 +92,8 @@ sits_get_data_end <- Sys.time()
 process_duration_sits_get_data <- round(sits_get_data_end-sits_get_data_start,2)
 process_duration_sits_get_data
 
-
 # 2.3.1 -- Visualize the temporal patterns of all features
 plot(sits_patterns(samples))
-
 
 # 2.3.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
@@ -105,10 +101,8 @@ samples |>
    sits_patterns() |> 
    plot()
 
-
 # 2.4 -- Save the samples Time Series to a R file
 saveRDS(samples,paste0(rds_path, "/time_series/", process_version, "TS_", tiles_train,".rds"))
-
 
 # ============================================================
 # 3. Samples quality assessment, filtering and balancing
@@ -190,7 +184,6 @@ clean_samples <- all_samples %>% filter(eval == "clean" | label == "DESMAT_DEGRA
 # 3.3.1 -- Save the new_samples Time Series to a R file
 saveRDS(clean_samples,paste0(rds_path, "/som/", process_version,"clean_samples_", tiles_train,".rds"))
 
-
 # 3.4 -- Clustering new Time Series Samples and calculate the process duration
 sits_som_map_start2 <- Sys.time()
 som_cluster_clean <- sits_som_map(data = clean_samples,
@@ -259,7 +252,6 @@ clean_samples_balanced <- clean_samples_balanced[, colSums(is.na(clean_samples_b
 # 3.5.2 -- Save the new Time Series Samples Balanced to a R file
 saveRDS(clean_samples_balanced,paste0(rds_path, "/time_series/", process_version, "clean_samples_balanced", tiles_train,".rds"))
 
-
 # 3.6 -- Clustering new Time Series Samples Balanced using SOM
 sits_som_map_start3 <- Sys.time()
 som_cluster_clean_balanced <- sits_som_map(clean_samples_balanced,
@@ -308,7 +300,6 @@ ggsave(
 
 # 3.6.4 -- Show the summary of the balanced time series sample data
 summary(clean_samples_balanced)
-
 
 # ============================================================
 # 4. Train Classification Model
