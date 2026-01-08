@@ -1,4 +1,4 @@
-# Satellite Image Time Series for Amazon Analysis
+# Satellite Image Time Series for Prodes Amazônia Analysis
 
 The sits package uses satellite image time series for land classification through a *time-first, space-later approach*.  
 In the data preparation process, collections of large Earth observation images are organized into data cubes.  
