@@ -13,10 +13,10 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
-vector_path   <- "~/data/segments"
-class_path    <- "~/data/class"
-rds_path      <- "~/data/rds"
-mixture_path  <- "~/data/raw/mixture_model"
+vector_path   <- "data/segments"
+class_path    <- "data/class"
+rds_path      <- "data/rds/model/random_forest/2025_12_12_08h46m_RF_1y_012015_012014_013015_013014_with_df_mask.rds" #add the model name
+mixture_path  <- "data/raw/mixture_model"
 
 # ============================================================
 # 1. Define and Load Data Cubes
@@ -68,10 +68,13 @@ local_segs_cube <- sits_cube(
 # 5. Probability and Classification Mapping
 # ============================================================
 
-# Step 5.1 -- Define the version name of probability file
+# Step 5.1 -- Retrieve the trained model
+rf_model <- readRDS(rds_path)
+
+# Step 5.2 -- Define the version name of probability file
 version <- paste("RF", qtd_anos, tiles_class, sep = "-")
 
-# Step 5.2 -- Classify segments according to the probabilities and calculate the process duration
+# Step 5.3 -- Classify segments according to the probabilities and calculate the process duration
 sits_classify_start <- Sys.time()
 class_prob <- sits_classify(
   data        = local_segs_cube,
@@ -89,7 +92,7 @@ temp_process_sits_classify <- round(sits_classify_end-sits_classify_start,2)
 temp_process_sits_classify
 
 
-# Step 5.3 -- Reconstruct vector cube with classification probabilities 
+# Step 5.4 -- Reconstruct vector cube with classification probabilities 
 vector_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
@@ -101,7 +104,7 @@ vector_cube <- sits_cube(
 )
 
 
-# Step 5.4 -- Generate Final Classified Map of Segments
+# Step 5.5 -- Generate Final Classified Map of Segments
 class_map <- sits_label_classification(
   cube        = class_prob,
   output_dir  = class_path,

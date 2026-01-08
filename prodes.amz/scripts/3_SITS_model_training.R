@@ -15,10 +15,10 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
-sample_path   <- "~/data/raw/samples/" #add the sample file to the path
-rds_path      <- "~/data/rds"
-mixture_path  <- "~/data/raw/mixture_model"
-plots_path    <- "~/data/plots"
+sample_path   <- "data/raw/samples/" #add the sample file to the path
+rds_path      <- "data/rds"
+mixture_path  <- "data/raw/mixture_model"
+plots_path    <- "data/plots"
 
 ## IV. Define a list with preference colours for each class
 my_colours <- c(

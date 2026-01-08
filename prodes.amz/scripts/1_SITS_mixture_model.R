@@ -8,7 +8,7 @@ library(tibble)
 
 
 ## II. Define the paths for files and folders needed in the processing
-mixture_path <- "~/data/raw/mixture_model"
+mixture_path <- "data/raw/mixture_model"
 
 # ============================================================
 # 1. Define and Load Raster Data Cubes from a collection
