@@ -103,7 +103,7 @@ samples |>
    plot()
 
 # 2.4 -- Save the samples Time Series to a R file
-saveRDS(samples,paste0(rds_path, "/time_series/", process_version, "TS_", tiles_train,".rds"))
+saveRDS(samples, paste0(rds_path, "/times_series/", process_version, tiles_train, "_samples", ".rds"))
 
 # ============================================================
 # 3. Samples quality assessment, filtering and balancing
@@ -137,7 +137,7 @@ ggsave(
 )
 
 # 3.1.2 -- Save the samples Time Series to a R file
-saveRDS(som_cluster,paste0(rds_path, "/som/", process_version, "SOM1_15x15_", tiles_train,".rds"))
+saveRDS(som_cluster, paste0(rds_path, "/som/", process_version, "SOM1_15x15_", tiles_train,".rds"))
 
 # 3.1.3 -- Produce a tibble with a summary of the mixed labels:
 som_eval <- sits_som_evaluate_cluster(som_cluster)
@@ -183,7 +183,7 @@ ggsave(
 clean_samples <- all_samples %>% filter(eval == "clean" | label == "DESMAT_DEGRAD_FOGO")
 
 # 3.3.1 -- Save the new_samples Time Series to a R file
-saveRDS(clean_samples,paste0(rds_path, "/som/", process_version,"clean_samples_", tiles_train,".rds"))
+saveRDS(clean_samples, paste0(rds_path, "/times_series/", process_version, tiles_train, "_clean_samples", ".rds"))
 
 # 3.4 -- Clustering new Time Series Samples and calculate the process duration
 sits_som_map_start2 <- Sys.time()
@@ -213,7 +213,7 @@ ggsave(
 )
 
 # 3.4.2 -- Save the new Time Series Samples to a R file
-saveRDS(som_cluster_clean,paste0(rds_path, "/som/", process_version, "SOM2_15x15_", tiles_train,".rds"))
+saveRDS(som_cluster_clean, paste0(rds_path, "/som/", process_version, "SOM2_15x15_", tiles_train,".rds"))
 
 # 3.4.3 -- Produce a tibble with a summary of the mixed labels
 som_eval_clean <- sits_som_evaluate_cluster(som_cluster_clean)
@@ -251,7 +251,7 @@ process_duration_sits_reduce_imbalance
 clean_samples_balanced <- clean_samples_balanced[, colSums(is.na(clean_samples_balanced)) == 0]
 
 # 3.5.2 -- Save the new Time Series Samples Balanced to a R file
-saveRDS(clean_samples_balanced,paste0(rds_path, "/time_series/", process_version, "clean_samples_balanced", tiles_train,".rds"))
+saveRDS(clean_samples_balanced, paste0(rds_path, "/time_series/", process_version, tiles_train, "_clean_samples_balanced", ".rds"))
 
 # 3.6 -- Clustering new Time Series Samples Balanced using SOM
 sits_som_map_start3 <- Sys.time()
