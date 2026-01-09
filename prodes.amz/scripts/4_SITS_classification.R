@@ -15,7 +15,7 @@ process_version <- paste0(date_process, time_process)
 ## III. Define the paths for files and folders needed in the processing
 vector_path   <- "data/segments"
 class_path    <- "data/class"
-rds_path      <- "data/rds/model/random_forest/2025_12_12_08h46m_RF_1y_012015_012014_013015_013014_with_df_mask.rds" #add the model name
+rds_path      <- "data/rds/model/random_forest/2026_01_09_09h47m_RF_1y_012015_012014_013015_013014_with_df_mask.rds" #add the model name
 mixture_path  <- "data/raw/mixture_model"
 
 # ============================================================
@@ -23,7 +23,7 @@ mixture_path  <- "data/raw/mixture_model"
 # ============================================================
 
 # Step 1.1 -- Create a classification cube from a collection
-cube_class <- sits_cube(
+cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
@@ -37,7 +37,7 @@ cube_class <- sits_cube(
 tiles_class <- paste(cube$tile, collapse = "_")
 
 datas <- sits_timeline(cube)
-qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / years(1)), "y")
+qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / lubridate::years(1)), "y")
 
 # Step 1.2 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
@@ -59,21 +59,21 @@ local_segs_cube <- sits_cube(
   raster_cube = cube_merge_lsmm_class,
   vector_dir  = vector_path,
   vector_band = "segments",
-  version     = "comp05-hex", # SITS recognizes "underline" as a separator of information. Use only for this purpose.
+  version     = "snic-1ymlme-rectangular-compactness-05", # SITS recognizes "underline" as a separator of information. Use only for this purpose.
   parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version")
 )
 
 # ============================================================
-# 5. Probability and Classification Mapping
+# 2. Probability and Classification Mapping
 # ============================================================
 
-# Step 5.1 -- Retrieve the trained model
+# Step 2.1 -- Retrieve the trained model
 rf_model <- readRDS(rds_path)
 
-# Step 5.2 -- Define the version name of probability file
+# Step 2.2 -- Define the version name of probability file
 version <- paste("RF", qtd_anos, tiles_class, sep = "-")
 
-# Step 5.3 -- Classify segments according to the probabilities and calculate the process duration
+# Step 2.3 -- Classify segments according to the probabilities and calculate the process duration
 sits_classify_start <- Sys.time()
 class_prob <- sits_classify(
   data        = local_segs_cube,
@@ -90,7 +90,7 @@ sits_classify_end <- Sys.time()
 temp_process_sits_classify <- round(sits_classify_end-sits_classify_start,2)
 temp_process_sits_classify
 
-# Step 5.4 -- Reconstruct vector cube with classification probabilities 
+# Step 2.4 -- Reconstruct vector cube with classification probabilities 
 vector_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
@@ -101,7 +101,7 @@ vector_cube <- sits_cube(
   parse_info  = c("X1", "X2", "tile", "start_date", "end_date", "band", "version")
 )
 
-# Step 5.5 -- Generate Final Classified Map of Segments
+# Step 2.5 -- Generate Final Classified Map of Segments
 class_map <- sits_label_classification(
   cube        = class_prob,
   output_dir  = class_path,
