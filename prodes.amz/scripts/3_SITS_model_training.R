@@ -20,6 +20,8 @@ rds_path      <- "data/rds"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots"
 
+var <- stringr::str_extract(basename(sample_path), "_(with|no)_df_mask")
+
 ## IV. Define a list with preference colours for each class
 my_colours <- c(
   "OOB"                       = "black",
@@ -103,7 +105,7 @@ samples |>
    plot()
 
 # 2.4 -- Save the samples Time Series to a R file
-saveRDS(samples, paste0(rds_path, "/times_series/", process_version, tiles_train, "_samples", ".rds"))
+saveRDS(samples, paste0(rds_path, "/times_series/", process_version, tiles_train,  var, "_samples", ".rds"))
 
 # ============================================================
 # 3. Samples quality assessment, filtering and balancing
@@ -127,7 +129,7 @@ process_duration_sits_som_map
 plot(som_cluster)
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", "som_eval.png"),
+  filename = paste0(process_version, tiles_train, var, "_", "som_eval.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -137,7 +139,7 @@ ggsave(
 )
 
 # 3.1.2 -- Save the samples Time Series to a R file
-saveRDS(som_cluster, paste0(rds_path, "/som/", process_version, "SOM1_15x15_", tiles_train,".rds"))
+saveRDS(som_cluster, paste0(rds_path, "/som/", process_version, "SOM1_15x15_", tiles_train, var, ".rds"))
 
 # 3.1.3 -- Produce a tibble with a summary of the mixed labels:
 som_eval <- sits_som_evaluate_cluster(som_cluster)
@@ -151,7 +153,7 @@ plot(som_eval) +
   theme(legend.position = "right")
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", "confusao_cluster.png"),
+  filename = paste0(process_version, tiles_train,  var, "_", "confusao_cluster.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -170,7 +172,7 @@ all_samples <- sits_som_clean_samples(
 plot(all_samples)
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", "all_samples.png"),
+  filename = paste0(process_version, tiles_train,  var, "_", "all_samples.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -183,7 +185,7 @@ ggsave(
 clean_samples <- all_samples %>% filter(eval == "clean" | label == "DESMAT_DEGRAD_FOGO")
 
 # 3.3.1 -- Save the new_samples Time Series to a R file
-saveRDS(clean_samples, paste0(rds_path, "/times_series/", process_version, tiles_train, "_clean_samples", ".rds"))
+saveRDS(clean_samples, paste0(rds_path, "/times_series/", process_version, tiles_train,  var, "_clean_samples", ".rds"))
 
 # 3.4 -- Clustering new Time Series Samples and calculate the process duration
 sits_som_map_start2 <- Sys.time()
@@ -203,7 +205,7 @@ process_duration_sits_som_map2
 plot(som_cluster_clean)
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", "som_eval_clean.png"),
+  filename = paste0(process_version, tiles_train,  var, "_", "som_eval_clean.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -213,7 +215,7 @@ ggsave(
 )
 
 # 3.4.2 -- Save the new Time Series Samples to a R file
-saveRDS(som_cluster_clean, paste0(rds_path, "/som/", process_version, "SOM2_15x15_", tiles_train,".rds"))
+saveRDS(som_cluster_clean, paste0(rds_path, "/som/", process_version, "SOM2_15x15_", tiles_train,  var, ".rds"))
 
 # 3.4.3 -- Produce a tibble with a summary of the mixed labels
 som_eval_clean <- sits_som_evaluate_cluster(som_cluster_clean)
@@ -227,7 +229,7 @@ plot(som_eval_clean) +
   theme(legend.position = "right")
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", "confusao_cluster_clean.png"),
+  filename = paste0(process_version, tiles_train,  var, "_", "confusao_cluster_clean.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -251,7 +253,7 @@ process_duration_sits_reduce_imbalance
 clean_samples_balanced <- clean_samples_balanced[, colSums(is.na(clean_samples_balanced)) == 0]
 
 # 3.5.2 -- Save the new Time Series Samples Balanced to a R file
-saveRDS(clean_samples_balanced, paste0(rds_path, "/time_series/", process_version, tiles_train, "_clean_samples_balanced", ".rds"))
+saveRDS(clean_samples_balanced, paste0(rds_path, "/time_series/", process_version, tiles_train,  var, "_clean_samples_balanced", ".rds"))
 
 # 3.6 -- Clustering new Time Series Samples Balanced using SOM
 sits_som_map_start3 <- Sys.time()
@@ -269,7 +271,7 @@ process_duration_sits_som_map3
 plot(som_cluster_clean_balanced)
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", "som_eval_clean_balanced.png"),
+  filename = paste0(process_version, tiles_train,  var, "_", "som_eval_clean_balanced.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -290,7 +292,7 @@ plot(som_eval_clean_balanced) +
   theme(legend.position = "right")
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", "confusao_cluster_clean_balanced.png"),
+  filename = paste0(process_version, tiles_train,  var, "_", "confusao_cluster_clean_balanced.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -318,8 +320,6 @@ rf_model <- sits_train(
 # Step 4.3.1 -- Plot the most important variables of the model
 plot(rf_model)
 
-var <- stringr::str_extract(basename(sample_path), "_(with|no)_df_mask")
-
 # Step 4.3.2 -- Plot the Out of Box error by the number of trees 
 rf_model2 <- sits_model_export(rf_model)
 
@@ -330,7 +330,7 @@ matplot(rf_model2$err.rate,
         xlab = "Number of Trees (ntree)", ylab = "Out of Box Error")
 
 legend("topright", 
-       legend = nomes_classes, 
+       legend = names(my_colours), 
        col = my_colours, 
        lty = 1,      
        cex = 1,    
@@ -349,4 +349,4 @@ ggsave(
 # Step 4.4 -- Save the model to a R file
 saveRDS(rf_model,paste0(rds_path, "/model/random_forest/", process_version, "RF_", qtd_anos, "_", tiles_train, var,".rds"))
 
-Print("Model has been trained!")
+print("Model has been trained!")
