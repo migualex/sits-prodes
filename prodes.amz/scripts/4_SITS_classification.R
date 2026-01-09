@@ -18,6 +18,8 @@ class_path    <- "data/class"
 rds_path      <- "data/rds/model/random_forest/2026_01_09_09h47m_RF_1y_012015_012014_013015_013014_with_df_mask.rds" #add the model name
 mixture_path  <- "data/raw/mixture_model"
 
+var <- stringr::str_extract(basename(rds_path), "-(with|no)-df-mask")
+
 # ============================================================
 # 1. Define and Load Data Cubes
 # ============================================================
@@ -33,8 +35,8 @@ cube <- sits_cube(
   progress    = TRUE
 )
 
-# Step 1.1.1 -- Concatenates all the names of the classification tiles into a single string separated by '_'
-tiles_class <- paste(cube$tile, collapse = "_")
+# Step 1.1.1 -- Concatenates all the names of the classification tiles into a single string separated by '-'
+tiles_class <- paste(cube$tile, collapse = "-")
 
 datas <- sits_timeline(cube)
 qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / lubridate::years(1)), "y")
