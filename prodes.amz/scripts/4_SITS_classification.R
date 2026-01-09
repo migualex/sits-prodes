@@ -73,7 +73,7 @@ local_segs_cube <- sits_cube(
 rf_model <- readRDS(rds_path)
 
 # Step 2.2 -- Define the version name of probability file
-version <- paste("RF", qtd_anos, tiles_class, var, sep = "-")
+version <- paste("rf", qtd_anos, tiles_class, var, sep = "-")
 
 # Step 2.3 -- Classify segments according to the probabilities and calculate the process duration
 sits_classify_start <- Sys.time()
