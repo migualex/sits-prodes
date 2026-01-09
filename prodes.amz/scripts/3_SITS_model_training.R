@@ -54,7 +54,7 @@ cube <- sits_cube(
 )
 
 datas <- sits_timeline(cube)
-qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / years(1)), "y")
+qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / lubridate::years(1)), "y")
 
 # Concatenates all the names of the training tiles into a single string separated by '_'
 tiles_train <- paste(cube$tile, collapse = "_")
@@ -256,8 +256,8 @@ saveRDS(clean_samples_balanced, paste0(rds_path, "/time_series/", process_versio
 # 3.6 -- Clustering new Time Series Samples Balanced using SOM
 sits_som_map_start3 <- Sys.time()
 som_cluster_clean_balanced <- sits_som_map(clean_samples_balanced,
-                                          grid_xdim = 15,
-                                          grid_ydim = 15,
+                                          grid_xdim = 20,
+                                          grid_ydim = 20,
                                           alpha = 1.0,
                                           distance = "dtw",
                                           rlen = 20)
