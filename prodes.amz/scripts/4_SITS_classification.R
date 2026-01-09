@@ -15,10 +15,10 @@ process_version <- paste0(date_process, time_process)
 ## III. Define the paths for files and folders needed in the processing
 vector_path   <- "data/segments"
 class_path    <- "data/class"
-rds_path      <- "data/rds/model/random_forest/2026_01_09_09h47m_RF_1y_012015_012014_013015_013014_with_df_mask.rds" #add the model name
+rds_path      <- "data/rds/model/random_forest/2026_01_09_10h28m_RF-1y-012015-012014-013015-013014-no-df-mask.rds" #add the model name
 mixture_path  <- "data/raw/mixture_model"
 
-var <- stringr::str_extract(basename(rds_path), "-(with|no)-df-mask")
+var <- stringr::str_extract(basename(rds_path), "(with|no)-df-mask")
 
 # ============================================================
 # 1. Define and Load Data Cubes
@@ -73,7 +73,7 @@ local_segs_cube <- sits_cube(
 rf_model <- readRDS(rds_path)
 
 # Step 2.2 -- Define the version name of probability file
-version <- paste("RF", qtd_anos, tiles_class, sep = "-")
+version <- paste("RF", qtd_anos, tiles_class, var, sep = "-")
 
 # Step 2.3 -- Classify segments according to the probabilities and calculate the process duration
 sits_classify_start <- Sys.time()
