@@ -243,7 +243,7 @@ sits_reduce_imbalance_start <- Sys.time()
 clean_samples_balanced <- sits_reduce_imbalance(
   samples = clean_samples,
   n_samples_over = 300,
-  n_samples_under = 1000
+  n_samples_under = 500
 )
 sits_reduce_imbalance_end <- Sys.time()
 process_duration_sits_reduce_imbalance <- round(sits_reduce_imbalance_end-sits_reduce_imbalance_start,2)
@@ -314,7 +314,7 @@ set.seed(88)
 # Step 4.2 -- Train the Random Forest model
 rf_model <- sits_train(
    samples   = clean_samples_balanced,
-   ml_method = sits_rfor(num_trees = 200)
+   ml_method = sits_rfor(num_trees = 100)
  )
 
 # Step 4.3.1 -- Plot the most important variables of the model
