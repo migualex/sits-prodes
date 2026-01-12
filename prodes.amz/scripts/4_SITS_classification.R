@@ -13,9 +13,11 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
+model_name    <- "2026_01_09_10h28m_RF-1y-012015-012014-013015-013014-no-df-mask.rds" #add the model name
+seg_version   <- "snic-1ymlme-rectangular-compactness-05"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
-rds_path      <- "data/rds/model/random_forest/2026_01_09_10h28m_RF-1y-012015-012014-013015-013014-no-df-mask.rds" #add the model name
+rds_path      <- paste0("data/rds/model/random_forest/", modelo)
 mixture_path  <- "data/raw/mixture_model"
 
 var <- stringr::str_extract(basename(rds_path), "(with|no)-df-mask")
@@ -61,7 +63,7 @@ local_segs_cube <- sits_cube(
   raster_cube = cube_merge_lsmm_class,
   vector_dir  = vector_path,
   vector_band = "segments",
-  version     = "snic-1ymlme-rectangular-compactness-05", # SITS recognizes "underline" as a separator of information. Use only for this purpose.
+  version     = seg_version, 
   parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version")
 )
 
