@@ -13,14 +13,14 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
-model_name    <- "2025_12_12_08h46m_RF_1y_012015_012014_013015_013014_with_df_mask.rds" #add the model name
+model_name    <- "2026_01_14_16h57m_RF-2y-012015-012014-013015-013014-with-df-mask.rds" #add the model name
 seg_version   <- "snic-1ymlme-rectangular-compactness-05"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
 rds_path      <- paste0("data/rds/model/random_forest/", model_name)
 mixture_path  <- "data/raw/mixture_model"
 
-var <- stringr::str_extract(basename(rds_path), "(with|no)-df-mask")
+var <- stringr::str_extract(basename(rds_path), "with-df-mask")
 
 # ============================================================
 # 1. Define and Load Data Cubes
@@ -32,7 +32,7 @@ cube <- sits_cube(
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
   tiles       = "012014",
-  start_date  = "2024-08-01",
+  start_date  = "2023-08-01",
   end_date    = "2025-07-31",
   progress    = TRUE
 )
