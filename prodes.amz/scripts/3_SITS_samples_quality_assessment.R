@@ -21,7 +21,7 @@ mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots"
 
 # IV. Identifier to distinguish this model run from previous versions
-var <- "_(with|no)_df_mask"
+var <- "_with_df_mask"
 
 ## V. Define a list with preference colours for each class
 my_colours <- c(
@@ -90,12 +90,13 @@ samples <- sits_get_data(
   samples     = samples_sf,
   label       = "label",
   n_sam_pol   = 16,       # number of pixels per segment
-  multicores  = 8,       # parallel processing
+  multicores  = 8,       # adapt to your computer CPU core availability
   progress    = TRUE
 )
 sits_get_data_end <- Sys.time()
-process_duration_sits_get_data <- round(sits_get_data_end-sits_get_data_start,2)
-process_duration_sits_get_data
+sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units = "secs")
+sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_get_data_time / 3600), as.integer((sits_get_data_time %% 3600) / 60))
+
 
 # 2.3.1 -- Visualize the temporal patterns of all features
 plot(sits_patterns(samples))
@@ -110,7 +111,7 @@ samples |>
 saveRDS(samples, paste0(rds_path, "/time_series/", process_version, tiles_train,  var, "_samples", ".rds"))
 
 # ============================================================
-# 3. 
+# 3. Analyse quality, filter and balance
 # ============================================================
 
 # 3.1 -- Clustering original Time Series Samples using SOM and calculate the process duration
@@ -125,8 +126,9 @@ som_cluster <- sits_som_map(
   rlen = 20
 )
 sits_som_map_end <- Sys.time()
-process_duration_sits_som_map <- round(sits_som_map_end-sits_som_map_start,2)
-process_duration_sits_som_map
+sits_som_map_time <- as.numeric(sits_som_map_end - sits_som_map_start, units = "secs")
+sprintf("SITS SOM map process duration (HH:MM): %02d:%02d", as.integer(sits_som_map_time / 3600), as.integer((sits_som_map_time %% 3600) / 60))
+
 
 # 3.1.1 -- Plot the SOM map
 plot(som_cluster)
@@ -149,14 +151,14 @@ som_eval <- sits_som_evaluate_cluster(som_cluster)
 
 # 3.1.4 -- Plot the result of summary of the mixed labels
 plot(som_eval) +
-  labs(title = 'Confusão por cluster') +
-  xlab("Porcentagem de Mistura") +
+  labs(title = 'Confusion by cluster') +
+  xlab("Percentage of Mixture") +
   ylab(NULL) +
-  scale_fill_manual(values = my_colours, name = "Legenda") +
+  scale_fill_manual(values = my_colours, name = "Legend") +
   theme(legend.position = "right")
 
 ggsave(
-  filename = paste0(process_version, tiles_train,  var, "_", "confusao_cluster.png"),
+  filename = paste0(process_version, tiles_train,  var, "_", "confusion_cluster.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -203,8 +205,8 @@ som_cluster_clean <- sits_som_map(data = clean_samples,
                                   # mode = "online" # only for windows' PCs
                                   )
 sits_som_map_end2 <- Sys.time()
-process_duration_sits_som_map2 <- round(sits_som_map_end2-sits_som_map_start2,2)
-process_duration_sits_som_map2
+sits_som_map_time2 <- as.numeric(sits_som_map_end2 - sits_som_map_start2, units = "secs")
+sprintf("SITS SOM map 2 process duration (HH:MM): %02d:%02d", as.integer(sits_som_map_time2 / 3600), as.integer((sits_som_map_time2 %% 3600) / 60))
 
 # 3.4.1 -- Plot the SOM map
 plot(som_cluster_clean)
@@ -227,10 +229,10 @@ som_eval_clean <- sits_som_evaluate_cluster(som_cluster_clean)
 
 # 3.4.4 -- Plot the result
 plot(som_eval_clean) +
-  labs(title = 'Confusão por cluster') +
-  xlab("Porcentagem de Mistura") +
+  labs(title = 'Confusion by cluster') +
+  xlab("Percentage of Mixture") +
   ylab(NULL) +
-  scale_fill_manual(values = my_colours, name = "Legenda") +
+  scale_fill_manual(values = my_colours, name = "Legend") +
   theme(legend.position = "right")
 
 ggsave(
@@ -251,8 +253,8 @@ clean_samples_balanced <- sits_reduce_imbalance(
   n_samples_under = 500
 )
 sits_reduce_imbalance_end <- Sys.time()
-process_duration_sits_reduce_imbalance <- round(sits_reduce_imbalance_end-sits_reduce_imbalance_start,2)
-process_duration_sits_reduce_imbalance
+sits_reduce_imbalance_time <- as.numeric(sits_reduce_imbalance_end - sits_reduce_imbalance_start, units = "secs")
+sprintf("SITS reduce imbalance process duration (HH:MM): %02d:%02d", as.integer(sits_reduce_imbalance_time / 3600), as.integer((sits_reduce_imbalance_time %% 3600) / 60))
 
 # 3.5.1 -- Removing columns that contain NA values
 clean_samples_balanced <- clean_samples_balanced[, colSums(is.na(clean_samples_balanced)) == 0]
@@ -270,8 +272,8 @@ som_cluster_clean_balanced <- sits_som_map(clean_samples_balanced,
                                            distance = "dtw",
                                            rlen = 20)
 sits_som_map_end3 <- Sys.time()
-process_duration_sits_som_map3 <- round(sits_som_map_end3-sits_som_map_start3,2)
-process_duration_sits_som_map3
+sits_som_map_time3 <- as.numeric(sits_som_map_end3 - sits_som_map_start3, units = "secs")
+sprintf("SITS SOM map 3 process duration (HH:MM): %02d:%02d", as.integer(sits_som_map_time3 / 3600), as.integer((sits_som_map_time3 %% 3600) / 60))
 
 # 3.6.1 -- Plot the SOM map
 plot(som_cluster_clean_balanced)
@@ -291,10 +293,10 @@ som_eval_clean_balanced <- sits_som_evaluate_cluster(som_cluster_clean_balanced)
 
 # 3.6.3 -- Plot the result
 plot(som_eval_clean_balanced) +
-  labs(title = 'Confusão por cluster') +
-  xlab("Porcentagem de Mistura") +
+  labs(title = 'Confusion by cluster') +
+  xlab("Percentage of Mixture") +
   ylab(NULL) +
-  scale_fill_manual(values = my_colours, name = "Legenda") +
+  scale_fill_manual(values = my_colours, name = "Legend") +
   theme(legend.position = "right")
 
 ggsave(

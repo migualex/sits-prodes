@@ -41,12 +41,12 @@ sits_mixture_model_start <- Sys.time()
 mm_cube <- sits_mixture_model(
   data = cube,
   endmembers = endmembers,
-  multicores = 8, #adapt to your computer CPU core availability
-  memsize = 80, #adapt to your computer memory availability
+  multicores = 8, # adapt to your computer CPU core availability
+  memsize = 80, # adapt to your computer memory availability
   output_dir = mixture_path
 )
 sits_mixture_model_end <- Sys.time()
-process_duration_sits_mixture_model <- round(sits_mixture_model_end-sits_mixture_model_start,2)
-process_duration_sits_mixture_model
+sits_mixture_model_time <- as.numeric(sits_mixture_model_end - sits_mixture_model_start, units = "secs")
+sprintf("SITS LSMM process duration (HH:MM): %02d:%02d", as.integer(sits_mixture_model_time / 3600), as.integer((sits_mixture_model_time %% 3600) / 60))
 
 print("Linear Spectral Mixture Model created!")

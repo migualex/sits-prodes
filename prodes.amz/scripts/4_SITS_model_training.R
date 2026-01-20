@@ -16,7 +16,7 @@ rds_path      <- "data/rds"
 plots_path    <- "data/plots"
 
 # IV. Identifier to distinguish this model run from previous versions | Keep it the same as the samples' identifier
-var <- "_df_mask"
+var <- "with-df-mask"
 
 ## V. Define a list with preference colours for each class
 my_colours <- c(
@@ -98,7 +98,7 @@ legend("topright",
        bty = "n")
 
 ggsave(
-  filename = paste0(process_version, tiles_train, "", no.years, "_", var, "oob_ntree.png"),
+  filename = paste0(process_version, tiles_train,"_", no.years, var, "_oob_ntree.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -108,6 +108,6 @@ ggsave(
 )
 
 # Step 2.4 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "/model/random_forest/", process_version, "RF-", no.years, "-", tiles_train, var,".rds"))
+saveRDS(rf_model,paste0(rds_path, "/model/random_forest/", process_version, "RF-", no.years, "-", tiles_train, "-",  var,".rds"))
 
 print("Model has been trained!")
