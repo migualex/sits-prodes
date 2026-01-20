@@ -46,7 +46,7 @@ mm_cube_segments <- sits_segment(
   version = version
 )
 sits_segment_end <- Sys.time()
-process_duration_sits_segment <- round(sits_segment_end-sits_segment_start,2)
-process_duration_sits_segment
+sits_segment_time <- as.numeric(sits_segment_end - sits_segment_start, units = "secs")
+sprintf("SITS segment process duration (HH:MM): %02d:%02d", as.integer(sits_segment_time / 3600), as.integer((sits_segment_time %% 3600) / 60))
 
 print("Segmentation has finished")

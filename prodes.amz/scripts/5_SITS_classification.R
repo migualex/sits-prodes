@@ -20,7 +20,7 @@ class_path    <- "data/class"
 rds_path      <- paste0("data/rds/model/random_forest/", model_name)
 mixture_path  <- "data/raw/mixture_model"
 
-var <- stringr::str_extract(basename(rds_path), "with-df-mask")
+var <- "with-df-mask"
 
 # ============================================================
 # 1. Define and Load Data Cubes
@@ -82,8 +82,8 @@ sits_classify_start <- Sys.time()
 class_prob <- sits_classify(
   data        = local_segs_cube,
   ml_model    = rf_model,
-  multicores  = 4,
-  memsize     = 80,
+  multicores  = 4,  # adapt to your computer CPU core availability
+  memsize     = 80, # adapt to your computer memory availability
   output_dir =  class_path,
   version     = version,
   n_sam_pol   = 16, #  Number of time series per segment to be classified (integer, min = 10, max = 50)
@@ -91,8 +91,8 @@ class_prob <- sits_classify(
   progress    = TRUE
 )
 sits_classify_end <- Sys.time()
-temp_process_sits_classify <- round(sits_classify_end-sits_classify_start,2)
-temp_process_sits_classify
+sits_classify_time <- as.numeric(sits_classify_end - sits_classify_start, units = "secs")
+sprintf("SITS classify process duration (HH:MM): %02d:%02d", as.integer(sits_classify_time / 3600), as.integer((sits_classify_time %% 3600) / 60))
 
 # Step 2.4 -- Reconstruct vector cube with classification probabilities 
 vector_cube <- sits_cube(
@@ -110,8 +110,8 @@ class_map <- sits_label_classification(
   cube        = class_prob,
   output_dir  = class_path,
   version     = version,
-  multicores  = 4,
-  memsize     = 80,
+  multicores  = 4,  # adapt to your computer CPU core availability
+  memsize     = 80, # adapt to your computer memory availability
   progress    = TRUE
 )
 

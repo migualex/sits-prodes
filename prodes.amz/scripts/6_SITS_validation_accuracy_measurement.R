@@ -54,8 +54,8 @@ plot(probs_datacube_class)
 uncertainty <- sits_uncertainty(
   vector_cube,
   type = "entropy",
-  multicores = 8,
-  memsize = 80,
+  multicores = 8, # adapt to your computer CPU core availability
+  memsize = 80, # adapt to your computer memory availability
   output_dir = data_dir,
   version = version,
   progress = TRUE
@@ -155,7 +155,7 @@ samples_sf <- sits_stratified_sampling(
   cube = probs_datacube_class,
   sampling_design = sampling_design,
   alloc = "alloc_120",
-  multicores = 4
+  multicores = 4 # adapt to your computer CPU core availability
   )
 
 # Step 4.4 -- Save samples in a shapefile
@@ -172,7 +172,7 @@ ground_truth <- system.file(
 # Step 4.6 -- Calculate accuracy according to Olofsson's method
 area_acc <- sits_accuracy(probs_datacube_class, 
                           validation = ground_truth,
-                          multicores = 4
+                          multicores = 4 # adapt to your computer CPU core availability
                           )
 
 # Step 4.7 -- Print the area estimated accuracy
