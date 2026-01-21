@@ -15,7 +15,7 @@ date_process <- format(Sys.Date(), "%Y-%m-%d")
 # 1. Load Mixture Model Data Cubes from a collection
 # ============================================================
 
-mm_cube_local <- sits_cube(
+mm_cube_fraction_features <- sits_cube(
   source = "BDC",
   tiles = '012014',
   collection = "SENTINEL-2-16D",
@@ -29,7 +29,7 @@ mm_cube_local <- sits_cube(
 # 2. Segment the mixture model cube based on Fraction Images features
 # ============================================================
 
-version <- paste("comp05-hex", date_process)
+version <- paste("comp05-hex_", date_process)
 
 sits_segment_start <- Sys.time()
 mm_cube_segments <- sits_segment(

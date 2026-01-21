@@ -49,7 +49,7 @@ mm_cube <- sits_cube(
   tiles = '012014',
   collection = "SENTINEL-2-16D",
   bands = c("SOIL", "VEG", "WATER"),
-  data_dir = mixture_path,
+  class_path = mixture_path,
   progress = TRUE
 )
 
@@ -116,3 +116,59 @@ class_map <- sits_label_classification(
 )
 
 print("Classification has finished")
+
+# ============================================================
+# 3. Uncertainty
+# ============================================================
+
+# Step 3.1 -- Calculate uncertainty vector cube
+uncertainty <- sits_uncertainty(
+  vector_cube,
+  type = "entropy",
+  multicores = 8, # adapt to your computer CPU core availability
+  memsize = 80, # adapt to your computer memory availability
+  output_dir = class_path,
+  version = version,
+  progress = TRUE
+)
+
+# Step 3.2.1 -- List the paths of the '.gpkg' files in 'class_path' containing 'entropy'
+uncertainty_files <- list.files(
+  path = class_path, 
+  pattern = "entropy.*\\.gpkg$", 
+  full.names = TRUE
+)
+
+# Step 3.2.2 -- Sort by modification date and get the last one (most recent)
+uncertainty_file <- uncertainty_files[which.max(file.info(uncertainty_files)$mtime)]
+
+# Step 3.2.3 -- Read the segment polygons file with entropy
+uncertainty_polygons <- sf::read_sf(uncertainty_file)
+
+# Step 3.3.1 -- Create a raster template based on uncertainty_polygons
+raster_template <- rast(
+  ext(uncertainty_polygons), 
+  res = res(rast(vector_cube$file_info[[1]]$path[1])), # Get the actual resolution of the cube
+  crs = crs(uncertainty_polygons)
+)
+
+# Step 3.3.2 -- Rasterize the values of the 'entropy' variable in the uncertainty vector file
+uncertainty_raster <- rasterize(uncertainty_polygons, raster_template, field = "entropy")
+
+# Step 3.3.3 -- Show entropy raster image
+plot(uncertainty_raster)
+
+# Step 3.4 -- Multiply by 10,000 to maintain accuracy
+uncertainty_raster_uint16 <- round(uncertainty_raster * 10000)
+
+# Step 3.3 -- Plot the resulting uncertainty cube
+plot(uncertainty_raster_uint16)
+
+# Step 3.3 -- Save the final file with the desired data type
+writeRaster(
+  uncertainty_raster_uint16, 
+  filename = file.path(class_path, paste0(tools::file_path_sans_ext(basename(uncertainty_file)), "_raster.tif")),
+  datatype = "INT2U",  # This is the code for Uint16
+  overwrite = TRUE,
+  gdal = c("COMPRESS=LZW", "PREDICTOR=2") # Additional compression to reduce file size
+)
