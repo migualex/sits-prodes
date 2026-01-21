@@ -1,3 +1,7 @@
+# ============================================================
+#  Validation and accuracy measurement
+# ============================================================
+
 ## I. Load Required Libraries
 library(tibble)
 library(sits)
@@ -46,89 +50,12 @@ probs_datacube_class <- sits_cube(
 # Step 1.2.1 --  Plot the classification map
 plot(probs_datacube_class)
 
-# ============================================================
-# 2. Uncertainty
-# ============================================================
-
-# Step 2.1 -- Calculate uncertainty vector cube
-uncertainty <- sits_uncertainty(
-  vector_cube,
-  type = "entropy",
-  multicores = 8, # adapt to your computer CPU core availability
-  memsize = 80, # adapt to your computer memory availability
-  output_dir = data_dir,
-  version = version,
-  progress = TRUE
-  )
-
-# Step 2.2.1 -- List the paths of the '.gpkg' files in 'data_dir' containing 'entropy'
-uncertainty_files <- list.files(
-  path = data_dir, 
-  pattern = "entropy.*\\.gpkg$", 
-  full.names = TRUE
-  )
-
-# Step 2.2.2 -- Sort by modification date and get the last one (most recent)
-uncertainty_file <- uncertainty_files[which.max(file.info(uncertainty_files)$mtime)]
-
-# Step 2.2.3 -- Read the segment polygons file with entropy
-uncertainty_polygons <- sf::read_sf(uncertainty_file)
-
-# Step 2.3.1 -- Create a raster template based on uncertainty_polygons
-raster_template <- rast(
-  ext(uncertainty_polygons), 
-  res = res(rast(vector_cube$file_info[[1]]$path[1])), # Get the actual resolution of the cube
-  crs = crs(uncertainty_polygons)
-)
-
-# Step 2.3.2 -- Rasterize the values of the 'entropy' variable in the uncertainty vector file
-uncertainty_raster <- rasterize(uncertainty_polygons, raster_template, field = "entropy")
-
-# Step 2.3.3 -- Show entropy raster image
-plot(uncertainty_raster)
-
-# Step 2.4 -- Multiply by 10,000 to maintain accuracy
-uncertainty_raster_uint16 <- round(uncertainty_raster * 10000)
-
-# Step 2.3 -- Plot the resulting uncertainty cube
-plot(uncertainty_raster_uint16)
-
-# Step 2.3 -- Save the final file with the desired data type
-writeRaster(
-  uncertainty_raster_uint16, 
-  filename = file.path(data_dir, paste0(tools::file_path_sans_ext(basename(uncertainty_file)), "_raster.tif")),
-  datatype = "INT2U",  # This is the code for Uint16
-  overwrite = TRUE,
-  gdal = c("COMPRESS=LZW", "PREDICTOR=2") # Additional compression to reduce file size
-)
-
 
 # ============================================================
-# 3. Cross-validation of training data
+# 2. Accuracy assessment of classified images
 # ============================================================
 
-# Reading training samples
-train_samples  <- sf::st_read(train_samples_dir)
-
-# Step 3.1 -- Using k-fold validation
-rfor_validate <- sits_kfold_validate(
-  samples = train_samples,
-  folds = 5, # how many times to split the data (default = 5)
-  ml_method = sits_rfor(),
-  multicores = 5 # adapt to your computer CPU core availability
-)
-# Step 3.2 -- Plot the confusion matrix
-plot(rfor_validate, type = "confusion_matrix")
-
-# Step 3.3 -- Plot the metrics by class
-plot(rfor_validate, type = "metrics")
-
-
-# ============================================================
-# 4. Accuracy assessment of classified images
-# ============================================================
-
-# Step 4.1 -- Sampling design
+# Step 2.1 -- Sampling design
 sampling_design <- sits_sampling_design(
   cube = probs_datacube_class,
   expected_ua = c(
@@ -147,10 +74,10 @@ sampling_design <- sits_sampling_design(
   rare_class_prop = 0.1
 )
 
-# Step 4.2 -- Show sampling design
+# Step 2.2 -- Show sampling design
 sampling_design
 
-# Step 4.3 -- Generate stratified random samples
+# Step 2.3 -- Generate stratified random samples
 samples_sf <- sits_stratified_sampling(
   cube = probs_datacube_class,
   sampling_design = sampling_design,
@@ -158,25 +85,25 @@ samples_sf <- sits_stratified_sampling(
   multicores = 4 # adapt to your computer CPU core availability
   )
 
-# Step 4.4 -- Save samples in a shapefile
+# Step 2.4 -- Save samples in a shapefile
 sf::st_write(samples_sf, 
              file.path(val_samples_dir, "validation_samples.shp"), 
              append = FALSE
              )
 
-# Step 4.5 -- Get ground truth points
+# Step 2.5 -- Get ground truth points
 ground_truth <- system.file(
   "class/samples_validation.csv", package = "sitsdata"
   )
 
-# Step 4.6 -- Calculate accuracy according to Olofsson's method
+# Step 2.6 -- Calculate accuracy according to Olofsson's method
 area_acc <- sits_accuracy(probs_datacube_class, 
                           validation = ground_truth,
                           multicores = 4 # adapt to your computer CPU core availability
                           )
 
-# Step 4.7 -- Print the area estimated accuracy
+# Step 2.7 -- Print the area estimated accuracy
 area_acc
 
-# Step 4.8 -- Show confusion matrix
+# Step 2.8 -- Show confusion matrix
 area_acc$error_matrix

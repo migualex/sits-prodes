@@ -16,10 +16,10 @@ rds_path      <- "data/rds"
 plots_path    <- "data/plots"
 
 # IV. Identifier to distinguish this model run from previous versions | Keep it the same as the samples' identifier
-var <- "with-df-mask"
+var <- "with-df-mask-with-all-samples"
 
 ## V. Define a list with preference colours for each class
-my_colours <- c(
+my_colors <- c(
   "OOB"                       = "black",
   "AGUA"                      = "#191ad7",
   "DESMAT_ARVORE_REMANESCE"   = "#e56c35",
@@ -61,6 +61,31 @@ tiles_train <- paste(cube$tile, collapse = "-")
 
 
 # ============================================================
+# 2. Cross-validation of training data
+# ============================================================
+
+# Step 2.1 -- Reading training samples
+train_samples <- readRDS("~/sits-prodes/prodes.amz/data/rds/time_series/samples-train_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask_2026-01-21_10h10m.rds")
+
+# Step 2.2 -- Using k-fold validation
+sits_kfold_validate_start <- Sys.time()
+rfor_validate <- sits_kfold_validate(
+  samples = train_samples,
+  folds = 5, # how many times to split the data (default = 5)
+  ml_method = sits_rfor(),
+  multicores = 11) # adapt to your computer CPU core availability
+sits_kfold_validate_end <- Sys.time()
+sits_kfold_validate_time <- as.numeric(sits_kfold_validate_end - sits_kfold_validate_start, units = "secs")
+sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_kfold_validate_time / 3600), as.integer((sits_kfold_validate_time %% 3600) / 60))
+
+# Step 2.2.1 -- Plot the confusion matrix
+plot(rfor_validate, type = "confusion_matrix")
+
+# Step 2.2.2 -- Plot the metrics by class
+plot(rfor_validate, type = "metrics")
+
+
+# ============================================================
 # 2. Training and saving model
 # ============================================================
 
@@ -86,13 +111,13 @@ rf_model2 <- sits_model_export(rf_model)
 
 matplot(rf_model2$err.rate, 
         type = "l", lty = 1, lwd = 2,
-        col = my_colours,           
+        col = my_colors,           
         main = "Out of Box error by the number of trees",
         xlab = "Number of Trees (ntree)", ylab = "Out of Box Error")
 
 legend("topright", 
-       legend = names(my_colours), 
-       col = my_colours, 
+       legend = names(my_colors), 
+       col = my_colors, 
        lty = 1,      
        cex = 1,    
        bty = "n")
