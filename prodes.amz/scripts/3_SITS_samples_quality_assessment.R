@@ -342,7 +342,7 @@ sprintf("SITS reduce imbalance process duration (HH:MM): %02d:%02d", as.integer(
 clean_samples_balanced <- clean_samples_balanced[, colSums(is.na(clean_samples_balanced)) == 0]
 
 # 4.5.2 -- Save the new Time Series Samples Balanced to a R file
-saveRDS(clean_samples_balanced, paste0(rds_path, "time_series/", process_version, "_", tiles_train, "_", var, "_clean-samples-balanced.rds"))
+saveRDS(clean_samples_balanced, paste0(rds_path, "time_series/", "samples-cleanned-&-balanced", "_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
 # 4.6 -- Clustering new Time Series Samples Balanced using SOM
 # First, run with a 2x2 grid, then change to one of the values within the interval indicated by SITS and run again

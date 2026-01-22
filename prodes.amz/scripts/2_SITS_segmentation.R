@@ -41,7 +41,7 @@ mm_cube_segments <- sits_segment(
     padding = 0
   ),
   memsize = 80, #adapt to your computer memory availability
-  multicores = 4, #adapt to your computer CPU core availability
+  multicores = 12, #adapt to your computer CPU core availability
   output_dir = segments_path,
   version = version
 )
