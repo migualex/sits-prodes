@@ -6,6 +6,8 @@
 library(sits)
 library(tibble)
 library(ggplot2)
+library(terra)
+library(RColorBrewer)
 
 ## II. Define the date and time for the start of processing
 date_process <- format(Sys.Date(), "/%Y_%m_%d_")
@@ -13,7 +15,7 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
-model_name    <- "2026_01_14_16h57m_RF-2y-012015-012014-013015-013014-with-df-mask.rds" #add the model name
+model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds" #add the model name
 seg_version   <- "snic-1ymlme-rectangular-compactness-05"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
@@ -32,7 +34,7 @@ cube <- sits_cube(
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
   tiles       = "012014",
-  start_date  = "2023-08-01",
+  start_date  = "2022-08-01",
   end_date    = "2025-07-31",
   progress    = TRUE
 )
@@ -40,8 +42,8 @@ cube <- sits_cube(
 # Step 1.1.1 -- Concatenates all the names of the classification tiles into a single string separated by '-'
 tiles_class <- paste(cube$tile, collapse = "-")
 
-datas <- sits_timeline(cube)
-qtd_anos <- paste0(floor(lubridate::interval(datas[1], datas[length(datas)]) / lubridate::years(1)), "y")
+dates <- sits_timeline(cube)
+no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
 
 # Step 1.2 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
@@ -49,7 +51,7 @@ mm_cube <- sits_cube(
   tiles = '012014',
   collection = "SENTINEL-2-16D",
   bands = c("SOIL", "VEG", "WATER"),
-  class_path = mixture_path,
+  data_dir = mixture_path,
   progress = TRUE
 )
 
@@ -75,14 +77,14 @@ local_segs_cube <- sits_cube(
 rf_model <- readRDS(rds_path)
 
 # Step 2.2 -- Define the version name of probability file
-version <- paste("rf", qtd_anos, tiles_class, var, sep = "-")
+version <- paste("rf", no.years, tiles_class, var, sep = "-")
 
 # Step 2.3 -- Classify segments according to the probabilities and calculate the process duration
 sits_classify_start <- Sys.time()
 class_prob <- sits_classify(
   data        = local_segs_cube,
   ml_model    = rf_model,
-  multicores  = 4,  # adapt to your computer CPU core availability
+  multicores  = 10,  # adapt to your computer CPU core availability
   memsize     = 80, # adapt to your computer memory availability
   output_dir =  class_path,
   version     = version,
@@ -110,7 +112,7 @@ class_map <- sits_label_classification(
   cube        = class_prob,
   output_dir  = class_path,
   version     = version,
-  multicores  = 4,  # adapt to your computer CPU core availability
+  multicores  = 10,  # adapt to your computer CPU core availability
   memsize     = 80, # adapt to your computer memory availability
   progress    = TRUE
 )
@@ -125,7 +127,7 @@ print("Classification has finished")
 uncertainty <- sits_uncertainty(
   vector_cube,
   type = "entropy",
-  multicores = 8, # adapt to your computer CPU core availability
+  multicores = 10, # adapt to your computer CPU core availability
   memsize = 80, # adapt to your computer memory availability
   output_dir = class_path,
   version = version,
@@ -143,32 +145,33 @@ uncertainty_files <- list.files(
 uncertainty_file <- uncertainty_files[which.max(file.info(uncertainty_files)$mtime)]
 
 # Step 3.2.3 -- Read the segment polygons file with entropy
-uncertainty_polygons <- sf::read_sf(uncertainty_file)
+uncertainty_polygons <- vect(uncertainty_file)
 
-# Step 3.3.1 -- Create a raster template based on uncertainty_polygons
+# Step 3.3 -- Create a raster template based on uncertainty_polygons
 raster_template <- rast(
   ext(uncertainty_polygons), 
   res = res(rast(vector_cube$file_info[[1]]$path[1])), # Get the actual resolution of the cube
   crs = crs(uncertainty_polygons)
 )
 
-# Step 3.3.2 -- Rasterize the values of the 'entropy' variable in the uncertainty vector file
+# Step 3.4 -- Rasterize the values of the 'entropy' variable in the uncertainty vector file
 uncertainty_raster <- rasterize(uncertainty_polygons, raster_template, field = "entropy")
 
-# Step 3.3.3 -- Show entropy raster image
-plot(uncertainty_raster)
-
-# Step 3.4 -- Multiply by 10,000 to maintain accuracy
+# Step 3.5.1 -- Multiply by 10,000 to maintain accuracy
 uncertainty_raster_uint16 <- round(uncertainty_raster * 10000)
 
-# Step 3.3 -- Plot the resulting uncertainty cube
-plot(uncertainty_raster_uint16)
+# Step 3.5.2 -- Plot the resulting uncertainty cube
+plot(uncertainty_raster_uint16, 
+     col = colorRampPalette(rev(brewer.pal(11, "Spectral")))(100),
+     maxcell = ncell(uncertainty_raster_uint16), # Usa TODOS os pixels
+     main = "Uncertainty Map - Full Resolution")
 
-# Step 3.3 -- Save the final file with the desired data type
+
+# Step 3.6 -- Save the final file with the desired data type
 writeRaster(
   uncertainty_raster_uint16, 
   filename = file.path(class_path, paste0(tools::file_path_sans_ext(basename(uncertainty_file)), "_raster.tif")),
   datatype = "INT2U",  # This is the code for Uint16
   overwrite = TRUE,
-  gdal = c("COMPRESS=LZW", "PREDICTOR=2") # Additional compression to reduce file size
+  gdal = c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9") # Additional compression to reduce file size
 )
