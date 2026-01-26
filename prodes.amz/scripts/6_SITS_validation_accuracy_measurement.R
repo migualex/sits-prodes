@@ -6,6 +6,7 @@
 library(tibble)
 library(sits)
 library(terra)
+library(sf)
 
 ## II. Define the date and time for the start of processing
 date_process <- format(Sys.Date(), "/%Y_%m_%d_")
@@ -16,71 +17,103 @@ process_version <- paste0(date_process, time_process)
 data_dir <- "data/class"
 val_samples_dir <- "data/raw/validation_samples"
 train_samples_dir <- "data/raw/training_samples"
-mixture_path  <- "data/raw/mixture_model"
 
+
+# ============================================================
+# 1. ML Model and SITS Cube
+# ============================================================
+
+labels <- c(
+  "1" = "AGUA",
+  "2" = "DESMAT_ARVORE_REMANESCE",
+  "3" = "DESMAT_CORTE_RASO",
+  "4" = "DESMAT_CORTE_RASO_DM",
+  "5" = "DESMAT_DEGRAD_FOGO",
+  "6" = "DESMAT_VEG",
+  "7" = "DESMAT_VEG_DM",
+  "8" = "FLO_DEGRAD",
+  "9" = "FLO_DEGRAD_FOGO",
+  "10" = "FLORESTA",
+  "11" = "NF",
+  "12" = "WETLANDS"
+)
+
+# Step 1.1 -- Load the original cube
+class_cube <- sits_cube(
+  source = "BDC",
+  collection = "SENTINEL-2-16D",
+  bands = "class",
+  labels = labels,
+  data_dir = data_dir,
+  version = "rf-3y-012014-with-df-mask",
+  parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
+                 "band", "version"))
+
+
+
+
+# Step 1.2 -- Extract and define some information
 tiles_class <- paste(cube$tile, collapse = "-")
 dates <- sits_timeline(cube)
-qtd_anos <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
-version <- paste("rf", qtd_anos, tiles_class, var, sep = "-")
+no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
+var <- "with-df-mask"
+version <- paste("rf", no.years, tiles_class, var, sep = "-")
+
+# Step 1.3 -- Recovery ML Model
+rf_model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
+
+
 
 # ============================================================
-# 1. Load probabilities cube
+# 2. Classification Map
 # ============================================================
 
-# Step 1.1 -- Define the classes of the probability cube
-labels <- c("DESMAT_CORTE_RASO" = "Clear_Cut_Bare_Soil",
-            "DESMAT_CORTE_RASO_DM" = "Clear_Cut_Bare_Soil_mask",
-            "DESMAT_CORTE_RASO_FOGO" = "Clear_Cut_Burned_Area",
-            "DESMAT_DEGRAD_FOGO" = "Deforested_by_Fire",
-            "DESMAT_ARVORE_REMANESCE" = "Clear_Cut_Bare_Soil_remaining trees", 
-            "FLORESTA" = "Forest",
-            "FLO_DEGRAD_FOGO" = "Degraded_Forest_Fire",
-            "FLO_DEGRAD" = "Degraded_Forest",
-            "DESMAT_VEG" = "Clear_Cut_Vegetation",
-            "DESMAT_VEG_DM" = "Clear_Cut_Vegetation_mask",
-            "AGUA" = "Water",
-            "NF" = "Non_Forest_Vegetation",
-            "ROCHA" = "Rock",
-            "WETLANDS" = "Wetland")
+# Step 2.1 -- Read GeoPackage File
+class_data <- st_read(classified_gpkg_path)
 
+# Step 2.2 -- Verify unique classes
+unique(class_data$class)
 
-cube <- sits_cube(
-  source      = "BDC",
-  collection  = "SENTINEL-2-16D",
-  bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
-  tiles       = "012014",
-  start_date  = "2022-08-01",
-  end_date    = "2025-07-31",
-  progress    = TRUE
+# Step 2.3 -- Define the classes of the probability cube
+class_mapping <- c(
+  "DESMAT_CORTE_RASO" = 1,
+  "DESMAT_CORTE_RASO_DM" = 2,
+  "DESMAT_ARVORE_REMANESCE" = 3,
+  "FLORESTA" = 4,
+  "FLO_DEGRAD_FOGO" = 5,
+  "FLO_DEGRAD" = 6,
+  "DESMAT_VEG" = 7,
+  "DESMAT_VEG_DM" = 8,
+  "AGUA" = 9,
+  "NF" = 10,
+  "ROCHA" = 11,
+  "WETLANDS" = 12
 )
 
-mm_cube <- sits_cube(
-  source = "BDC",
-  tiles = '012014',
-  collection = "SENTINEL-2-16D",
-  bands = c("SOIL", "VEG", "WATER"),
-  data_dir = mixture_path,
-  progress = TRUE
+# Step 2.4 -- Add numeric column
+class_data$class_num <- class_mapping[class_data$class]
+
+# Step 2.5 -- Verify if all of them were mapped
+table(class_data$class, class_data$class_num, useNA = "ifany")
+
+# ============================================================
+# 2. Create raster
+# ============================================================
+
+# Step 2.1 -- Create raster template
+template_rast <- rast(cube$file_info[[1]]$path[1])
+
+# Step 2.2 -- Rasterize
+class_rast <- rasterize(
+  vect(class_data), 
+  template_rast,
+  field = "class_num",
+  touches = FALSE
 )
 
-cube_merge_lsmm_class <- sits_merge(mm_cube, cube)
-
-# Step 1.2 -- Create a probability data cube from a file 
-class_datacube <- sits_cube(
-  source = "BDC",
-  collection = "SENTINEL-2-16D",
-  tiles = "012014",
-  raster_cube = cube_merge_lsmm_class,
-  vector_dir = data_dir,
-  vector_band = "class",
-  version = version,
-  label
-  parse_info  = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
-  progress = TRUE
-)
-
-# Step 1.2.1 --  Plot the classification map
-plot(class_datacube)
+# Step 2.3 -- Save as GeoTIFF file
+output_tif <- paste0(tools::file_path_sans_ext(classified_gpkg_path), ".tif")
+writeRaster(class_rast, output_tif, overwrite = TRUE, datatype = "INT1U")
 
 
 # ============================================================
@@ -91,20 +124,18 @@ plot(class_datacube)
 sampling_design <- sits_sampling_design(
   cube = class_datacube,
   expected_ua = c(
-    "Clear_Cut_Bare_Soil" = 0.75,
-    "Clear_Cut_Bare_Soil_mask" = 0.70,
-    "Deforested_by_Fire" = 0.70,
-    "Clear_Cut_Bare_Soil_remaining trees" = 0.70, 
-    "Clear_Cut_Burned_Area" = 0.70, 
-    "Clear_Cut_Vegetation_mask" = 0.70, 
-    "Degraded_Forest_Fire" = 0.70,
-    "Degraded_Forest" = 0.70,
-    "Non_Forest_Vegetation" = 0.70,
-    "Rock" = 0.70,
-    "Forest" = 0.75,  
-    "Clear_Cut_Vegetation" = 0.70,  
-    "Water" = 0.70, 
-    "Wetland" = 0.70
+    "DESMAT_CORTE_RASO" = 0.75,
+    "DESMAT_CORTE_RASO_DM" = 0.70,
+    "DESMAT_ARVORE_REMANESCE" = 0.70, 
+    "DESMAT_VEG_DM" = 0.70, 
+    "FLO_DEGRAD_FOGO" = 0.70,
+    "FLO_DEGRAD" = 0.70,
+    "NF" = 0.70,
+    "ROCHA" = 0.70,
+    "FLORESTA" = 0.75,  
+    "DESMAT_VEG" = 0.70,  
+    "AGUA" = 0.70, 
+    "WETLANDS" = 0.70
   ),
   alloc_options = c(120, 100),
   std_err = 0.01,
@@ -145,3 +176,202 @@ area_acc
 
 # Step 2.8 -- Show confusion matrix
 area_acc$error_matrix
+
+###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sits_rasterize_segments <- function(file, res, output_dir, style = NULL) {
+  stopifnot(!is.null(res))
+  stopifnot(!is.null(file))
+  stopifnot(!is.null(output_dir))
+  
+  # create output dir
+  fs::dir_create(output_dir, recurse = TRUE)
+  
+  # expand paths
+  file <- fs::path_expand(file)
+  output_dir <- fs::path_expand(output_dir)
+  
+  # define output files
+  output_file_base <- fs::path(output_dir) / fs::path_file(file) |>
+    fs::path_ext_remove()
+  
+  output_file <- stringr::str_c(output_file_base, ".tif")
+  output_style <- stringr::str_c(output_file_base, ".qml")
+  
+  if (fs::file_exists(output_file)) {{
+    return(output_file)
+  }}
+  
+  file_sf <- sf::st_read(file, quiet = TRUE)
+  
+  if (is.null(style)) {
+    file_sf <- file_sf |>
+      dplyr::mutate(class_num = .data[["class"]] |>
+                      as.factor() |>
+                      as.numeric())
+    
+    style <- file_sf |>
+      tibble::as_tibble() |>
+      dplyr::select(dplyr::all_of(c("class", "class_num"))) |>
+      dplyr::distinct(.data[["class"]], .data[["class_num"]]) |>
+      dplyr::mutate(color = RColorBrewer::brewer.pal(n = dplyr::n(), name = "Set3")) |>
+      dplyr::rename("index" = "class_num",
+                    "color" = "color",
+                    "name" = "class") |>
+      dplyr::arrange(.data[["index"]])
+    
+  } else {
+    file_sf <- file_sf |>
+      dplyr::rename("name" = "class") |>
+      dplyr::left_join(style |> dplyr::select(dplyr::all_of(c(
+        "name", "index"
+      )))) |>
+      dplyr::mutate(
+        class_num = .data[["index"]]
+      )
+  }
+  
+  file_bbox <- sf::st_bbox(file_sf)
+  
+  # Create vector file with `class` converted
+  file_gpkg <- fs::file_temp(ext = ".gpkg")
+  
+  sf::st_write(obj = file_sf, dsn = file_gpkg)
+  
+  a_srs <- readRDS(url("https://github.com/restore-plus/restore-utils/raw/refs/heads/main/inst/extdata/crs/bdc.rds"))
+  
+  # Rasterize!
+  gdalUtilities::gdal_rasterize(
+    src_datasource = file_gpkg,
+    dst_filename   = output_file,
+    a              = "class_num",
+    at             = TRUE,
+    tr             = c(res, res),
+    te             = file_bbox,
+    ot             = "Int16",
+    init           = 255,
+    a_nodata       = 255,
+    co             = c(
+      "COMPRESS=ZSTD",
+      "PREDICTOR=2",
+      "ZSTD_LEVEL=1",
+      "BIGTIFF=YES"
+    ),
+    a_srs          = a_srs
+  )
+  
+  # Save style
+  sits:::.colors_qml(color_table = style, file = output_style)
+  
+  # Return!
+  output_file
+}
+
+library(sits)
+library(sf)
+
+#map_class <- read_sf("data/class/SENTINEL-2_MSI_012014_2022-07-28_2025-07-28_class_rf-3y-012014-with-df-mask.gpkg")
+
+model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
+
+style <- tibble::tibble(
+  name = sits_labels(model),
+  index = 1:length(sits_labels(model)),
+  color = pals::cols25(length(sits_labels(model)))
+)
+
+#
+# Segments to raster
+#
+input_dir <- "data/class/"
+output_dir <- "data/class-raster"
+
+raster_files <- fs::dir_ls(input_dir, glob = "*class_rf-3y-012014-with-df-mask*.gpkg") |>
+  purrr::map(function(file) {
+    file_name <- fs::path_file(file)
+    
+    cli::cli_inform("Processing: {file_name}")
+    
+    sits_rasterize_segments(
+      file       = file,
+      res        = 10,
+      style      = style,
+      output_dir = output_dir
+    )
+  })
+
+
+library(sits)
+
+data_dir <- "data/class-raster"
+
+model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
+
+version <- "rf-3y-012014-with-df-mask"
+
+labels <- c(
+  "1" = "AGUA",
+  "2" = "DESMAT_ARVORE_REMANESCE",
+  "3" = "DESMAT_CORTE_RASO",
+  "4" = "DESMAT_CORTE_RASO_DM",
+  "5" = "DESMAT_DEGRAD_FOGO",
+  "6" = "DESMAT_VEG",
+  "7" = "DESMAT_VEG_DM",
+  "8" = "FLO_DEGRAD",
+  "9" = "FLO_DEGRAD_FOGO",
+  "10" = "FLORESTA",
+  "11" = "NF",
+  "12" = "ROCHA",
+  "13" = "WETLANDS"
+)
+
+class_cube <- sits_cube(
+  source = "BDC",
+  collection = "SENTINEL-2-16D",
+  bands = "class",
+  labels = labels,
+  data_dir = data_dir,
+  version = version,
+  parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
+                 "band", "version")
+)
+
+
+validation <- readRDS("data/rds/time_series/samples-val_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask_2026-01-21_10h10m.rds")
+
+
+validation_csv <- validation |>
+  dplyr::select(latitude, longitude, label)
+
+write.csv(
+  validation_csv,
+  "data/test/validation_accuracy.csv",
+  row.names = FALSE
+)
+
+
+# Calculate accuracy according to Olofsson's method
+area_acc <- sits_accuracy(class_cube, 
+                          validation = validation_csv,
+                          multicores = 4)
+
+
+validation_clean <- validation |>
+  dplyr::select(
+    -time_series,
+    -cube
+  )
+
