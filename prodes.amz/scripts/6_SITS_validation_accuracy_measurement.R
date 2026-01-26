@@ -15,8 +15,9 @@ process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
 data_dir <- "data/class"
-val_samples_dir <- "data/raw/validation_samples"
-train_samples_dir <- "data/raw/training_samples"
+
+#val_samples_dir <- "data/raw/validation_samples"
+#train_samples_dir <- "data/raw/training_samples"
 
 
 # ============================================================
@@ -39,7 +40,7 @@ labels <- c(
 )
 
 # Step 1.1 -- Load the original cube
-class_cube <- sits_cube(
+cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
@@ -48,9 +49,6 @@ class_cube <- sits_cube(
   version = "rf-3y-012014-with-df-mask",
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version"))
-
-
-
 
 # Step 1.2 -- Extract and define some information
 tiles_class <- paste(cube$tile, collapse = "-")
@@ -61,7 +59,6 @@ version <- paste("rf", no.years, tiles_class, var, sep = "-")
 
 # Step 1.3 -- Recovery ML Model
 rf_model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
-
 
 
 # ============================================================
@@ -99,98 +96,6 @@ table(class_data$class, class_data$class_num, useNA = "ifany")
 # ============================================================
 # 2. Create raster
 # ============================================================
-
-# Step 2.1 -- Create raster template
-template_rast <- rast(cube$file_info[[1]]$path[1])
-
-# Step 2.2 -- Rasterize
-class_rast <- rasterize(
-  vect(class_data), 
-  template_rast,
-  field = "class_num",
-  touches = FALSE
-)
-
-# Step 2.3 -- Save as GeoTIFF file
-output_tif <- paste0(tools::file_path_sans_ext(classified_gpkg_path), ".tif")
-writeRaster(class_rast, output_tif, overwrite = TRUE, datatype = "INT1U")
-
-
-# ============================================================
-# 2. Accuracy assessment of classified images
-# ============================================================
-
-# Step 2.1 -- Sampling design
-sampling_design <- sits_sampling_design(
-  cube = class_datacube,
-  expected_ua = c(
-    "DESMAT_CORTE_RASO" = 0.75,
-    "DESMAT_CORTE_RASO_DM" = 0.70,
-    "DESMAT_ARVORE_REMANESCE" = 0.70, 
-    "DESMAT_VEG_DM" = 0.70, 
-    "FLO_DEGRAD_FOGO" = 0.70,
-    "FLO_DEGRAD" = 0.70,
-    "NF" = 0.70,
-    "ROCHA" = 0.70,
-    "FLORESTA" = 0.75,  
-    "DESMAT_VEG" = 0.70,  
-    "AGUA" = 0.70, 
-    "WETLANDS" = 0.70
-  ),
-  alloc_options = c(120, 100),
-  std_err = 0.01,
-  rare_class_prop = 0.1
-)
-
-
-# Step 2.2 -- Show sampling design
-sampling_design
-
-# Step 2.3 -- Generate stratified random samples
-samples_sf <- sits_stratified_sampling(
-  cube = class_datacube,
-  sampling_design = sampling_design,
-  alloc = "alloc_120",
-  multicores = 4 # adapt to your computer CPU core availability
-  )
-
-# Step 2.4 -- Save samples in a shapefile
-sf::st_write(samples_sf, 
-             file.path(val_samples_dir, "validation_samples.shp"), 
-             append = FALSE
-             )
-
-# Step 2.5 -- Get ground truth points
-ground_truth <- system.file(
-  "class/samples_validation.csv", package = "sitsdata"
-  )
-
-# Step 2.6 -- Calculate accuracy according to Olofsson's method
-area_acc <- sits_accuracy(probs_datacube_class, 
-                          validation = ground_truth,
-                          multicores = 4 # adapt to your computer CPU core availability
-                          )
-
-# Step 2.7 -- Print the area estimated accuracy
-area_acc
-
-# Step 2.8 -- Show confusion matrix
-area_acc$error_matrix
-
-###
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 sits_rasterize_segments <- function(file, res, output_dir, style = NULL) {
   stopifnot(!is.null(res))
@@ -280,9 +185,6 @@ sits_rasterize_segments <- function(file, res, output_dir, style = NULL) {
   output_file
 }
 
-library(sits)
-library(sf)
-
 #map_class <- read_sf("data/class/SENTINEL-2_MSI_012014_2022-07-28_2025-07-28_class_rf-3y-012014-with-df-mask.gpkg")
 
 model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
@@ -293,9 +195,6 @@ style <- tibble::tibble(
   color = pals::cols25(length(sits_labels(model)))
 )
 
-#
-# Segments to raster
-#
 input_dir <- "data/class/"
 output_dir <- "data/class-raster"
 
@@ -314,9 +213,69 @@ raster_files <- fs::dir_ls(input_dir, glob = "*class_rf-3y-012014-with-df-mask*.
   })
 
 
-library(sits)
+# ============================================================
+# 3. 
+# ============================================================
 
-data_dir <- "data/class-raster"
+# Step 3.1 -- Sampling design
+sampling_design <- sits_sampling_design(
+  cube = class_datacube,
+  expected_ua = c(
+    "DESMAT_CORTE_RASO" = 0.75,
+    "DESMAT_CORTE_RASO_DM" = 0.70,
+    "DESMAT_ARVORE_REMANESCE" = 0.70, 
+    "DESMAT_VEG_DM" = 0.70, 
+    "FLO_DEGRAD_FOGO" = 0.70,
+    "FLO_DEGRAD" = 0.70,
+    "NF" = 0.70,
+    "ROCHA" = 0.70,
+    "FLORESTA" = 0.75,  
+    "DESMAT_VEG" = 0.70,  
+    "AGUA" = 0.70, 
+    "WETLANDS" = 0.70
+  ),
+  alloc_options = c(120, 100),
+  std_err = 0.01,
+  rare_class_prop = 0.1
+)
+
+
+# Step 3.2 -- Show sampling design
+sampling_design
+
+# Step 3.3 -- Generate stratified random samples
+samples_sf <- sits_stratified_sampling(
+  cube = class_datacube,
+  sampling_design = sampling_design,
+  alloc = "alloc_120",
+  multicores = 4 # adapt to your computer CPU core availability
+  )
+
+# Step 3.4 -- Save samples in a shapefile
+sf::st_write(samples_sf, 
+             file.path(val_samples_dir, "validation_samples.shp"), 
+             append = FALSE
+             )
+
+
+# ============================================================
+# 4. Accuracy assessment of classified images
+# ============================================================
+
+# Step 4.5 -- Get ground truth points
+ground_truth <- system.file(
+  "class/samples_validation.csv", package = "sitsdata"
+  )
+
+# Step 2.6 -- Calculate accuracy according to Olofsson's method
+area_acc <- sits_accuracy(probs_datacube_class, 
+                          validation = ground_truth,
+                          multicores = 4 # adapt to your computer CPU core availability
+                          )
+
+
+
+
 
 model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
 
@@ -367,6 +326,13 @@ write.csv(
 area_acc <- sits_accuracy(class_cube, 
                           validation = validation_csv,
                           multicores = 4)
+
+# Step 2.7 -- Print the area estimated accuracy
+area_acc
+
+
+# Step 2.8 -- Show confusion matrix
+area_acc$error_matrix
 
 
 validation_clean <- validation |>
