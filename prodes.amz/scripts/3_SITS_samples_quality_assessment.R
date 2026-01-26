@@ -26,19 +26,19 @@ var <- "with-df-mask"
 ## V. Define a list with preference colors for each class
 my_colors <- c(
   "OOB"                       = "black",
-  "AGUA"                      = "#191ad7",
-  "DESMAT_ARVORE_REMANESCE"   = "#e56c35",
-  "DESMAT_CORTE_RASO"         = "#f01304",
+  "AGUA"                      = "#2980B9",
+  "DESMAT_ARVORE_REMANESCE"   = "#a19c0a",
+  "DESMAT_CORTE_RASO"         = "#f39c12",
   "DESMAT_CORTE_RASO_DM"      = "#f39c12",
-  "DESMAT_DEGRAD_FOGO"        = "#a42900",
-  "DESMAT_VEG"                = "#24fc15",
-  "DESMAT_VEG_DM"             = "#e6b0aa",
-  "FLO_DEGRAD"                = "#fbf909",
-  "FLO_DEGRAD_FOGO"           = "#d1b007",
-  "FLORESTA"                  = "#1e2f09",
-  "NF"                        = "#fb0e9f",
-  "ROCHA"                     = "#562917",
-  "WETLANDS"                  = "#b779c6" 
+  "DESMAT_DEGRAD_FOGO"        = "#EC7063",
+  "DESMAT_VEG"                = "#D8DA83",
+  "DESMAT_VEG_DM"             = "#D8DA83",
+  "FLO_DEGRAD"                = "#9da676",
+  "FLO_DEGRAD_FOGO"           = "#e6b0aa",
+  "FLORESTA"                  = "#1E8449",
+  "NF"                        = "#C0D665",
+  "ROCHA"                     = "#229C59",
+  "WETLANDS"                  = "#A0B9C8" 
 )
 
 
@@ -122,14 +122,14 @@ set.seed(88)
 
 message(sprintf("Total samples: %d", nrow(samples)))
 
-# 3.2 -- Split training set (70%)
+# 3.2 -- Split training set (80%)
 samples_train <- samples |> 
   group_by(label) |> 
-  slice_sample(prop = 0.7) |> 
+  slice_sample(prop = 0.8) |> 
   ungroup()
 message(sprintf("Training samples: %d (%.1f%%)", nrow(samples_train), 100 * nrow(samples_train) / nrow(samples)))
 
-# 3.3 -- Creates the validation set by selecting samples NOT included in the training set (remaining 30%)
+# 3.3 -- Creates the validation set by selecting samples NOT included in the training set (remaining 20%)
 samples_val <- anti_join(samples, samples_train, by = names(samples))
 message(sprintf("Validation samples: %d (%.1f%%)", nrow(samples_val), 100 * nrow(samples_val) / nrow(samples)))
 
@@ -192,8 +192,8 @@ saveRDS(samples_val,
 sits_som_map_start <- Sys.time()
 som_cluster <- sits_som_map(
   samples_train,
-  grid_xdim = 30,
-  grid_ydim = 30,
+  grid_xdim = 2,
+  grid_ydim = 2,
   alpha = 1.0,
   distance = "dtw",
   rlen = 20
@@ -348,8 +348,8 @@ saveRDS(clean_samples_balanced, paste0(rds_path, "time_series/", "samples-cleann
 # First, run with a 2x2 grid, then change to one of the values within the interval indicated by SITS and run again
 sits_som_map_start3 <- Sys.time()
 som_cluster_clean_balanced <- sits_som_map(clean_samples_balanced,
-                                           grid_xdim = 17,
-                                           grid_ydim = 17,
+                                           grid_xdim = 2,
+                                           grid_ydim = 2,
                                            alpha = 1.0,
                                            distance = "dtw",
                                            rlen = 20)

@@ -21,19 +21,19 @@ var <- "with-df-mask-with-all-samples"
 ## V. Define a list with preference colours for each class
 my_colors <- c(
   "OOB"                       = "black",
-  "AGUA"                      = "#191ad7",
-  "DESMAT_ARVORE_REMANESCE"   = "#e56c35",
-  "DESMAT_CORTE_RASO"         = "#f01304",
+  "AGUA"                      = "#2980B9",
+  "DESMAT_ARVORE_REMANESCE"   = "#a19c0a",
+  "DESMAT_CORTE_RASO"         = "#f39c12",
   "DESMAT_CORTE_RASO_DM"      = "#f39c12",
-  "DESMAT_DEGRAD_FOGO"        = "#a42900",
-  "DESMAT_VEG"                = "#24fc15",
-  "DESMAT_VEG_DM"             = "#e6b0aa",
-  "FLO_DEGRAD"                = "#fbf909",
-  "FLO_DEGRAD_FOGO"           = "#d1b007",
-  "FLORESTA"                  = "#1e2f09",
-  "NF"                        = "#fb0e9f",
-  "ROCHA"                     = "#562917",
-  "WETLANDS"                  = "#b779c6" 
+  "DESMAT_DEGRAD_FOGO"        = "#EC7063",
+  "DESMAT_VEG"                = "#D8DA83",
+  "DESMAT_VEG_DM"             = "#D8DA83",
+  "FLO_DEGRAD"                = "#9da676",
+  "FLO_DEGRAD_FOGO"           = "#e6b0aa",
+  "FLORESTA"                  = "#1E8449",
+  "NF"                        = "#C0D665",
+  "ROCHA"                     = "#229C59",
+  "WETLANDS"                  = "#A0B9C8" 
 )
 
 
