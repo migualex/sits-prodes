@@ -7,96 +7,26 @@ library(tibble)
 library(sits)
 library(terra)
 library(sf)
+library(dplyr)
 
 ## II. Define the date and time for the start of processing
-date_process <- format(Sys.Date(), "/%Y_%m_%d_")
-time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
+date_process <- format(Sys.Date(), "%Y-%m-%d_")
+time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 ## III. Define the paths for files and folders needed in the processing
 data_dir <- "data/class"
-
-#val_samples_dir <- "data/raw/validation_samples"
-#train_samples_dir <- "data/raw/training_samples"
-
-
-# ============================================================
-# 1. ML Model and SITS Cube
-# ============================================================
-
-labels <- c(
-  "1" = "AGUA",
-  "2" = "DESMAT_ARVORE_REMANESCE",
-  "3" = "DESMAT_CORTE_RASO",
-  "4" = "DESMAT_CORTE_RASO_DM",
-  "5" = "DESMAT_DEGRAD_FOGO",
-  "6" = "DESMAT_VEG",
-  "7" = "DESMAT_VEG_DM",
-  "8" = "FLO_DEGRAD",
-  "9" = "FLO_DEGRAD_FOGO",
-  "10" = "FLORESTA",
-  "11" = "NF",
-  "12" = "WETLANDS"
-)
-
-# Step 1.1 -- Load the original cube
-cube <- sits_cube(
-  source = "BDC",
-  collection = "SENTINEL-2-16D",
-  bands = "class",
-  labels = labels,
-  data_dir = data_dir,
-  version = "rf-3y-012014-with-df-mask",
-  parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
-                 "band", "version"))
-
-# Step 1.2 -- Extract and define some information
-tiles_class <- paste(cube$tile, collapse = "-")
-dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
-var <- "with-df-mask"
-version <- paste("rf", no.years, tiles_class, var, sep = "-")
-
-# Step 1.3 -- Recovery ML Model
-rf_model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
+output_dir <- "data/class-raster" # classified raster file cannot be in the same folder as the classified gpkg file
+samples_dir <- "data/raw/samples"
+model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
+version <- "rf-3y-012014-with-df-mask"
 
 
 # ============================================================
-# 2. Classification Map
+# 1. Create raster file from classified vector map
 # ============================================================
 
-# Step 2.1 -- Read GeoPackage File
-class_data <- st_read(classified_gpkg_path)
-
-# Step 2.2 -- Verify unique classes
-unique(class_data$class)
-
-# Step 2.3 -- Define the classes of the probability cube
-class_mapping <- c(
-  "DESMAT_CORTE_RASO" = 1,
-  "DESMAT_CORTE_RASO_DM" = 2,
-  "DESMAT_ARVORE_REMANESCE" = 3,
-  "FLORESTA" = 4,
-  "FLO_DEGRAD_FOGO" = 5,
-  "FLO_DEGRAD" = 6,
-  "DESMAT_VEG" = 7,
-  "DESMAT_VEG_DM" = 8,
-  "AGUA" = 9,
-  "NF" = 10,
-  "ROCHA" = 11,
-  "WETLANDS" = 12
-)
-
-# Step 2.4 -- Add numeric column
-class_data$class_num <- class_mapping[class_data$class]
-
-# Step 2.5 -- Verify if all of them were mapped
-table(class_data$class, class_data$class_num, useNA = "ifany")
-
-# ============================================================
-# 2. Create raster
-# ============================================================
-
+# 1.1 -- Function to rasterize
 sits_rasterize_segments <- function(file, res, output_dir, style = NULL) {
   stopifnot(!is.null(res))
   stopifnot(!is.null(file))
@@ -185,20 +115,15 @@ sits_rasterize_segments <- function(file, res, output_dir, style = NULL) {
   output_file
 }
 
-#map_class <- read_sf("data/class/SENTINEL-2_MSI_012014_2022-07-28_2025-07-28_class_rf-3y-012014-with-df-mask.gpkg")
-
-model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
-
+# 1.2 -- Get labels' style from ML model
 style <- tibble::tibble(
   name = sits_labels(model),
   index = 1:length(sits_labels(model)),
   color = pals::cols25(length(sits_labels(model)))
 )
 
-input_dir <- "data/class/"
-output_dir <- "data/class-raster"
-
-raster_files <- fs::dir_ls(input_dir, glob = "*class_rf-3y-012014-with-df-mask*.gpkg") |>
+# 1.3 -- Aplly rasterize function to all files in directory that has the same version and gpkg extension
+raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-3y-012014-with-df-mask*.gpkg") |>
   purrr::map(function(file) {
     file_name <- fs::path_file(file)
     
@@ -214,73 +139,13 @@ raster_files <- fs::dir_ls(input_dir, glob = "*class_rf-3y-012014-with-df-mask*.
 
 
 # ============================================================
-# 3. 
+# 2. SITS Cube
 # ============================================================
 
-# Step 3.1 -- Sampling design
-sampling_design <- sits_sampling_design(
-  cube = class_datacube,
-  expected_ua = c(
-    "DESMAT_CORTE_RASO" = 0.75,
-    "DESMAT_CORTE_RASO_DM" = 0.70,
-    "DESMAT_ARVORE_REMANESCE" = 0.70, 
-    "DESMAT_VEG_DM" = 0.70, 
-    "FLO_DEGRAD_FOGO" = 0.70,
-    "FLO_DEGRAD" = 0.70,
-    "NF" = 0.70,
-    "ROCHA" = 0.70,
-    "FLORESTA" = 0.75,  
-    "DESMAT_VEG" = 0.70,  
-    "AGUA" = 0.70, 
-    "WETLANDS" = 0.70
-  ),
-  alloc_options = c(120, 100),
-  std_err = 0.01,
-  rare_class_prop = 0.1
-)
+# Step 2.1 -- Get labels associated to the trained model data set
+sits_labels(model)
 
-
-# Step 3.2 -- Show sampling design
-sampling_design
-
-# Step 3.3 -- Generate stratified random samples
-samples_sf <- sits_stratified_sampling(
-  cube = class_datacube,
-  sampling_design = sampling_design,
-  alloc = "alloc_120",
-  multicores = 4 # adapt to your computer CPU core availability
-  )
-
-# Step 3.4 -- Save samples in a shapefile
-sf::st_write(samples_sf, 
-             file.path(val_samples_dir, "validation_samples.shp"), 
-             append = FALSE
-             )
-
-
-# ============================================================
-# 4. Accuracy assessment of classified images
-# ============================================================
-
-# Step 4.5 -- Get ground truth points
-ground_truth <- system.file(
-  "class/samples_validation.csv", package = "sitsdata"
-  )
-
-# Step 2.6 -- Calculate accuracy according to Olofsson's method
-area_acc <- sits_accuracy(probs_datacube_class, 
-                          validation = ground_truth,
-                          multicores = 4 # adapt to your computer CPU core availability
-                          )
-
-
-
-
-
-model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
-
-version <- "rf-3y-012014-with-df-mask"
-
+# Step 2.2 -- Labels of the classified image (Enumerate them in the order they appear according to "sits_labels(model)")
 labels <- c(
   "1" = "AGUA",
   "2" = "DESMAT_ARVORE_REMANESCE",
@@ -297,47 +162,44 @@ labels <- c(
   "13" = "WETLANDS"
 )
 
-class_cube <- sits_cube(
+# Step 2.3 -- Load the original cube with classified raster file
+cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
   labels = labels,
-  data_dir = data_dir,
+  data_dir = output_dir, # classified raster file cannot be in the same folder as the classified gpkg file
   version = version,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
-                 "band", "version")
-)
+                 "band", "version"))
 
 
-validation <- readRDS("data/rds/time_series/samples-val_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask_2026-01-21_10h10m.rds")
+# Step 2.4 -- Extract and define some information
+tiles_class <- paste(cube$tile, collapse = "-")
+dates <- sits_timeline(cube)
+no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
+var <- "with-df-mask"
+version <- paste("rf", no.years, tiles_class, var, sep = "-")
 
 
-validation_csv <- validation |>
-  dplyr::select(latitude, longitude, label)
+# ============================================================
+# 3. Accuracy assessment of classified images
+# ============================================================
 
-write.csv(
-  validation_csv,
-  "data/test/validation_accuracy.csv",
-  row.names = FALSE
-)
+# Step 3.1 -- Get validation samples points
+samples_validation <- st_read("~/sits-prodes/prodes.amz/data/raw/samples/samples_validation_points.gpkg")
 
+# Step 3.2 -- Filter validation samples according to the classified tile
+samples_validation_012014 <- samples_validation %>%
+  filter(tile == "012014")
 
-# Calculate accuracy according to Olofsson's method
-area_acc <- sits_accuracy(class_cube, 
-                          validation = validation_csv,
-                          multicores = 4)
+# Step 3.3 -- Calculate accuracy
+area_acc <- sits_accuracy(cube, 
+                          validation = samples_validation_012014,
+                          multicores = 2) # adapt to your computer CPU core availability
 
-# Step 2.7 -- Print the area estimated accuracy
+# Step 3.4 -- Print the area estimated accuracy
 area_acc
 
-
-# Step 2.8 -- Show confusion matrix
+# Step 3.5 -- Show confusion matrix
 area_acc$error_matrix
-
-
-validation_clean <- validation |>
-  dplyr::select(
-    -time_series,
-    -cube
-  )
-
