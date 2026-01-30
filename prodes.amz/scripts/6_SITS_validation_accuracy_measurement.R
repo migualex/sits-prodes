@@ -8,6 +8,7 @@ library(sits)
 library(terra)
 library(sf)
 library(dplyr)
+library(mapview)
 
 ## II. Define the date and time for the start of processing
 date_process <- format(Sys.Date(), "%Y-%m-%d_")
@@ -18,8 +19,8 @@ process_version <- paste0(date_process, time_process)
 data_dir <- "data/class"
 output_dir <- "data/class-raster" # classified raster file cannot be in the same folder as the classified gpkg file
 samples_dir <- "data/raw/samples"
-model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
-version <- "rf-3y-012014-with-df-mask"
+model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/2025_12_12_08h46m_RF_1y_012015_012014_013015_013014_with-df-mask.rds")
+version <- "rf-1y-013015-with-df-mask"
 
 
 # ============================================================
@@ -123,7 +124,7 @@ style <- tibble::tibble(
 )
 
 # 1.3 -- Aplly rasterize function to all files in directory that has the same version and gpkg extension
-raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-3y-012014-with-df-mask*.gpkg") |>
+raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-1y-013015-with-df-mask*.gpkg") |>
   purrr::map(function(file) {
     file_name <- fs::path_file(file)
     
@@ -173,7 +174,6 @@ cube <- sits_cube(
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version"))
 
-
 # Step 2.4 -- Extract and define some information
 tiles_class <- paste(cube$tile, collapse = "-")
 dates <- sits_timeline(cube)
@@ -181,25 +181,68 @@ no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / l
 var <- "with-df-mask"
 version <- paste("rf", no.years, tiles_class, var, sep = "-")
 
+# ============================================================
+# 3. Stratified random sampling
+# ============================================================
+
+# 3.1 -- Sampling design
+sampling_design <- sits_sampling_design(
+  cube = cube,
+  expected_ua = c(
+    "AGUA" = 0.95,
+    "DESMAT_ARVORE_REMANESCE" = 0.40, 
+    "DESMAT_CORTE_RASO" = 0.75, 
+    "DESMAT_CORTE_RASO_DM" = 0.9,  
+    "DESMAT_DEGRAD_FOGO" = 0.70, 
+    "DESMAT_VEG" = 0.70,  
+    "DESMAT_VEG_DM" = 0.75, 
+    "FLO_DEGRAD" = 0.70, 
+    "FLO_DEGRAD_FOGO" = 0.70,
+    "FLORESTA" = 0.95,
+    "NF" = 0.90,
+    "ROCHA" = 0.80,
+    "WETLANDS" = 0.70
+  ),
+  alloc_options = c(120, 100, 75, 50, 30),
+  std_err = 0.01,
+  rare_class_prop = 0.01
+)
+
+# 3.2 -- Show sampling design
+sampling_design
+
+# 3.3 -- Generate stratified samples
+samples_sf <- sits_stratified_sampling(
+  cube = cube,
+  sampling_design = sampling_design,
+  alloc = "alloc_50",
+  overhead = 1.2, #proporção de pixels a mais que eu quero que pegue para descatar pixels de borda
+  progress = TRUE,
+  multicores = 12)
+
+samples_sf%>% group_by(label) %>% summarise(num = n())
+
+
+# 3.4 -- Define File Path
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation_", version, "_", process_version, ".gpkg"))
+
+# 3.4 -- Save samples_sf object as GPKG file
+sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 
 # ============================================================
-# 3. Accuracy assessment of classified images
+# 4. Accuracy assessment of classified images
 # ============================================================
 
-# Step 3.1 -- Get validation samples points
-samples_validation <- st_read("~/sits-prodes/prodes.amz/data/raw/samples/samples_validation_points.gpkg")
+# Step 4.1 -- Get validation samples points (coordenadas geograficas)
+samples_validation <- st_read(samples_sf_file_path)
 
-# Step 3.2 -- Filter validation samples according to the classified tile
-samples_validation_012014 <- samples_validation %>%
-  filter(tile == "012014")
-
-# Step 3.3 -- Calculate accuracy
+# Step 4.2 -- Calculate accuracy
 area_acc <- sits_accuracy(cube, 
-                          validation = samples_validation_012014,
-                          multicores = 2) # adapt to your computer CPU core availability
+                          validation = samples_validation,
+                          multicores = 10) # adapt to your computer CPU core availability
 
-# Step 3.4 -- Print the area estimated accuracy
+# Step 4.3 -- Print the area estimated accuracy
 area_acc
 
-# Step 3.5 -- Show confusion matrix
+# Step 4.4 -- Show confusion matrix
 area_acc$error_matrix
