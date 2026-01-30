@@ -166,7 +166,6 @@ plot(uncertainty_raster_uint16,
      maxcell = ncell(uncertainty_raster_uint16), # Usa TODOS os pixels
      main = "Uncertainty Map - Full Resolution")
 
-
 # Step 3.6 -- Save the final file with the desired data type
 writeRaster(
   uncertainty_raster_uint16, 
