@@ -33,8 +33,8 @@ cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
-  tiles       = "012014",
-  start_date  = "2022-08-01",
+  tiles       = "020023",
+  start_date  = "2024-08-01",
   end_date    = "2025-07-31",
   progress    = TRUE
 )
@@ -48,7 +48,7 @@ no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / l
 # Step 1.2 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
   source = "BDC",
-  tiles = '012014',
+  tiles = '020023',
   collection = "SENTINEL-2-16D",
   bands = c("SOIL", "VEG", "WATER"),
   data_dir = mixture_path,
