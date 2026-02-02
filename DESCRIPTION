@@ -1,0 +1,23 @@
+Package: sitsprodes
+Title: PRODES-AMZ workflow experiments using the SITS package
+Version: 0.1.0
+Authors@R:
+    c(
+      person(given = "PRODES", family = "AMZ", role = c("aut", "cre"),
+             email = "prodes.amz@inpe.br"),
+      person(given = "Miguel", family = "Cunha", role = "aut",
+             email = "migualexandr@gmail.com"),
+      person(given = "Guilherme", family = "Correia", role = "aut",
+             email = "guilherme.correia@inpe.br"),
+      person(given = "Gustavo", family = "Salgado", role = "aut",
+             email = "gustavo.salgado@inpe.br"),
+      person(given = "Pedro", family = "Brito", role = "aut",
+             email = "pedro.brito@inpe.br")
+    )
+Description: Tools and workflows to support the use of PRODES-AMZ within the sits ecosystem.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports:
+    sits
