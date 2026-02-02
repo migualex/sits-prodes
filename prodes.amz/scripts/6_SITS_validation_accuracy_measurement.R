@@ -8,7 +8,7 @@ library(sits)
 library(terra)
 library(sf)
 library(dplyr)
-library(mapview)
+library(ggplot2)
 
 ## II. Define the date and time for the start of processing
 date_process <- format(Sys.Date(), "%Y-%m-%d_")
@@ -20,7 +20,7 @@ data_dir <- "data/class"
 output_dir <- "data/class-raster" # classified raster file cannot be in the same folder as the classified gpkg file
 samples_dir <- "data/raw/samples"
 model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/2025_12_12_08h46m_RF_1y_012015_012014_013015_013014_with-df-mask.rds")
-version <- "rf-1y-013015-with-df-mask"
+version <- "rf-1y-012014-with-df-mask"
 
 
 # ============================================================
@@ -124,7 +124,7 @@ style <- tibble::tibble(
 )
 
 # 1.3 -- Aplly rasterize function to all files in directory that has the same version and gpkg extension
-raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-1y-013015-with-df-mask*.gpkg") |>
+raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-1y-012014-with-df-mask*.gpkg") |>
   purrr::map(function(file) {
     file_name <- fs::path_file(file)
     
@@ -190,22 +190,22 @@ sampling_design <- sits_sampling_design(
   cube = cube,
   expected_ua = c(
     "AGUA" = 0.95,
-    "DESMAT_ARVORE_REMANESCE" = 0.40, 
-    "DESMAT_CORTE_RASO" = 0.75, 
-    "DESMAT_CORTE_RASO_DM" = 0.9,  
+    "DESMAT_ARVORE_REMANESCE" = 0.10, 
+    "DESMAT_CORTE_RASO" = 0.70, 
+    "DESMAT_CORTE_RASO_DM" = 0.85, # ok
     "DESMAT_DEGRAD_FOGO" = 0.70, 
-    "DESMAT_VEG" = 0.70,  
-    "DESMAT_VEG_DM" = 0.75, 
+    "DESMAT_VEG" = 0.70,
+    "DESMAT_VEG_DM" = 0.85, # ok
     "FLO_DEGRAD" = 0.70, 
     "FLO_DEGRAD_FOGO" = 0.70,
     "FLORESTA" = 0.95,
-    "NF" = 0.90,
-    "ROCHA" = 0.80,
+    "NF" = 0.70,
+    "ROCHA" = 0.10,
     "WETLANDS" = 0.70
   ),
   alloc_options = c(120, 100, 75, 50, 30),
   std_err = 0.01,
-  rare_class_prop = 0.01
+  rare_class_prop = 0.025
 )
 
 # 3.2 -- Show sampling design
@@ -215,8 +215,8 @@ sampling_design
 samples_sf <- sits_stratified_sampling(
   cube = cube,
   sampling_design = sampling_design,
-  alloc = "alloc_50",
-  overhead = 1.2, #proporção de pixels a mais que eu quero que pegue para descatar pixels de borda
+  alloc = "alloc_30",
+  overhead = 1.2, # overproportion to avoid border pixels
   progress = TRUE,
   multicores = 12)
 
