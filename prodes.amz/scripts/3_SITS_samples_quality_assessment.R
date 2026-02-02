@@ -85,129 +85,13 @@ cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 
 
 # ============================================================
-# 2. Split samples in training and validation sets
+# 2. Load and Explore Train Sample Data
 # ============================================================
 
-# 2.1 -- Load samples file (reference samples)
-samples_sf  <- sf::st_read(file.path(sample_path, "/", "amostragem_pontos_manoel_teste2.gpkg"))
-message(sprintf("Total samples: %d", nrow(samples_sf)))
-
-# 2.2 -- Create ID column
-samples_sf <- samples_sf |> 
-  mutate(temp_id = row_number())
-
-# 2.3 -- Set seed for reproducibility
-set.seed(88)
-
-# 2.4 -- Split training set (70%)
-samples_train <- samples_sf |> 
-  group_by(label,tile) |> 
-  slice_sample(prop = 0.7) |> 
-  ungroup()
-message(sprintf("Training samples: %d (%.1f%%)", nrow(samples_train), 100 * nrow(samples_train) / nrow(samples_sf)))
-
-# 2.5 -- Creates the validation set by selecting samples NOT included in the training set (remaining points)
-samples_val <- samples_sf |> 
-  filter(!temp_id %in% samples_train$temp_id)
-message(sprintf("Validation samples: %d (%.1f%%)", nrow(samples_val), 100 * nrow(samples_val) / nrow(samples_sf)))
-
-# 2.6 -- Remove temp_id
-samples_train <- samples_train |> select(-temp_id)
-samples_val   <- samples_val |> select(-temp_id)
-
-
-# ============================================================
-# 3. Visualize samples distribution comparison
-# ============================================================
-
-# 3.1 -- Prepare the data for the graph
-plot_data <- bind_rows(
-  samples_train |> mutate(Dataset = "Training"),
-  samples_val   |> mutate(Dataset = "Validation")
-) |> 
-  sf::st_drop_geometry() |> 
-  count(label, tile, Dataset) |> 
-  group_by(label, tile) |> 
-  mutate(pct = n / sum(n)) |> 
-  ungroup()
-
-# 3.2 -- Create graph
-p_split <- ggplot(plot_data, aes(x = label, y = n, fill = Dataset)) +
-  geom_col(position = position_dodge(width = 0.9)) + 
-  geom_text(
-    aes(label = scales::percent(pct, accuracy = 1)), 
-    position = position_dodge(width = 0.9),
-    vjust = -0.5,
-    size = 3,
-    fontface = "bold"
-  ) +
-  facet_wrap(~tile, scales = "free_y") + 
-  scale_fill_manual(values = c("Training" = "#2ecc71", "Validation" = "#e74c3c")) +
-  expand_limits(y = max(plot_data$n) * 1.1) + 
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank(),
-    strip.background = element_rect(fill = "#f0f0f0"),
-    strip.text = element_text(face = "bold")
-  ) +
-  labs(
-    title = "Sample Distribution: Training vs Validation",
-    subtitle = "Proportion over Label and Tile",
-    x = "Class (Label)",
-    y = "Number of Points",
-    fill = "Dataset"
-  )
-
-# 3.3 -- Plot graph
-print(p_split)
-
-# 3.4 -- Save the plot
-ggsave(
-  filename = paste0(plots_path, "train_val_split_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".png"),
-  plot = p_split,
-  width = 12,
-  height = 6,
-  dpi = 300
-)
-
-
-# ============================================================
-# 4. Save training and validation samples to GPKG files
-# ============================================================
-
-# 4.1 -- Define file name for samples_training and samples_validation
-file_name_train <- paste0("samples-train_", length(cube$tile), "-tiles-", 
-                          tiles_train, "_", no.years, "-period-", 
-                          cube_dates[1], "_", cube_dates[length(cube_dates)], 
-                          "_", var, "_", process_version, ".gpkg")
-file_name_val <- paste0("samples-val_", length(cube$tile), "-tiles-", 
-                          tiles_train, "_", no.years, "-period-", 
-                          cube_dates[1], "_", cube_dates[length(cube_dates)], 
-                          "_", var, "_", process_version, ".gpkg")
-
-# 4.2 -- Define full path for samples_training and samples_validation
-full_path_train <- file.path(sample_path, file_name_train)
-full_path_val <- file.path(sample_path, file_name_val)
-
-# 4.2 -- Save samples as como GeoPackage
-sf::st_write(samples_train, dsn = full_path_train, delete_dsn = TRUE)
-sf::st_write(samples_val, dsn = full_path_val, delete_dsn = TRUE)
-
-
-# ============================================================
-# 5. Load and Explore Train Sample Data
-# ============================================================
-
-# 5.1 -- Read training samples
+# 2.1 -- Read training samples
 samples_train <- sf::st_read(file.path(sample_path, "samples-train_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_with-df-mask_2026-01-28_12h59m.gpkg"))
 
-# 5.2 -- Force geometry to POINT type
-samples_train <- samples_train |> 
-  st_cast("POINT") |> 
-  st_as_sf()
-
-# 5.3 -- Extract Time Series from samples_train and calculate the process duration
+# 2.2 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
 samples <- sits_get_data(
   cube        = cube_merge_lsmm_train,
@@ -219,25 +103,25 @@ sits_get_data_end <- Sys.time()
 sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units = "secs")
 sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_get_data_time / 3600), as.integer((sits_get_data_time %% 3600) / 60))
 
-# 5.3.1 -- Visualize the temporal patterns of all features
+# 2.2.1 -- Visualize the temporal patterns of all features
 plot(sits_patterns(samples))
 
-# 5.3.2 -- Visualize the temporal patterns of specific features in a specific period
+# 2.2.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
   sits_select(bands = c("SOIL","VEG","WATER"), start_date = '2022-08-01', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 
-# 5.4 -- Save the samples Time Series to a R file
+# 2.3 -- Save the samples Time Series to a R file
 saveRDS(samples, 
         paste0(rds_path,"time_series/", "samples-entire_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
 
 # ============================================================
-# 6. Analyse quality, filter and balance
+# 3. Analyse quality, filter and balance (SOM - 1)
 # ============================================================
 
-# 6.1 -- Clustering original Time Series Samples using SOM and calculate the process duration
+# 3.1 -- Clustering original Time Series Samples using SOM and calculate the process duration
 # First, run with a 2x2 grid, then change to one of the values within the interval indicated by SITS and run again
 sits_som_map_start <- Sys.time()
 som_cluster <- sits_som_map(
@@ -252,7 +136,7 @@ sits_som_map_end <- Sys.time()
 sits_som_map_time <- as.numeric(sits_som_map_end - sits_som_map_start, units = "secs")
 sprintf("SITS SOM map process duration (HH:MM): %02d:%02d", as.integer(sits_som_map_time / 3600), as.integer((sits_som_map_time %% 3600) / 60))
 
-# 6.1.1 -- Plot the SOM map
+# 3.1.1 -- Plot the SOM map
 plot(som_cluster)
 
 ggsave(
@@ -265,7 +149,7 @@ ggsave(
   dpi = 350,
 )
 
-# 6.1.2 -- Save the samples Time Series to a R file
+# 3.1.2 -- Save the samples Time Series to a R file
 saveRDS(som_cluster, paste0(
   rds_path, "som/",
   process_version,
@@ -273,10 +157,10 @@ saveRDS(som_cluster, paste0(
   tiles_train, "_", var, ".rds")
 )
 
-# 6.1.3 -- Produce a tibble with a summary of the mixed labels:
+# 3.1.3 -- Produce a tibble with a summary of the mixed labels:
 som_eval <- sits_som_evaluate_cluster(som_cluster)
 
-# 6.1.4 -- Plot the result of summary of the mixed labels
+# 3.1.4 -- Plot the result of summary of the mixed labels
 plot(som_eval) +
   labs(title = 'Confusion by cluster') +
   xlab("Percentage of Mixture") +
@@ -294,7 +178,7 @@ ggsave(
   dpi = 350,
 )
 
-# 6.2 -- Evaluates the quality of the samples based on the results of the SOM map
+# 3.2 -- Evaluates the quality of the samples based on the results of the SOM map
 all_samples <- sits_som_clean_samples(
   som_map = som_cluster, 
   prior_threshold = 0.80,
