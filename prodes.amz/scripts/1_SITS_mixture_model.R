@@ -2,15 +2,15 @@
 #  Creating Linear Spectral Mixture Model (LSMM) for features training and classification
 # ============================================================
 
-## I. Load Required Libraries
+# Load Required Libraries
 library(sits)
 library(tibble)
 
-## II. Define the paths for files and folders needed in the processing
+# Define the paths for files and folders needed in the processing
 mixture_path <- "data/raw/mixture_model"
 
 # ============================================================
-# 1. Define and Load Raster Data Cubes from a collection
+#  1. Define and Load Raster Data Cubes from a collection
 # ============================================================
 
 cube <- sits_cube(
@@ -18,12 +18,12 @@ cube <- sits_cube(
   collection = "SENTINEL-2-16D",
   bands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12'),
   tiles = c('012014',  '012015', '013014', '013015'),
-  start_date = '2022-08-01',
+  start_date = '2023-08-01',
   end_date = '2025-07-31',
   progress = TRUE)
 
 # ============================================================
-# 2. Creating Fractions Images features from mixture model cube
+#  2. Creating Fractions Images features from mixture model cube
 # ============================================================
 
 # Endmembers' values from: SMALL, C.; SOUSA, D. The Sentinel 2 MSI Spectral Mixing Space. Remote Sens. 2022, 14, 5748
@@ -41,8 +41,8 @@ sits_mixture_model_start <- Sys.time()
 mm_cube <- sits_mixture_model(
   data = cube,
   endmembers = endmembers,
-  multicores = 8, # adapt to your computer CPU core availability
-  memsize = 80, # adapt to your computer memory availability
+  multicores = 28, # adapt to your computer CPU core availability
+  memsize = 180, # adapt to your computer memory availability
   output_dir = mixture_path
 )
 sits_mixture_model_end <- Sys.time()
