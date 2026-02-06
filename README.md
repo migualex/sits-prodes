@@ -3,12 +3,12 @@ PRODES-AMZ experiments and pipelines using the SITS package
 
 <img src="./inst/extdata/sticker/biomasbr_logo.jpeg" alt="RESTORE+ icon" align="right" height="150" width="150"/>
 
-This repository brings together reproducible experiments and pipelines
-from the PRODES-AMZ project developed with the SITS package. Its purpose
-is to clearly and systematically document the adopted processes,
+This repository brings together reproducible experiments and processing pipelines
+from the PRODES-AMZ project, developed using the SITS package. Its purpose
+is to clearly and systematically document the adopted workflows,
 providing references for experimentation, validation, and methodological
-improvement, while supporting reproducibility and the continuous
-evolution of the analyses conducted within the project.
+improvements, while supporting reproducibility and the continuous
+evolution of project's analyses.
 
 # Getting started
 
