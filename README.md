@@ -12,7 +12,7 @@ evolution of project's analyses.
 
 # Getting started
 
-To use the scripts available in this repository, clone the project to
+To use the scripts in this repository, clone the project to
 your local machine using the command below:
 
 ``` sh
@@ -28,8 +28,8 @@ devtools::install(".")
 
 # Repository structure
 
-- `data/`: Datasets used and generated in the analyses
-- `inst/`: Supplementary resources required for the package to function
+- `data/`: Datasets used and generated throughout the analyses
+- `inst/`: Supplementary resources required for the package to run
 - `R/`: Package functions
 - `scripts/`: Processing and experimentation routines
 
@@ -42,5 +42,5 @@ terms of the Creative Commons license:
 
 ## Support
 
-For questions, suggestions, or issues, please use the issues section or
+For questions, suggestions, or issues, please use the **Issues** section or
 contact the repository maintainers.
