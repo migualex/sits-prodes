@@ -1,4 +1,4 @@
-PRODES-AMZ experiments and pipelines using the SITS package
+PRODES-AMZ experiments and pipelines developed using the SITS package
 ================
 
 <img src="./inst/extdata/sticker/biomasbr_logo.jpeg" alt="RESTORE+ icon" align="right" height="150" width="150"/>
