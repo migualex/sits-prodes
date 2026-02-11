@@ -21,10 +21,12 @@ process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 data_dir <- "data/class"
-output_dir <- "data/class-raster" # classified raster file cannot be in the same folder as the classified gpkg file
+output_dir <- "data/class/raster" # classified raster file cannot be in the same folder as the classified gpkg file
 samples_dir <- "data/raw/samples"
-model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_no-remaining-trees_2026-02-02_15h14m.rds")
-version <- "rf-1y-012014-no-remaining-trees"
+plots_path    <- "data/plots/"
+aux_dir <- "data/raw/aux"
+#model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_no-remaining-trees_2026-02-02_15h14m.rds")
+version <- "rf-1y-012014-all-classes"
 
 
 # ============================================================
@@ -152,33 +154,33 @@ sits_labels(model)
 
 # Step 3.2 -- Labels of the classified image (Enumerate them in the order they appear according to "sits_labels(model)")
 labels <- c(
-  "1" = "AGUA",
-  "2" = "DESMAT_CORTE_RASO",
-  "3" = "DESMAT_CORTE_RASO_DM",
-  "4" = "DESMAT_DEGRAD_FOGO",
-  "5" = "DESMAT_VEG",
-  "6" = "DESMAT_VEG_DM",
-  "7" = "FLO_DEGRAD",
-  "8" = "FLO_DEGRAD_FOGO",
-  "9" = "FLORESTA",
-  "10" = "NF",
-  "11" = "ROCHA",
-  "12" = "WETLANDS"
-)  
-  #"1" = "AGUA",
-  #"2" = "DESMAT_ARVORE_REMANESCE",
-  # "3" = "DESMAT_CORTE_RASO",
-  # "4" = "DESMAT_CORTE_RASO_DM",
-  # "5" = "DESMAT_DEGRAD_FOGO",
-  # "6" = "DESMAT_VEG",
-  # "7" = "DESMAT_VEG_DM",
-  # "8" = "FLO_DEGRAD",
-  # "9" = "FLO_DEGRAD_FOGO",
-  # "10" = "FLORESTA",
-  # "11" = "NF",
-  # "12" = "ROCHA",
-  # "13" = "WETLANDS"
-# )
+#   "1" = "AGUA",
+#   "2" = "DESMAT_CORTE_RASO",
+#   "3" = "DESMAT_CORTE_RASO_DM",
+#   "4" = "DESMAT_DEGRAD_FOGO",
+#   "5" = "DESMAT_VEG",
+#   "6" = "DESMAT_VEG_DM",
+#   "7" = "FLO_DEGRAD", 
+#   "8" = "FLO_DEGRAD_FOGO",
+#   "9" = "FLORESTA",
+#   "10" = "NF",
+#   "11" = "ROCHA",
+#   "12" = "WETLANDS"
+# )  
+"1" = "AGUA",
+"2" = "DESMAT_ARVORE_REMANESCE",
+"3" = "DESMAT_CORTE_RASO",
+"4" = "DESMAT_CORTE_RASO_DM",
+"5" = "DESMAT_DEGRAD_FOGO",
+"6" = "DESMAT_VEG",
+"7" = "DESMAT_VEG_DM",
+"8" = "FLO_DEGRAD",
+"9" = "FLO_DEGRAD_FOGO",
+"10" = "FLORESTA",
+"11" = "NF",
+"12" = "ROCHA",
+"13" = "WETLANDS"
+)
 
 # Step 3.3 -- Load the original cube with classified raster file
 cube <- sits_cube(
@@ -193,15 +195,15 @@ cube <- sits_cube(
   )
 
 # Step 3.4 -- Extract and define some information
-tiles_class <- paste(cube$tile, collapse = "-")
+tiles <- paste(cube$tile, collapse = "-")
 dates <- sits_timeline(cube)
 no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
 var <- "no-remaining-trees"
-version <- paste("rf", no.years, tiles_class, var, sep = "-")
+version <- paste("rf", no.years, tiles, var, sep = "-")
 
 
 # ============================================================
-# 4. Stratified random sampling
+# 4. Full Map Stratified random sampling
 # ============================================================
 
 # 4.1 -- Sampling design
@@ -249,7 +251,7 @@ samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation_", ver
 sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 
 # ============================================================
-# 5. Accuracy assessment of classified images
+# 5. Accuracy assessment of Full Map classified images
 # ============================================================
 
 # Step 5.1 -- Get validation samples points (in geographical coordinates - lat/long)
@@ -267,7 +269,7 @@ area_acc
 area_acc$error_matrix
 
 # ============================================================
-# 6. Plotting Accuracy
+# 6. Plotting Full Map Accuracy
 # ============================================================
 
 # Step 6.1 -- Change labels' names for plotting purpose
@@ -309,14 +311,24 @@ ggplot(matriz_conf, aes(x = Var2, y = Var1, fill = Freq)) +
         axis.text.y = element_text(size = 8),
         plot.title = element_text(hjust = 0.5))
 
+ggsave(
+  filename = paste(version, "matrix-confusion.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
 # Step 6.4 -- Convert accuracies results to a data frame
 acuracias <- data.frame(class = names(area_acc$accuracy[[1]]),
                         user_accuracy = round(as.numeric(area_acc$accuracy[[1]]), 2),
                         prod_accuracy = round(as.numeric(area_acc$accuracy[[2]]), 2)
-) %>% 
-  tidyr::pivot_longer(cols = -class,
-                      names_to = "tipo_acuracia",
-                      values_to = "acuracia")
+                        ) %>% 
+                        tidyr::pivot_longer(cols = -class,
+                                            names_to = "tipo_acuracia",
+                                            values_to = "acuracia")
 
 # Step 6.5 -- Plot accuracies metrics
 ggplot(acuracias, aes(x = tipo_acuracia, y = class, fill = acuracia)) + 
@@ -338,7 +350,26 @@ ggplot(acuracias, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
         plot.caption = element_text(hjust = 1, size = 11, margin = margin(t = 10)),
         panel.grid = element_blank())
 
+ggsave(
+  filename = paste(version, "accuracies.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
 # Step 6.6 -- Plot Error-Adjusted Area (ha)
+class_areas <- data.frame(class = names(area_acc$area_pixels),
+                          mapped_area_ha = round(as.numeric(area_acc$areas_pixels), 2),
+                          error_adj_area_ha = round(as.numeric(area_acc$error_ajusted_area), 2),
+                          conf_interval_ha = round(as.numeric(area_acc$conf_interval), 2)
+                          ) %>%
+                          tidyr::pivot_longer(cols = -class,
+                                              names_to = "tipo_area",
+                                              values_to = "area")
+
 ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) + 
   geom_tile(color = NA, fill = "white") +
   geom_text(aes(label = area), size = 4) +
@@ -356,3 +387,106 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = "none",
         panel.grid = element_blank())
+
+ggsave(
+  filename = paste(version, "areas.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# ============================================================
+# 6. PRODES Adjusted Map Accuracy
+# ============================================================
+# 4.1 -- Reclassify classified cube
+mask_label <- c("1" = "Deforestation Mask",
+                "0" = "bla")
+
+prodes_mask <- sits_cube(source = "BDC",
+                         collection = "SENTINEL-2-16D",
+                         data_dir = aux_dir,
+                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         bands = "class",
+                         version = "v2024-f",
+                         labels = mask_label)
+
+cube_reclass <- sits_reclassify(cube = cube,
+                                mask = prodes_mask,
+                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
+                                                                           "DESMAT_CORTE_RASO",
+                                                                           "DESMAT_VEG",
+                                                                           "DESMAT_DEGRAD_FOGO"
+                                                                          ),
+                                             "Degradation" = cube %in% c("FLO_DEGRAD",
+                                                                         "FLO_DEGRAD_FOGO"
+                                                                        ),
+                                             "Other Classes" = cube %in% c("AGUA",
+                                                                           "DESMAT_CORTE_RASO_DM",
+                                                                           "DESMAT_VEG_DM",
+                                                                           "FLORESTA",
+                                                                           "NF",
+                                                                           "ROCHA",
+                                                                           "WETLANDS"
+                                                                          )
+                                             ),
+                                multicores = 24,
+                                memsize = 180,
+                                version = "V4",
+                                output_dir = output_dir,
+                                progress = TRUE)
+plot(cube_reclass)
+
+# 4.2 -- Sampling design degradation
+sampling_design <- sits_sampling_design(
+  cube = cube_reclass,
+  expected_ua = c(
+    "Deforestation" = 0.70,
+    "Degradation" = 0.50, 
+    "Other Classes" = 0.90
+  ),
+  alloc_options = c(120, 100),
+  std_err = 0.01,
+  rare_class_prop = 0.05
+)
+
+# 4.2 -- Show sampling design
+sampling_design
+
+# 4.3 -- Generate stratified samples
+samples_sf <- sits_stratified_sampling(
+  cube = cube_reclass,
+  sampling_design = sampling_design,
+  alloc = "alloc_30",
+  overhead = 1.2, # overproportion to avoid border pixels
+  progress = TRUE,
+  multicores = 12)
+
+# 4.4 -- Total of each class
+samples_sf%>% group_by(label) %>% summarise(num = n())
+
+# 4.5 -- Define File Path
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation_", version, "_", process_version, ".gpkg"))
+
+# 4.6 -- Save samples_sf object as GPKG file
+sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
+
+# ============================================================
+# 5. Accuracy assessment of Full Map classified images
+# ============================================================
+
+# Step 5.1 -- Get validation samples points (in geographical coordinates - lat/long)
+samples_validation <- st_read("data/raw/samples_validation/samples-validation_012014_no-remaining_trees_1y_27-07-2024_12-07-2025.gpkg")
+
+# Step 5.2 -- Calculate accuracy
+area_acc <- sits_accuracy(cube_reclass, 
+                          validation = samples_validation,
+                          multicores = 28) # adapt to your computer CPU core availability
+
+# Step 5.3 -- Print the area estimated accuracy
+area_acc
+
+# Step 5.4 -- Show confusion matrix
+area_acc$error_matrix
