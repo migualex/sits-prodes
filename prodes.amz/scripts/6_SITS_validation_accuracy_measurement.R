@@ -19,6 +19,9 @@ date_process <- format(Sys.Date(), "%Y-%m-%d_")
 time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
+pastas <- c("data/class/raster", "data/raw/aux")
+lapply(pastas, dir.create, recursive = FALSE, showWarnings = FALSE)
+
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 data_dir <- "data/class"
 output_dir <- "data/class/raster" # classified raster file cannot be in the same folder as the classified gpkg file
