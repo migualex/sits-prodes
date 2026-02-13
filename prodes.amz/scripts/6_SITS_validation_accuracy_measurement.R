@@ -20,7 +20,6 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 pastas <- c("data/class/raster", "data/raw/aux")
-lapply(pastas, dir.create, recursive = FALSE, showWarnings = FALSE)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 data_dir <- "data/class"
@@ -201,7 +200,7 @@ cube <- sits_cube(
 tiles <- paste(cube$tile, collapse = "-")
 dates <- sits_timeline(cube)
 no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
-var <- "no-remaining-trees"
+var <- "all-classes"
 version <- paste("rf", no.years, tiles, var, sep = "-")
 
 
@@ -448,7 +447,7 @@ sampling_design <- sits_sampling_design(
   expected_ua = c(
     "Deforestation" = 0.70,
     "Degradation" = 0.50, 
-    "Other Classes" = 0.90
+    "Other Classes" = 0.95
   ),
   alloc_options = c(120, 100),
   std_err = 0.01,
@@ -462,16 +461,16 @@ sampling_design
 samples_sf <- sits_stratified_sampling(
   cube = cube_reclass,
   sampling_design = sampling_design,
-  alloc = "alloc_30",
+  alloc = "alloc_120",
   overhead = 1.2, # overproportion to avoid border pixels
   progress = TRUE,
-  multicores = 12)
+  multicores = 28)
 
 # 4.4 -- Total of each class
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
 # 4.5 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation_", version, "_", process_version, ".gpkg"))
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-desmat-degrad_", version, "_", process_version, ".gpkg"))
 
 # 4.6 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
