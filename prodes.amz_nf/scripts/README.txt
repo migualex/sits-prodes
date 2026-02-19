@@ -1,0 +1,1 @@
+This folder is intended for storing the scripts used in the SITS project.

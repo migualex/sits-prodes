@@ -1,0 +1,1 @@
+This folder is intended for storing the Cube Segmentation created in the script 2_SITS_segmentation.
