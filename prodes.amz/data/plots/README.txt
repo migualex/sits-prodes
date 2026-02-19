@@ -1,1 +1,1 @@
-This folder is intended for storing the Plots created in all the scripts.
+This folder is intended to store the plots created by all scripts.
