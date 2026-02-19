@@ -10,7 +10,7 @@ classification_path <- paste0("data/class/", class_obj, ".gpkg")
 prodes_mask_path    <- "data/raw/auxiliary/grade_bdc_acumulado_24_10857.gpkg"
 output_path         <- paste0("data/class/post_process/", class_obj, "_post-processed.gpkg")
 
-tile <- "012014" 
+tile <- stringr::str_split_i(class_obj, "-", -1) 
 
 crs_albers <- "+proj=aea +lat_0=-12 +lon_0=-54 +lat_1=-2 +lat_2=-22 +x_0=5000000 +y_0=10000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
 
