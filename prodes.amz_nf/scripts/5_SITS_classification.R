@@ -52,7 +52,7 @@ cube <- sits_cube(
 # Step 2.2 -- Extract tiles, timeline and duration from the cube (in years)
 tiles_class <- paste(cube$tile, collapse = "-")
 dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
 
 # Step 2.3 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
