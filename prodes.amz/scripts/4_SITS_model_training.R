@@ -40,6 +40,9 @@ my_colors <- c(
   "WETLANDS"                  = "#A0B9C8" 
 )
 
+# Step 1.6 -- Define time range
+start_date    <- "2023-08-01"
+end_date      <- "2025-07-31"
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -51,14 +54,14 @@ cube <- sits_cube(
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
   tiles       = c("012014","012015","013014","013015"),
-  start_date  = "2023-08-01",
+  start_date  = start_date,
   end_date    = "2025-07-31",
   progress    = TRUE
 )
 
 # Step 2.2 -- Calculate the number of years in the training cube
 cube_dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(cube_dates[1], cube_dates[length(cube_dates)]) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
 
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")
