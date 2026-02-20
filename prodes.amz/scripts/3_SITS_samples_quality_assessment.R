@@ -24,7 +24,7 @@ mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 
 # Step 1.4 -- Define time range
-start_date    <- "2023-08-01"
+start_date    <- "2024-08-01"
 end_date      <- "2025-07-31"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
@@ -32,20 +32,19 @@ var <- "no-remaining-trees"
 
 # Step 1.6 -- Define a list with preference colors for each class
 my_colors <- c(
-  "OOB"                       = "black",
-  "AGUA"                      = "#2980B9",
-  "DESMAT_ARVORE_REMANESCE"   = "#a19c0a",
-  "DESMAT_CORTE_RASO"         = "#f39c12",
-  "DESMAT_CORTE_RASO_DM"      = "#f39c12",
-  "DESMAT_DEGRAD_FOGO"        = "#EC7063",
-  "DESMAT_VEG"                = "#D8DA83",
-  "DESMAT_VEG_DM"             = "#D8DA83",
-  "FLO_DEGRAD"                = "#9da676",
-  "FLO_DEGRAD_FOGO"           = "#e6b0aa",
-  "FLORESTA"                  = "#1E8449",
-  "NF"                        = "#C0D665",
-  "ROCHA"                     = "#229C59",
-  "WETLANDS"                  = "#A0B9C8" 
+  "Corpo_Dagua"                           = "#2980B9",
+  "Corte_Raso_Com_Arvores_Remanescentes"  = "#a19c0a",
+  "Corte_Raso"                            = "#f39c12",
+  "Corte_Raso_Antigo"                     = "#D39750",
+  "Corte_Raso_Com_Fogo"                   = "#CD6155",
+  "Corte_Raso_Com_Vegetacao"              = "#D8DA83",
+  "Corte_Raso_Antigo_Com_Vegetacao"       = "#B2B46D",
+  "Degradacao"                            = "#9da676",
+  "Degradacao_Por_Fogo"                   = "#e6b0aa",
+  "Floresta"                              = "#1E8449",
+  "Floresta_Transicional"                 = "#E0DD22",  
+  "Vegetacao_Natural_Nao_Florestal"       = "#C0D665",
+  "Area_Inundavel"                        = "#A0B9C8" 
 )
 
 
@@ -92,7 +91,7 @@ cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
-samples_train <- sf::st_read(file.path(sample_path, "samples-4-tiles-no_remaining_trees.gpkg"))
+samples_train <- sf::st_read(file.path(sample_path, "amostras_poligonos_012014_012015_em_refinamento.gpkg"))
 
 # Step 3.2 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
@@ -113,7 +112,7 @@ plot(sits_patterns(samples))
 
 # Step 3.2.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
-  sits_select(bands = c("SOIL","VEG","WATER"), start_date = '2023-08-01', end_date = '2025-07-28') |> 
+  sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2024-08-01', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 

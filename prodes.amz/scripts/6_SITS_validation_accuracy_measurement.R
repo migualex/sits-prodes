@@ -151,7 +151,7 @@ raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-1y-012014-no-remaining-tr
 sits_labels(model)
 
 # Step 3.2 -- Labels of the classified image (Enumerate them in the order they appear according to "sits_labels(model)")
-labels <- c(
+labels <- c(  
   "1" = "AGUA",
   "2" = "DESMAT_CORTE_RASO",
   "3" = "DESMAT_CORTE_RASO_DM",
@@ -164,7 +164,34 @@ labels <- c(
   "10" = "NF",
   "11" = "ROCHA",
   "12" = "WETLANDS"
-)  
+)
+
+
+  # "1" = "AGUA",
+  # "2" = "DESMAT_ARVORE_REMANESCE",
+  # "3" = "DESMAT_CORTE_RASO",
+  # "4" = "DESMAT_DEGRAD_FOGO",
+  # "5" = "DESMAT_VEG",
+  # "6" = "FLO_DEGRAD",
+  # "7" = "FLO_DEGRAD_FOGO",
+  # "8" = "FLORESTA",
+  # "9" = "NF",
+  # "10" = "ROCHA",
+  # "11" = "WETLANDS"
+
+  # "1" = "AGUA",
+  # "2" = "DESMAT_CORTE_RASO",
+  # "3" = "DESMAT_CORTE_RASO_DM",
+  # "4" = "DESMAT_DEGRAD_FOGO",
+  # "5" = "DESMAT_VEG",
+  # "6" = "DESMAT_VEG_DM",
+  # "7" = "FLO_DEGRAD",
+  # "8" = "FLO_DEGRAD_FOGO",
+  # "9" = "FLORESTA",
+  # "10" = "NF",
+  # "11" = "ROCHA",
+  # "12" = "WETLANDS"
+ 
   #"1" = "AGUA",
   #"2" = "DESMAT_ARVORE_REMANESCE",
   # "3" = "DESMAT_CORTE_RASO",
@@ -178,7 +205,6 @@ labels <- c(
   # "11" = "NF",
   # "12" = "ROCHA",
   # "13" = "WETLANDS"
-# )
 
 # Step 3.3 -- Load the original cube with classified raster file
 cube <- sits_cube(
@@ -253,10 +279,50 @@ sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 # ============================================================
 
 # Step 5.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read("data/raw/samples_validation/samples-validation_012014_no-remaining_trees_1y_27-07-2024_12-07-2025.gpkg")
+samples_validation <- st_read("data/raw/samples_validation/samples-validation-desmat-degrad_rf-1y-012014-all-classes_2026-02-11_11h57m.gpkg")
+
+aux_dir <- "data/class-raster-reclass"
+
+# 4.1 -- Reclassify classified cube
+mask_label <- c("1" = "Deforestation Mask",
+                "0" = "bla")
+
+cube_mask <- sits_cube(source = "BDC",
+                         collection = "SENTINEL-2-16D",
+                         data_dir = aux_dir,
+                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         bands = "class",
+                         version = "v2024-f",
+                         labels = mask_label)
+
+cube_reclass <- sits_reclassify(cube = cube,
+                                mask = cube_mask,
+                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
+                                                                           "DESMAT_CORTE_RASO",
+                                                                           "DESMAT_VEG",
+                                                                           "DESMAT_DEGRAD_FOGO"
+                                ),
+                                "Degradation" = cube %in% c("FLO_DEGRAD",
+                                                            "FLO_DEGRAD_FOGO"
+                                ),
+                                "Other Classes" = cube %in% c("AGUA",
+                                                              "DESMAT_CORTE_RASO_DM",
+                                                              "DESMAT_VEG_DM",
+                                                              "FLORESTA",
+                                                              "NF",
+                                                              "ROCHA",
+                                                              "WETLANDS"
+                                )
+                                ),
+                                multicores = 24,
+                                memsize = 180,
+                                version = "v2024-f",
+                                output_dir = aux_dir,
+                                progress = TRUE)
+
 
 # Step 5.2 -- Calculate accuracy
-area_acc <- sits_accuracy(cube, 
+area_acc <- sits_accuracy(cube_reclass, 
                           validation = samples_validation,
                           multicores = 28) # adapt to your computer CPU core availability
 
@@ -300,8 +366,8 @@ ggplot(matriz_conf, aes(x = Var2, y = Var1, fill = Freq)) +
         y = "Predicted", 
         title = "Confusion Matrix") +
   scale_y_discrete(limits = rev,
-                   labels = new_label) +
-  scale_x_discrete(labels = new_label) +
+                   labels = labels) +
+  scale_x_discrete(labels = labels) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 25,
                                    hjust = 1,
@@ -330,7 +396,7 @@ ggplot(acuracias, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
        title = "Accuracies",
        caption = paste0("Global Accuracy: ", round(area_acc$accuracy[[3]], 2))) +
   scale_y_discrete(limits = rev,
-                   labels = new_label) +
+                   labels = labels) +
   scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
                               "user_accuracy" = "User Acc")) +
   theme_minimal() +
@@ -347,7 +413,7 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
        x = "Metrics", 
        title = "Area Metrics") +
   scale_y_discrete(limits = rev,
-                   labels = new_label) +
+                   labels = labels) +
   scale_x_discrete(limits = rev,
                    labels = c("mapped_area_ha" = "Mapped Area (ha)",
                               "error_adj_area_ha" = "Error-Adjusted Area (ha)",
