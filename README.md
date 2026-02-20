@@ -1,18 +1,18 @@
-PRODES-AMZ experiments and pipelines using the SITS package
+PRODES-AMZ experiments and pipelines developed using the SITS package
 ================
 
 <img src="./inst/extdata/sticker/biomasbr_logo.jpeg" alt="RESTORE+ icon" align="right" height="150" width="150"/>
 
-This repository brings together reproducible experiments and pipelines
-from the PRODES-AMZ project developed with the SITS package. Its purpose
-is to clearly and systematically document the adopted processes,
+This repository brings together reproducible experiments and processing pipelines
+from the PRODES-AMZ project, developed using the SITS package. Its purpose
+is to clearly and systematically document the adopted workflows,
 providing references for experimentation, validation, and methodological
-improvement, while supporting reproducibility and the continuous
-evolution of the analyses conducted within the project.
+improvements, while supporting reproducibility and the continuous
+evolution of project's analyses.
 
 # Getting started
 
-To use the scripts available in this repository, clone the project to
+To use the scripts in this repository, clone the project to
 your local machine using the command below:
 
 ``` sh
@@ -28,8 +28,8 @@ devtools::install(".")
 
 # Repository structure
 
-- `data/`: Datasets used and generated in the analyses
-- `inst/`: Supplementary resources required for the package to function
+- `data/`: Datasets used and generated throughout the analyses
+- `inst/`: Supplementary resources required for the package to run
 - `R/`: Package functions
 - `scripts/`: Processing and experimentation routines
 
@@ -42,5 +42,5 @@ terms of the Creative Commons license:
 
 ## Support
 
-For questions, suggestions, or issues, please use the issues section or
+For questions, suggestions, or issues, please use the **Issues** section or
 contact the repository maintainers.

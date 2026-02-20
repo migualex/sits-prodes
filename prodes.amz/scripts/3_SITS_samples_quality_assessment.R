@@ -65,7 +65,7 @@ cube <- sits_cube(
 
 # Step 2.2 -- Calculate the number of years in the training cube
 cube_dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(cube_dates[1], cube_dates[length(cube_dates)]) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
 
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")

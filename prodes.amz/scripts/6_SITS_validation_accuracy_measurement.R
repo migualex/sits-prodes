@@ -20,11 +20,13 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-data_dir <- "data/class"
-output_dir <- "data/class-raster" # classified raster file cannot be in the same folder as the classified gpkg file
-samples_dir <- "data/raw/samples"
-model <- readRDS("~/sits-prodes/prodes.amz/data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_no-remaining-trees_2026-02-02_15h14m.rds")
-version <- "rf-1y-012014-no-remaining-trees"
+class_dir <- "data/class"
+class_raster_dir <- "data/class/raster" # classified raster file cannot be in the same folder as the classified gpkg file
+samples_dir <- "data/raw/samples/validation_samples/"
+plots_path    <- "data/plots/"
+aux_dir <- "data/raw/auxiliary"
+model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
+version <- "rf-1y-012014-all-classes"
 
 
 # ============================================================
@@ -32,20 +34,20 @@ version <- "rf-1y-012014-no-remaining-trees"
 # ============================================================
 
 # Step 2.1 -- Function to rasterize
-sits_rasterize_segments <- function(file, res, output_dir, style = NULL) {
+sits_rasterize_segments <- function(file, res, class_raster_dir, style = NULL) {
   stopifnot(!is.null(res))
   stopifnot(!is.null(file))
-  stopifnot(!is.null(output_dir))
+  stopifnot(!is.null(class_raster_dir))
   
   # create output dir
-  fs::dir_create(output_dir, recurse = TRUE)
+  fs::dir_create(class_raster_dir, recurse = TRUE)
   
   # expand paths
   file <- fs::path_expand(file)
-  output_dir <- fs::path_expand(output_dir)
+  class_raster_dir <- fs::path_expand(class_raster_dir)
   
   # define output files
-  output_file_base <- fs::path(output_dir) / fs::path_file(file) |>
+  output_file_base <- fs::path(class_raster_dir) / fs::path_file(file) |>
     fs::path_ext_remove()
   
   output_file <- stringr::str_c(output_file_base, ".tif")
@@ -128,7 +130,8 @@ style <- tibble::tibble(
 )
 
 # Step 2.3 -- Aplly rasterize function to all files in directory that has the same version and gpkg extension
-raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-1y-012014-no-remaining-trees*.gpkg") |>
+to_raster <- paste0("*class_", version, "*.gpkg")
+raster_files <- fs::dir_ls(class_dir, glob = to_raster) |>
   purrr::map(function(file) {
     file_name <- fs::path_file(file)
     
@@ -138,7 +141,7 @@ raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-1y-012014-no-remaining-tr
       file       = file,
       res        = 10,
       style      = style,
-      output_dir = output_dir
+      output_dir = class_raster_dir
     )
   })
 
@@ -147,6 +150,7 @@ raster_files <- fs::dir_ls(data_dir, glob = "*class_rf-1y-012014-no-remaining-tr
 # 3. SITS Cube
 # ============================================================
 
+<<<<<<< HEAD
 # Step 3.1 -- Get labels associated to the trained model data set
 sits_labels(model)
 
@@ -205,29 +209,29 @@ labels <- c(
   # "11" = "NF",
   # "12" = "ROCHA",
   # "13" = "WETLANDS"
+=======
+# Step 3.1 -- Get labels associated to the trained model data set (Enumerate them in the order they appear according to "sits_labels(model)")
+labels <- c(
+  x = sits_labels(model)
+  )
+names(labels) <- 1:length(labels)
+>>>>>>> a983493843bed8cc6efa9b52ce7eb4f8224114cf
 
-# Step 3.3 -- Load the original cube with classified raster file
+# Step 3.2 -- Load the original cube with classified raster file
 cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
   labels = labels,
-  data_dir = output_dir, # classified raster file cannot be in the same folder as the classified gpkg file
+  data_dir = class_raster_dir, # classified raster file cannot be in the same folder as the classified gpkg file
   version = version,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version")
   )
 
-# Step 3.4 -- Extract and define some information
-tiles_class <- paste(cube$tile, collapse = "-")
-dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(dates[1], dates[length(dates)]) / lubridate::years(1)), "y")
-var <- "no-remaining-trees"
-version <- paste("rf", no.years, tiles_class, var, sep = "-")
-
 
 # ============================================================
-# 4. Stratified random sampling
+# 4. Full Map Stratified random sampling
 # ============================================================
 
 # 4.1 -- Sampling design
@@ -269,16 +273,17 @@ samples_sf <- sits_stratified_sampling(
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
 # 4.5 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation_", version, "_", process_version, ".gpkg"))
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-full-map_", version, "_", process_version, ".gpkg"))
 
 # 4.6 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 
 # ============================================================
-# 5. Accuracy assessment of classified images
+# 5. Accuracy assessment of Full Map classified images
 # ============================================================
 
 # Step 5.1 -- Get validation samples points (in geographical coordinates - lat/long)
+<<<<<<< HEAD
 samples_validation <- st_read("data/raw/samples_validation/samples-validation-desmat-degrad_rf-1y-012014-all-classes_2026-02-11_11h57m.gpkg")
 
 aux_dir <- "data/class-raster-reclass"
@@ -323,23 +328,29 @@ cube_reclass <- sits_reclassify(cube = cube,
 
 # Step 5.2 -- Calculate accuracy
 area_acc <- sits_accuracy(cube_reclass, 
+=======
+samples_validation <- st_read(paste0(samples_dir, "")) #full map validation samples
+
+# Step 5.2 -- Calculate accuracy
+area_acc_full_map <- sits_accuracy(cube, 
+>>>>>>> a983493843bed8cc6efa9b52ce7eb4f8224114cf
                           validation = samples_validation,
                           multicores = 28) # adapt to your computer CPU core availability
 
 # Step 5.3 -- Print the area estimated accuracy
-area_acc
+area_acc_full_map
 
 # Step 5.4 -- Show confusion matrix
-area_acc$error_matrix
+area_acc_full_map$error_matrix
 
 # ============================================================
-# 6. Plotting Accuracy
+# 6. Plotting Full Map Accuracy
 # ============================================================
 
-# Step 6.1 -- Change labels' names for plotting purpose
+# Change labels' names for plotting purpose (TIRAR ESSA PARTE QUANDO AS AMOSTRAS ESTIVEREM COM OS NOMES CORRETOS)
 new_label <-c("AGUA" = "Water",
               "DESMAT_ARVORE_REMANESCE" = "Clear Cut Trees", 
-              "DESMAT_CORTE_RASO" = "Clear Cut Bar Soil", 
+              "DESMAT_CORTE_RASO" = "Clear Cut Bare Soil", 
               "DESMAT_CORTE_RASO_DM" = "Old Clear Cut Bare Soil",
               "DESMAT_DEGRAD_FOGO" = "Fire Suppression", 
               "DESMAT_VEG" = "Clear Cut Vegetation",
@@ -352,11 +363,11 @@ new_label <-c("AGUA" = "Water",
               "WETLANDS" = "Wetland"
               )
 
-# Step 6.2 -- Create a tibble from error matrix
-matriz_conf <- tibble(as.data.frame(area_acc$error_matrix))
+# Step 6.1 -- Create a tibble from error matrix
+matriz_conf_full_map <- tibble(as.data.frame(area_acc_full_map$error_matrix))
 
-# Step 6.3 -- Plot error matrix
-ggplot(matriz_conf, aes(x = Var2, y = Var1, fill = Freq)) +
+# Step 6.2 -- Plot error matrix
+ggplot(matriz_conf_full_map, aes(x = Var2, y = Var1, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(label = Freq), size = 4) +
   scale_fill_distiller(palette = "Blues",
@@ -375,17 +386,27 @@ ggplot(matriz_conf, aes(x = Var2, y = Var1, fill = Freq)) +
         axis.text.y = element_text(size = 8),
         plot.title = element_text(hjust = 0.5))
 
-# Step 6.4 -- Convert accuracies results to a data frame
-acuracias <- data.frame(class = names(area_acc$accuracy[[1]]),
-                        user_accuracy = round(as.numeric(area_acc$accuracy[[1]]), 2),
-                        prod_accuracy = round(as.numeric(area_acc$accuracy[[2]]), 2)
-) %>% 
-  tidyr::pivot_longer(cols = -class,
-                      names_to = "tipo_acuracia",
-                      values_to = "acuracia")
+ggsave(
+  filename = paste(version, "matrix-confusion-full-map.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
 
-# Step 6.5 -- Plot accuracies metrics
-ggplot(acuracias, aes(x = tipo_acuracia, y = class, fill = acuracia)) + 
+# Step 6.3 -- Convert accuracies results to a data frame
+acuracias_full_map <- data.frame(class = names(area_acc_full_map$accuracy[[1]]),
+                                 user_accuracy = round(as.numeric(area_acc_full_map$accuracy[[1]]), 2),
+                                 prod_accuracy = round(as.numeric(area_acc_full_map$accuracy[[2]]), 2)
+                                ) %>% 
+                      tidyr::pivot_longer(cols = -class,
+                                          names_to = "tipo_acuracia",
+                                          values_to = "acuracia")
+
+# Step 6.4 -- Plot accuracies metrics
+ggplot(acuracias_full_map, aes(x = tipo_acuracia, y = class, fill = acuracia)) + 
   geom_tile(color = "white") +
   geom_text(aes(label = acuracia), size = 4) +
   scale_fill_distiller(palette = "RdYlGn",
@@ -394,7 +415,7 @@ ggplot(acuracias, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
   labs(y = "Class",
        x = "Accuracy", 
        title = "Accuracies",
-       caption = paste0("Global Accuracy: ", round(area_acc$accuracy[[3]], 2))) +
+       caption = paste0("Global Accuracy: ", round(area_acc_full_map$accuracy[[3]], 2))) +
   scale_y_discrete(limits = rev,
                    labels = labels) +
   scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
@@ -404,7 +425,233 @@ ggplot(acuracias, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
         plot.caption = element_text(hjust = 1, size = 11, margin = margin(t = 10)),
         panel.grid = element_blank())
 
+ggsave(
+  filename = paste(version, "accuracies-full-map.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# Step 6.5 -- Convert Error-Adjusted Area (ha) results to a data frame
+class_areas_full_map <- data.frame(class = names(area_acc_full_map$area_pixels),
+                                   mapped_area_ha = round(as.numeric(area_acc_full_map$areas_pixels), 2),
+                                   error_adj_area_ha = round(as.numeric(area_acc_full_map$error_ajusted_area), 2),
+                                   conf_interval_ha = round(as.numeric(area_acc_full_map$conf_interval), 2)
+                                  ) %>%
+                        tidyr::pivot_longer(cols = -class,
+                                            names_to = "tipo_area",
+                                            values_to = "area")
+
 # Step 6.6 -- Plot Error-Adjusted Area (ha)
+ggplot(class_areas_full_map, aes(x = tipo_area, y = class, fill = area)) + 
+  geom_tile(color = NA, fill = "white") +
+  geom_text(aes(label = area), size = 4) +
+  geom_vline(xintercept = c(1.5, 2.5), color = "grey30") +
+  labs(y = "Class",
+       x = "Metrics", 
+       title = "Area Metrics") +
+  scale_y_discrete(limits = rev,
+                   labels = new_label) +
+  scale_x_discrete(limits = rev,
+                   labels = c("mapped_area_ha" = "Mapped Area (ha)",
+                              "error_adj_area_ha" = "Error-Adjusted Area (ha)",
+                              "conf_interval_ha" = "Conf Interval (ha)")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none",
+        panel.grid = element_blank())
+
+ggsave(
+  filename = paste(version, "areas-full-map.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# ============================================================
+# 7. PRODES Adjusted Map Accuracy
+# ============================================================
+# 7.1 -- Reclassify classified cube
+mask_label <- c("1" = "Deforestation Mask",
+                "0" = "Others")
+
+prodes_mask <- sits_cube(source = "BDC",
+                         collection = "SENTINEL-2-16D",
+                         data_dir = aux_dir,
+                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         bands = "class",
+                         version = "v2024",
+                         labels = mask_label)
+
+cube_reclass <- sits_reclassify(cube = cube,
+                                mask = prodes_mask,
+                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
+                                                                           "DESMAT_CORTE_RASO",
+                                                                           "DESMAT_VEG",
+                                                                           "DESMAT_DEGRAD_FOGO"
+                                                                          ),
+                                "Other Classes" = cube %in% c("AGUA",
+                                                              "DESMAT_CORTE_RASO_DM",
+                                                              "DESMAT_VEG_DM",
+                                                              "FLORESTA",
+                                                              "NF",
+                                                              "ROCHA",
+                                                              "WETLANDS",
+                                                              "FLO_DEGRAD",
+                                                              "FLO_DEGRAD_FOGO"
+                                                              )
+                                ),
+                                multicores = 24,
+                                memsize = 180,
+                                version = "prodes",
+                                output_dir = class_raster_dir,
+                                progress = TRUE)
+plot(cube_reclass)
+
+# 7.2 -- Sampling design prodes
+sampling_design <- sits_sampling_design(
+  cube = cube_reclass,
+  expected_ua = c(
+    "Deforestation" = 0.70,
+    "Other Classes" = 0.90
+  ),
+  alloc_options = c(120, 100),
+  std_err = 0.01,
+  rare_class_prop = 0.05
+)
+
+# 7.2 -- Show sampling design
+sampling_design
+
+# 7.3 -- Generate stratified samples
+samples_sf <- sits_stratified_sampling(
+  cube = cube_reclass,
+  sampling_design = sampling_design,
+  alloc = "alloc_120",
+  overhead = 1.2, # overproportion to avoid border pixels
+  progress = TRUE,
+  multicores = 28)
+
+# 7.4 -- Total of each class
+samples_sf%>% group_by(label) %>% summarise(num = n())
+
+# 7.5 -- Define File Path
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-desmat_", version, "_", process_version, ".gpkg"))
+
+# 7.6 -- Save samples_sf object as GPKG file
+sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
+
+# ============================================================
+# 8. Accuracy assessment of PRODES Adjusted Map classified images
+# ============================================================
+
+# Step 8.1 -- Get validation samples points (in geographical coordinates - lat/long)
+samples_validation <- st_read(paste0(samples_dir, "")) #prodes adjusted validation samples
+
+# Step 8.2 -- Calculate accuracy
+area_acc_prodes <- sits_accuracy(cube_reclass, 
+                                 validation = samples_validation,
+                                 multicores = 28) # adapt to your computer CPU core availability
+
+# Step 8.3 -- Print the area estimated accuracy
+area_acc_prodes
+
+# Step 8.4 -- Show confusion matrix
+area_acc_prodes$error_matrix
+
+# ============================================================
+# 9. Plotting PRODES Adjusted Map Accuracy
+# ============================================================
+
+# Step 9.1 -- Create a tibble from error matrix
+matriz_conf_prodes <- tibble(as.data.frame(area_acc_prodes$error_matrix))
+
+# Step 9.2 -- Plot error matrix
+ggplot(matriz_conf_prodes, aes(x = Var2, y = Var1, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 4) +
+  scale_fill_distiller(palette = "Blues",
+                       direction = 1,
+                       name = "Cases") +
+  labs( x = "Reference",
+        y = "Predicted", 
+        title = "Confusion Matrix") +
+  scale_y_discrete(limits = rev,
+                   labels = new_label) +
+  scale_x_discrete(labels = new_label) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 25,
+                                   hjust = 1,
+                                   size = 8), 
+        axis.text.y = element_text(size = 8),
+        plot.title = element_text(hjust = 0.5))
+
+ggsave(
+  filename = paste(version, "matrix-confusion-prodes.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# Step 9.3 -- Convert accuracies results to a data frame
+acuracias_prodes <- data.frame(class = names(area_acc_prodes$accuracy[[1]]),
+                               user_accuracy = round(as.numeric(area_acc_prodes$accuracy[[1]]), 2),
+                               prod_accuracy = round(as.numeric(area_acc_prodes$accuracy[[2]]), 2)
+) %>% 
+  tidyr::pivot_longer(cols = -class,
+                      names_to = "tipo_acuracia",
+                      values_to = "acuracia")
+
+# Step 9.4 -- Plot accuracies metrics
+ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) + 
+  geom_tile(color = "white") +
+  geom_text(aes(label = acuracia), size = 4) +
+  scale_fill_distiller(palette = "RdYlGn",
+                       direction = 1,
+                       name = "Value") +
+  labs(y = "Class",
+       x = "Accuracy", 
+       title = "Accuracies",
+       caption = paste0("Global Accuracy: ", round(area_acc_prodes$accuracy[[3]], 2))) +
+  scale_y_discrete(limits = rev,
+                   labels = new_label) +
+  scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
+                              "user_accuracy" = "User Acc")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 1, size = 11, margin = margin(t = 10)),
+        panel.grid = element_blank())
+
+ggsave(
+  filename = paste(version, "accuracies-prodes.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# Step 9.5 -- Convert Error-Adjusted Area (ha) results to a data frame
+class_areas <- data.frame(class = names(area_acc_prodes$area_pixels),
+                          mapped_area_ha = round(as.numeric(area_acc_prodes$areas_pixels), 2),
+                          error_adj_area_ha = round(as.numeric(area_acc_prodes$error_ajusted_area), 2),
+                          conf_interval_ha = round(as.numeric(area_acc_prodes$conf_interval), 2)
+) %>%
+  tidyr::pivot_longer(cols = -class,
+                      names_to = "tipo_area",
+                      values_to = "area")
+
+# Step 9.6 -- Plot Error-Adjusted Area (ha)
 ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) + 
   geom_tile(color = NA, fill = "white") +
   geom_text(aes(label = area), size = 4) +
@@ -422,3 +669,221 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = "none",
         panel.grid = element_blank())
+
+ggsave(
+  filename = paste(version, "areas-prodes.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# ============================================================
+# 10. PRODES Degradation Adjusted Map Accuracy
+# ============================================================
+# 10.1 -- Reclassify classified cube
+mask_label <- c("1" = "Deforestation Mask",
+                "0" = "Others")
+
+prodes_mask <- sits_cube(source = "BDC",
+                         collection = "SENTINEL-2-16D",
+                         data_dir = aux_dir,
+                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         bands = "class",
+                         version = "v2024",
+                         labels = mask_label)
+
+cube_reclass <- sits_reclassify(cube = cube,
+                                mask = prodes_mask,
+                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
+                                                                           "DESMAT_CORTE_RASO",
+                                                                           "DESMAT_VEG",
+                                                                           "DESMAT_DEGRAD_FOGO"
+                                                                          ),
+                                             "Degradation" = cube %in% c("FLO_DEGRAD",
+                                                                         "FLO_DEGRAD_FOGO"
+                                                                        ),
+                                             "Other Classes" = cube %in% c("AGUA",
+                                                                           "DESMAT_CORTE_RASO_DM",
+                                                                           "DESMAT_VEG_DM",
+                                                                           "FLORESTA",
+                                                                           "NF",
+                                                                           "ROCHA",
+                                                                           "WETLANDS"
+                                                                          )
+                                             ),
+                                multicores = 24,
+                                memsize = 180,
+                                version = "degradation",
+                                output_dir = class_raster_dir,
+                                progress = TRUE)
+plot(cube_reclass)
+
+# 10.2 -- Sampling design degradation
+sampling_design <- sits_sampling_design(
+  cube = cube_reclass,
+  expected_ua = c(
+    "Deforestation" = 0.70,
+    "Degradation" = 0.50, 
+    "Other Classes" = 0.95
+  ),
+  alloc_options = c(120, 100),
+  std_err = 0.01,
+  rare_class_prop = 0.05
+)
+
+# 10.2 -- Show sampling design
+sampling_design
+
+# 10.3 -- Generate stratified samples
+samples_sf <- sits_stratified_sampling(
+  cube = cube_reclass,
+  sampling_design = sampling_design,
+  alloc = "alloc_120",
+  overhead = 1.2, # overproportion to avoid border pixels
+  progress = TRUE,
+  multicores = 28)
+
+# 10.4 -- Total of each class
+samples_sf%>% group_by(label) %>% summarise(num = n())
+
+# 10.5 -- Define File Path
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-desmat-degrad_", version, "_", process_version, ".gpkg"))
+
+# 10.6 -- Save samples_sf object as GPKG file
+sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
+
+# ============================================================
+# 11. Accuracy assessment of PRODES Degradation Adjusted Map classified images
+# ============================================================
+
+# Step 11.1 -- Get validation samples points (in geographical coordinates - lat/long)
+samples_validation <- st_read(paste0(samples_dir, "")) #prodes adjusted validation samples with degradation classes
+
+# Step 11.2 -- Calculate accuracy
+area_acc_prodes <- sits_accuracy(cube_reclass, 
+                          validation = samples_validation,
+                          multicores = 28) # adapt to your computer CPU core availability
+
+# Step 11.3 -- Print the area estimated accuracy
+area_acc_prodes
+
+# Step 11.4 -- Show confusion matrix
+area_acc_prodes$error_matrix
+
+# ============================================================
+# 12. Plotting PRODES Degradation Adjusted Map Accuracy
+# ============================================================
+
+# Step 12.1 -- Create a tibble from error matrix
+matriz_conf_prodes <- tibble(as.data.frame(area_acc_prodes$error_matrix))
+
+# Step 12.2 -- Plot error matrix
+ggplot(matriz_conf_prodes, aes(x = Var2, y = Var1, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 4) +
+  scale_fill_distiller(palette = "Blues",
+                       direction = 1,
+                       name = "Cases") +
+  labs( x = "Reference",
+        y = "Predicted", 
+        title = "Confusion Matrix") +
+  scale_y_discrete(limits = rev,
+                   labels = new_label) +
+  scale_x_discrete(labels = new_label) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 25,
+                                   hjust = 1,
+                                   size = 8), 
+        axis.text.y = element_text(size = 8),
+        plot.title = element_text(hjust = 0.5))
+
+ggsave(
+  filename = paste(version, "matrix-confusion-prodes-degrad.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# Step 12.3 -- Convert accuracies results to a data frame
+acuracias_prodes <- data.frame(class = names(area_acc_prodes$accuracy[[1]]),
+                               user_accuracy = round(as.numeric(area_acc_prodes$accuracy[[1]]), 2),
+                               prod_accuracy = round(as.numeric(area_acc_prodes$accuracy[[2]]), 2)
+) %>% 
+  tidyr::pivot_longer(cols = -class,
+                      names_to = "tipo_acuracia",
+                      values_to = "acuracia")
+
+# Step 12.4 -- Plot accuracies metrics
+ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) + 
+  geom_tile(color = "white") +
+  geom_text(aes(label = acuracia), size = 4) +
+  scale_fill_distiller(palette = "RdYlGn",
+                       direction = 1,
+                       name = "Value") +
+  labs(y = "Class",
+       x = "Accuracy", 
+       title = "Accuracies",
+       caption = paste0("Global Accuracy: ", round(area_acc_prodes$accuracy[[3]], 2))) +
+  scale_y_discrete(limits = rev,
+                   labels = new_label) +
+  scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
+                              "user_accuracy" = "User Acc")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 1, size = 11, margin = margin(t = 10)),
+        panel.grid = element_blank())
+
+ggsave(
+  filename = paste(version, "accuracies-prodes-degrad.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
+
+# Step 12.5 -- Convert Error-Adjusted Area (ha) results to a data frame 
+class_areas <- data.frame(class = names(area_acc_prodes$area_pixels),
+                          mapped_area_ha = round(as.numeric(area_acc_prodes$areas_pixels), 2),
+                          error_adj_area_ha = round(as.numeric(area_acc_prodes$error_ajusted_area), 2),
+                          conf_interval_ha = round(as.numeric(area_acc_prodes$conf_interval), 2)
+                         ) %>%
+                tidyr::pivot_longer(cols = -class,
+                                    names_to = "tipo_area",
+                                    values_to = "area")
+
+# Step 10.6 -- Plot Error-Adjusted Area (ha)
+ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) + 
+  geom_tile(color = NA, fill = "white") +
+  geom_text(aes(label = area), size = 4) +
+  geom_vline(xintercept = c(1.5, 2.5), color = "grey30") +
+  labs(y = "Class",
+       x = "Metrics", 
+       title = "Area Metrics") +
+  scale_y_discrete(limits = rev,
+                   labels = new_label) +
+  scale_x_discrete(limits = rev,
+                   labels = c("mapped_area_ha" = "Mapped Area (ha)",
+                              "error_adj_area_ha" = "Error-Adjusted Area (ha)",
+                              "conf_interval_ha" = "Conf Interval (ha)")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none",
+        panel.grid = element_blank())
+
+ggsave(
+  filename = paste(version, "areas-prodes-degrad.png", sep = "_"),
+  path = plots_path,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
