@@ -24,28 +24,30 @@ mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 
 # Step 1.4 -- Define time range
-start_date    <- "2023-08-01"
+start_date    <- "2024-08-01"
 end_date      <- "2025-07-31"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
-var <- "no-remaining-trees"
+var <- "nf"
 
 # Step 1.6 -- Define a list with preference colors for each class
 my_colors <- c(
-  "OOB"                       = "black",
-  "AGUA"                      = "#2980B9",
-  "DESMAT_ARVORE_REMANESCE"   = "#a19c0a",
-  "DESMAT_CORTE_RASO"         = "#f39c12",
-  "DESMAT_CORTE_RASO_DM"      = "#f39c12",
-  "DESMAT_DEGRAD_FOGO"        = "#EC7063",
-  "DESMAT_VEG"                = "#D8DA83",
-  "DESMAT_VEG_DM"             = "#D8DA83",
-  "FLO_DEGRAD"                = "#9da676",
-  "FLO_DEGRAD_FOGO"           = "#e6b0aa",
-  "FLORESTA"                  = "#1E8449",
-  "NF"                        = "#C0D665",
-  "ROCHA"                     = "#229C59",
-  "WETLANDS"                  = "#A0B9C8" 
+  "OOB"                                                                            = "black",
+  "Hidrografia_Rio"                                                                = "#1f78b4",
+  "Hidrografia_Lago"                                                               = "#2980B9",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida"                                 = "#A0B9C8",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa"                    = "#f6cc41",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa"                   = "#DBEBD8",
+  "Vegetacao_Natural_Nao_Florestal_Vereda"                                         = "#3ABABA",
+  "Vegetacao_Natural_Nao_Florestal_Mata"                                           = "#1E8449",
+  "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal"                                = "#CD6155",
+  "Fogo_Antigo_Em_Vegetacao_Natural_Nao_Florestal"                                 = "#E6B0AA",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura"                   = "#F0B27A",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio"                  = "#6D98B8",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto"                  = "#F39C12",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo"            = "#B08B57",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio_Antigo"           = "#4A677D",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo"           = "#A0522D"
 )
 
 
@@ -58,7 +60,7 @@ cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
-  tiles       = c("012014","012015","013014","013015"),
+  tiles       = c('014002', '015002'),
   start_date  = start_date,
   end_date    = end_date,
   progress    = TRUE
@@ -74,7 +76,7 @@ tiles_train <- paste(cube$tile, collapse = "-")
 # Step 2.4 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
   source = "BDC",
-  tiles = c('012014', '012015', '013014', '013015'),
+  tiles  = c('014002', '015002'),
   collection = "SENTINEL-2-16D",
   bands = c("SOIL", "VEG", "WATER"),
   data_dir = mixture_path,
@@ -92,7 +94,7 @@ cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
-samples_train <- sf::st_read(file.path(sample_path, "samples-4-tiles-no_remaining_trees.gpkg"))
+samples_train <- sf::st_read(file.path(sample_path, "samples-2-tiles.gpkg"))
 
 # Step 3.2 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
@@ -113,7 +115,7 @@ plot(sits_patterns(samples))
 
 # Step 3.2.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
-  sits_select(bands = c("SOIL","VEG","WATER"), start_date = '2023-08-01', end_date = '2025-07-28') |> 
+  sits_select(bands = c("SOIL","VEG","WATER"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 
@@ -131,8 +133,8 @@ saveRDS(samples,
 sits_som_map_start <- Sys.time()
 som_cluster <- sits_som_map(
   samples,
-  grid_xdim = 2,
-  grid_ydim = 2,
+  grid_xdim = 11,
+  grid_ydim = 11,
   alpha = 1.0,
   distance = "dtw",
   rlen = 20
@@ -212,7 +214,7 @@ ggsave(
 )
 
 # Step 5.3 -- Filter samples according to evaluation 'clean' or to a specific class with low samples quantity
-clean_samples <- all_samples %>% filter(eval == "clean" | label == "DESMAT_DEGRAD_FOGO")
+clean_samples <- all_samples %>% filter(eval == "clean")
 
 # Step 5.3.1 -- Save the new_samples Time Series to a R file
 saveRDS(clean_samples, paste0(rds_path, "time_series/", process_version, "_", tiles_train, "_", var, "_clean-samples.rds"))
@@ -221,8 +223,8 @@ saveRDS(clean_samples, paste0(rds_path, "time_series/", process_version, "_", ti
 # First, run with a 2x2 grid, then change to one of the values within the interval indicated by SITS and run again
 sits_som_map_start2 <- Sys.time()
 som_cluster_clean <- sits_som_map(data = all_samples,
-                                  grid_xdim = 2, 
-                                  grid_ydim = 2,
+                                  grid_xdim = 11, 
+                                  grid_ydim = 11,
                                   alpha = 1.0,
                                   distance = "dtw",
                                   rlen = 20
@@ -285,8 +287,8 @@ ggsave(
 sits_reduce_imbalance_start <- Sys.time()
 clean_samples_balanced <- sits_reduce_imbalance(
   samples = clean_samples,
-  n_samples_over = 300,
-  n_samples_under = 500
+  n_samples_over = 50,
+  n_samples_under = 100
 )
 sits_reduce_imbalance_end <- Sys.time()
 sits_reduce_imbalance_time <- as.numeric(sits_reduce_imbalance_end - sits_reduce_imbalance_start, units = "secs")
@@ -302,8 +304,8 @@ saveRDS(clean_samples_balanced, paste0(rds_path, "time_series/", "samples-cleann
 # First, run with a 2x2 grid, then change to one of the values within the interval indicated by SITS and run again
 sits_som_map_start3 <- Sys.time()
 som_cluster_clean_balanced <- sits_som_map(clean_samples_balanced,
-                                           grid_xdim = 2,
-                                           grid_ydim = 2,
+                                           grid_xdim = 9,
+                                           grid_ydim = 9,
                                            alpha = 1.0,
                                            distance = "dtw",
                                            rlen = 20)

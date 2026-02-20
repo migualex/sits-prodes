@@ -19,18 +19,18 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds" #add the model name
-seg_version   <- "snic-1ymlme-rectangular-compactness-05"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
+model_name    <- "RF-model_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_15h02m" #add the model name
+seg_version   <- "lsmm-snic-spac10-comp05-pad0-hexagonal-2026-02-11"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
 rds_path      <- paste0("data/rds/model/random_forest/", model_name)
 mixture_path  <- "data/raw/mixture_model"
 
 # Step 1.4 -- Identifier to distinguish the file from previous versions 
-var <- "with-df-mask"
+var <- "nf"
 
 # Step 1.5 -- Define time range
-start_date    <- "2023-08-01"
+start_date    <- "2024-08-01"
 end_date      <- "2025-07-31"
 
 
@@ -43,7 +43,7 @@ cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
-  tiles       = "012014",
+  tiles       = "014002",
   start_date  = start_date,
   end_date    = end_date,
   progress    = TRUE
@@ -57,7 +57,7 @@ no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::
 # Step 2.3 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
   source = "BDC",
-  tiles = '012014',
+  tiles = '014002',
   collection = "SENTINEL-2-16D",
   bands = c("SOIL", "VEG", "WATER"),
   data_dir = mixture_path,
