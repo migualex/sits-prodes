@@ -63,7 +63,7 @@ cube <- sits_cube(
 
 # Step 2.2 -- Calculate the number of years in the training cube
 cube_dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")
@@ -74,7 +74,7 @@ tiles_train <- paste(cube$tile, collapse = "-")
 # ============================================================
 
 # Step 3.1 -- Reading training samples
-train_samples <- readRDS("~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/rds/time_series/samples-cleanned-&-balanced_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_13h53m.rds")
+train_samples <- readRDS("~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/rds/time_series/samples_mde_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-23_15h14m.rds")
 
 # Step 3.2 -- Using k-fold validation
 sits_kfold_validate_start <- Sys.time()
@@ -113,7 +113,7 @@ plot(rf_model)
 
 # Step 4.2.2 -- Save the plot
 ggsave(
-  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"),
+  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth_mde.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -142,7 +142,7 @@ legend("topright",
 
 # Step 4.3.3 -- Save the plot
 ggsave(
-  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_oob_ntree.png"),
+  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_oob_ntree_mde.png"),
   path = plots_path,
   scale = 1,
   width = 3529,
@@ -152,6 +152,6 @@ ggsave(
 )
 
 # Step 4.4 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_mde", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
 print("Model has been trained!")

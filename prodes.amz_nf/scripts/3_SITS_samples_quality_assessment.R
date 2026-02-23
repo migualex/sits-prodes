@@ -20,6 +20,7 @@ process_version <- paste0(date_process, time_process)
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 sample_path   <- "data/raw/samples" #add the sample file to the path
 rds_path      <- "data/rds/"
+images_path   <- "data/raw/images"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 
@@ -68,7 +69,7 @@ cube <- sits_cube(
 
 # Step 2.2 -- Calculate the number of years in the training cube
 cube_dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")
@@ -86,7 +87,31 @@ mm_cube <- sits_cube(
 )
 
 # Step 2.5 -- Merge the Training Cube with Mixture Model Cube
-cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
+cube_merge_lsmm <- sits_merge(mm_cube, cube)
+
+# obtain the DEM cube
+dem_cube <- sits_cube(
+  source = "MPC",
+  collection = "COP-DEM-GLO-30",
+  bands = "ELEVATION",
+  tiles = c("20NPK","20NPJ", "20NQJ", "20NQK", "20NRJ", "20NRK")
+)
+
+# regularize DEM cube
+dem_cube_reg <- sits_regularize(
+  cube = dem_cube,
+  res = 10,
+  tiles = c("014002","015002"),
+  grid_system = "BDC_SM_V2",
+  crs = cube$crs,
+  bands = "ELEVATION",
+  memsize = 24,
+  output_dir = images_path
+)
+
+#cube_merge_lsmm_train <- sits_add_base_cube(cube_merge_lsmm, dem_cube_reg)
+cube_merge_lsmm_train <- sits_merge(cube_merge_lsmm, dem_cube_reg)
+plot(cube_merge_lsmm_train, band = "ELEVATION", palette = "Spectral", rev = FALSE)
 
 
 # ============================================================
@@ -115,13 +140,13 @@ plot(sits_patterns(samples))
 
 # Step 3.2.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
-  sits_select(bands = c("SOIL","VEG","WATER"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
+  sits_select(bands = c("ELEVATION"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 
 # Step 3.3 -- Save the samples Time Series to a R file
 saveRDS(samples, 
-        paste0(rds_path,"time_series/", "samples_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+        paste0(rds_path,"time_series/", "samples_mde_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
 
 # ============================================================

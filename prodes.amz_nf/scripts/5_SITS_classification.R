@@ -19,15 +19,16 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name    <- "RF-model_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_15h02m" #add the model name
-seg_version   <- "lsmm-snic-spac10-comp05-pad0-hexagonal-2026-02-11"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
+model_name    <- "RF-model_mde2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-23_15h14m" #add the model name
+seg_version   <- "lsmm-snic-spac10-comp05-pad0-rectangular-2026-02-23"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
 rds_path      <- paste0("data/rds/model/random_forest/", model_name)
 mixture_path  <- "data/raw/mixture_model"
+images_path   <- "data/raw/images"
 
 # Step 1.4 -- Identifier to distinguish the file from previous versions 
-var <- "nf"
+var <- "nf-mde"
 
 # Step 1.5 -- Define time range
 start_date    <- "2024-08-01"
@@ -52,7 +53,7 @@ cube <- sits_cube(
 # Step 2.2 -- Extract tiles, timeline and duration from the cube (in years)
 tiles_class <- paste(cube$tile, collapse = "-")
 dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
@@ -67,7 +68,29 @@ mm_cube <- sits_cube(
 )
 
 # Step 2.4 -- Merge the Classification Cube with Mixture Model Cube
-cube_merge_lsmm_class <- sits_merge(mm_cube, cube)
+cube_merge_lsmm <- sits_merge(mm_cube, cube)
+
+# obtain the DEM cube
+dem_cube <- sits_cube(
+  source = "MPC",
+  collection = "COP-DEM-GLO-30",
+  bands = "ELEVATION",
+  tiles = c("20NPK","20NPJ", "20NQJ", "20NQK")
+)
+
+# regularize DEM cube
+dem_cube_reg <- sits_regularize(
+  cube = dem_cube,
+  res = 10,
+  tiles = c("014002"),
+  grid_system = "BDC_SM_V2",
+  crs = cube$crs,
+  bands = "ELEVATION",
+  memsize = 24,
+  output_dir = images_path
+)
+
+cube_merge_lsmm_class <- sits_merge(cube_merge_lsmm, dem_cube_reg)
 
 # Step 2.5 -- Create a local segmented cube based on previous segmentation results
 local_segs_cube <- sits_cube(
@@ -85,7 +108,7 @@ local_segs_cube <- sits_cube(
 # ============================================================
 
 # Step 3.1 -- Retrieve the trained model
-rf_model <- readRDS(rds_path)
+rf_model <- readRDS("~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/rds/model/random_forest/RF-model_mde2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-23_15h14m.rds")
 
 # Step 3.2 -- Define the version name of probability file
 version <- paste("rf", no.years, tiles_class, var, sep = "-")
@@ -98,7 +121,7 @@ class_prob <- sits_classify(
   multicores  = 28,  # adapt to your computer CPU core availability
   memsize     = 180, # adapt to your computer memory availability
   output_dir =  class_path,
-  version     = version,
+  version     = version, # version should be a lower case character vector with no underlines
   n_sam_pol   = 16, #  Number of time series per segment to be classified (integer, min = 10, max = 50)
   verbose     = TRUE,
   progress    = TRUE

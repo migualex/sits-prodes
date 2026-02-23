@@ -21,12 +21,12 @@ process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 class_dir <- "data/class"
-class_raster_dir <- "data/class/raster" # classified raster file cannot be in the same folder as the classified gpkg file
+class_raster_output <- "data/class/raster" # classified raster file cannot be in the same folder as the classified gpkg file
 samples_dir <- "data/raw/samples/validation_samples/"
 plots_path    <- "data/plots/"
 aux_dir <- "data/raw/auxiliary"
-model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
-version <- "rf-1y-012014-all-classes"
+model <- readRDS("data/rds/model/random_forest/RF-model_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_14h43m.rds")
+version <- "rf-0y-014002-nf-samples-crude"
 
 
 # ============================================================
@@ -141,7 +141,7 @@ raster_files <- fs::dir_ls(class_dir, glob = to_raster) |>
       file       = file,
       res        = 10,
       style      = style,
-      output_dir = class_raster_dir
+      class_raster_dir = class_raster_output
     )
   })
 
@@ -162,12 +162,11 @@ cube <- sits_cube(
   collection = "SENTINEL-2-16D",
   bands = "class",
   labels = labels,
-  data_dir = class_raster_dir, # classified raster file cannot be in the same folder as the classified gpkg file
+  data_dir = class_raster_output, # classified raster file cannot be in the same folder as the classified gpkg file
   version = version,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version")
   )
-
 
 # ============================================================
 # 4. Full Map Stratified random sampling
@@ -176,21 +175,22 @@ cube <- sits_cube(
 # 4.1 -- Sampling design
 sampling_design <- sits_sampling_design(
   cube = cube,
-  expected_ua = c(
-    "AGUA" = 0.95,
-    "DESMAT_ARVORE_REMANESCE" = 0.10, 
-    "DESMAT_CORTE_RASO" = 0.70, 
-    "DESMAT_CORTE_RASO_DM" = 0.85, # ok
-    "DESMAT_DEGRAD_FOGO" = 0.70, 
-    "DESMAT_VEG" = 0.70,
-    "DESMAT_VEG_DM" = 0.85, # ok
-    "FLO_DEGRAD" = 0.70, 
-    "FLO_DEGRAD_FOGO" = 0.70,
-    "FLORESTA" = 0.95,
-    "NF" = 0.70,
-    "ROCHA" = 0.10,
-    "WETLANDS" = 0.70
-  ),
+  expected_ua = c("Hidrografia_Rio" = 0.70,
+                  "Hidrografia_Lago" = 0.70,
+                  "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida" = 0.10,
+                  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa" = 0.10,
+                  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa" = 0.10,
+                  "Vegetacao_Natural_Nao_Florestal_Vereda" = 0.10,
+                  "Vegetacao_Natural_Nao_Florestal_Mata" = 0.10,
+                  "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal" = 0.10,
+                  #"Fogo_Antigo_Em_Vegetacao_Natural_Nao_Florestal" = 0.10,
+                  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura" = 0.10,
+                  #"Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio" = 0.10,
+                  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto" = 0.10,
+                  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo" = 0.10,
+                  #"Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio_Antigo" = 0.10,
+                  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo" = 0.10
+                    ), #comentar a classe caso ela não esteja presente no modelo, senão haverá erro nesta função
   alloc_options = c(120, 100, 75, 50, 30),
   std_err = 0.01,
   rare_class_prop = 0.025
@@ -203,10 +203,10 @@ sampling_design
 samples_sf <- sits_stratified_sampling(
   cube = cube,
   sampling_design = sampling_design,
-  alloc = "alloc_30",
+  alloc = "alloc_50",
   overhead = 1.2, # overproportion to avoid border pixels
   progress = TRUE,
-  multicores = 12)
+  multicores = 24)
 
 # 4.4 -- Total of each class
 samples_sf%>% group_by(label) %>% summarise(num = n())
@@ -238,23 +238,6 @@ area_acc_full_map$error_matrix
 # ============================================================
 # 6. Plotting Full Map Accuracy
 # ============================================================
-
-# Change labels' names for plotting purpose (TIRAR ESSA PARTE QUANDO AS AMOSTRAS ESTIVEREM COM OS NOMES CORRETOS)
-new_label <-c("AGUA" = "Water",
-              "DESMAT_ARVORE_REMANESCE" = "Clear Cut Trees", 
-              "DESMAT_CORTE_RASO" = "Clear Cut Bare Soil", 
-              "DESMAT_CORTE_RASO_DM" = "Old Clear Cut Bare Soil",
-              "DESMAT_DEGRAD_FOGO" = "Fire Suppression", 
-              "DESMAT_VEG" = "Clear Cut Vegetation",
-              "DESMAT_VEG_DM" = "Old Clear Cut Vegetation",
-              "FLO_DEGRAD" = "Degradation", 
-              "FLO_DEGRAD_FOGO" = "Fire Degradation",
-              "FLORESTA" = "Forest",
-              "NF" = "Non Forest Natural Vegetation",
-              "ROCHA" = "Rock",
-              "WETLANDS" = "Wetland"
-              )
-
 # Step 6.1 -- Create a tibble from error matrix
 matriz_conf_full_map <- tibble(as.data.frame(area_acc_full_map$error_matrix))
 
@@ -268,9 +251,8 @@ ggplot(matriz_conf_full_map, aes(x = Var2, y = Var1, fill = Freq)) +
   labs( x = "Reference",
         y = "Predicted", 
         title = "Confusion Matrix") +
-  scale_y_discrete(limits = rev,
-                   labels = new_label) +
-  scale_x_discrete(labels = new_label) +
+  scale_y_discrete(limits = rev) +
+  #scale_x_discrete(labels = new_label) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 25,
                                    hjust = 1,
@@ -376,33 +358,36 @@ mask_label <- c("1" = "Deforestation Mask",
 prodes_mask <- sits_cube(source = "BDC",
                          collection = "SENTINEL-2-16D",
                          data_dir = aux_dir,
-                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         parse_info = c("tile", "start_date", "end_date", "band", "version"),
                          bands = "class",
                          version = "v2024",
                          labels = mask_label)
 
 cube_reclass <- sits_reclassify(cube = cube,
                                 mask = prodes_mask,
-                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
-                                                                           "DESMAT_CORTE_RASO",
-                                                                           "DESMAT_VEG",
-                                                                           "DESMAT_DEGRAD_FOGO"
+                                rules = list("Deforestation" = cube %in% c("Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura",
+                                                                           #"Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio",
+                                                                           "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto"
                                                                           ),
-                                "Other Classes" = cube %in% c("AGUA",
-                                                              "DESMAT_CORTE_RASO_DM",
-                                                              "DESMAT_VEG_DM",
-                                                              "FLORESTA",
-                                                              "NF",
-                                                              "ROCHA",
-                                                              "WETLANDS",
-                                                              "FLO_DEGRAD",
-                                                              "FLO_DEGRAD_FOGO"
-                                                              )
+                                
+                                              "Other Classes" = cube %in% c("Hidrografia_Rio",
+                                                                            "Hidrografia_Lago",
+                                                                            "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo",
+                                                                            #"Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio_Antigo",
+                                                                            "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo",
+                                                                            "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida",
+                                                                            "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa",
+                                                                            "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa",
+                                                                            "Vegetacao_Natural_Nao_Florestal_Vereda",
+                                                                            "Vegetacao_Natural_Nao_Florestal_Mata",
+                                                                            #"Fogo_Antigo_Em_Vegetacao_Natural_Nao_Florestal",
+                                                                            "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal"
+                                                                          )
                                 ),
                                 multicores = 24,
                                 memsize = 180,
-                                version = "prodes",
-                                output_dir = class_raster_dir,
+                                version = "degradation",
+                                output_dir = class_raster_output,
                                 progress = TRUE)
 plot(cube_reclass)
 
@@ -474,9 +459,8 @@ ggplot(matriz_conf_prodes, aes(x = Var2, y = Var1, fill = Freq)) +
   labs( x = "Reference",
         y = "Predicted", 
         title = "Confusion Matrix") +
-  scale_y_discrete(limits = rev,
-                   labels = new_label) +
-  scale_x_discrete(labels = new_label) +
+  scale_y_discrete(limits = rev) +
+  #scale_x_discrete(labels = new_label) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 25,
                                    hjust = 1,
@@ -514,8 +498,7 @@ ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
        x = "Accuracy", 
        title = "Accuracies",
        caption = paste0("Global Accuracy: ", round(area_acc_prodes$accuracy[[3]], 2))) +
-  scale_y_discrete(limits = rev,
-                   labels = new_label) +
+  scale_y_discrete(limits = rev) +
   scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
                               "user_accuracy" = "User Acc")) +
   theme_minimal() +
@@ -551,8 +534,7 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
   labs(y = "Class",
        x = "Metrics", 
        title = "Area Metrics") +
-  scale_y_discrete(limits = rev,
-                   labels = new_label) +
+  scale_y_discrete(limits = rev) +
   scale_x_discrete(limits = rev,
                    labels = c("mapped_area_ha" = "Mapped Area (ha)",
                               "error_adj_area_ha" = "Error-Adjusted Area (ha)",
@@ -587,23 +569,28 @@ prodes_mask <- sits_cube(source = "BDC",
                          version = "v2024",
                          labels = mask_label)
 
+
+
+
 cube_reclass <- sits_reclassify(cube = cube,
                                 mask = prodes_mask,
-                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
-                                                                           "DESMAT_CORTE_RASO",
-                                                                           "DESMAT_VEG",
-                                                                           "DESMAT_DEGRAD_FOGO"
+                                rules = list("Deforestation" = cube %in% c("Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura",
+                                                                           #"Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio",
+                                                                           "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto"
                                                                           ),
-                                             "Degradation" = cube %in% c("FLO_DEGRAD",
-                                                                         "FLO_DEGRAD_FOGO"
+                                             "Degradation" = cube %in% c(#"Fogo_Antigo_Em_Vegetacao_Natural_Nao_Florestal",
+                                                                         "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal"
                                                                         ),
-                                             "Other Classes" = cube %in% c("AGUA",
-                                                                           "DESMAT_CORTE_RASO_DM",
-                                                                           "DESMAT_VEG_DM",
-                                                                           "FLORESTA",
-                                                                           "NF",
-                                                                           "ROCHA",
-                                                                           "WETLANDS"
+                                             "Other Classes" = cube %in% c("Hidrografia_Rio",
+                                                                           "Hidrografia_Lago",
+                                                                           "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo",
+                                                                           #"Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Reservatorio_Antigo",
+                                                                           "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo",
+                                                                           "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida",
+                                                                           "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa",
+                                                                           "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa",
+                                                                           "Vegetacao_Natural_Nao_Florestal_Vereda",
+                                                                           "Vegetacao_Natural_Nao_Florestal_Mata"
                                                                           )
                                              ),
                                 multicores = 24,
@@ -682,9 +669,8 @@ ggplot(matriz_conf_prodes, aes(x = Var2, y = Var1, fill = Freq)) +
   labs( x = "Reference",
         y = "Predicted", 
         title = "Confusion Matrix") +
-  scale_y_discrete(limits = rev,
-                   labels = new_label) +
-  scale_x_discrete(labels = new_label) +
+  scale_y_discrete(limits = rev) +
+  #scale_x_discrete(labels = new_label) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 25,
                                    hjust = 1,
@@ -722,8 +708,7 @@ ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
        x = "Accuracy", 
        title = "Accuracies",
        caption = paste0("Global Accuracy: ", round(area_acc_prodes$accuracy[[3]], 2))) +
-  scale_y_discrete(limits = rev,
-                   labels = new_label) +
+  scale_y_discrete(limits = rev) +
   scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
                               "user_accuracy" = "User Acc")) +
   theme_minimal() +
@@ -759,8 +744,7 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
   labs(y = "Class",
        x = "Metrics", 
        title = "Area Metrics") +
-  scale_y_discrete(limits = rev,
-                   labels = new_label) +
+  scale_y_discrete(limits = rev) +
   scale_x_discrete(limits = rev,
                    labels = c("mapped_area_ha" = "Mapped Area (ha)",
                               "error_adj_area_ha" = "Error-Adjusted Area (ha)",

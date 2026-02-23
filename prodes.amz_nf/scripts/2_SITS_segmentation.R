@@ -40,7 +40,7 @@ mm_cube_fraction_features <- sits_cube(
 spacing <- 10
 compactness <- 0.5
 padding <- 0
-grid_seeding <- "hexagonal"
+grid_seeding <- "rectangular"
 
 # Step 2.2 -- Define the version of your segmentation file
 version <- paste0("LSMM-SNIC-spac",spacing,"-comp",gsub("\\.", "", as.character(compactness)),"-pad",padding,"-",grid_seeding,"-",date_process)
