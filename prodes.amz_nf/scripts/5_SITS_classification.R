@@ -28,10 +28,10 @@ mixture_path  <- "data/raw/mixture_model"
 images_path   <- "data/raw/images"
 
 # Step 1.4 -- Identifier to distinguish the file from previous versions 
-var <- "nf-mde"
+var <- "nf-samples-crude"
 
 # Step 1.5 -- Define time range
-start_date    <- "2024-08-01"
+start_date    <- "2023-08-01"
 end_date      <- "2025-07-31"
 
 
@@ -68,29 +68,7 @@ mm_cube <- sits_cube(
 )
 
 # Step 2.4 -- Merge the Classification Cube with Mixture Model Cube
-cube_merge_lsmm <- sits_merge(mm_cube, cube)
-
-# obtain the DEM cube
-dem_cube <- sits_cube(
-  source = "MPC",
-  collection = "COP-DEM-GLO-30",
-  bands = "ELEVATION",
-  tiles = c("20NPK","20NPJ", "20NQJ", "20NQK")
-)
-
-# regularize DEM cube
-dem_cube_reg <- sits_regularize(
-  cube = dem_cube,
-  res = 10,
-  tiles = c("014002"),
-  grid_system = "BDC_SM_V2",
-  crs = cube$crs,
-  bands = "ELEVATION",
-  memsize = 24,
-  output_dir = images_path
-)
-
-cube_merge_lsmm_class <- sits_merge(cube_merge_lsmm, dem_cube_reg)
+cube_merge_lsmm_class <- sits_merge(mm_cube, cube)
 
 # Step 2.5 -- Create a local segmented cube based on previous segmentation results
 local_segs_cube <- sits_cube(
@@ -108,7 +86,7 @@ local_segs_cube <- sits_cube(
 # ============================================================
 
 # Step 3.1 -- Retrieve the trained model
-rf_model <- readRDS("~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/rds/model/random_forest/RF-model_mde2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-23_15h14m.rds")
+rf_model <- readRDS(rds_path)
 
 # Step 3.2 -- Define the version name of probability file
 version <- paste("rf", no.years, tiles_class, var, sep = "-")

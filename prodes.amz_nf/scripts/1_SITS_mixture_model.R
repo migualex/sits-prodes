@@ -18,7 +18,7 @@ cube <- sits_cube(
   collection = "SENTINEL-2-16D",
   bands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12'),
   tiles = c('014002', '015002'),
-  start_date = '2024-08-01',
+  start_date = '2023-08-01',
   end_date = '2025-07-31',
   progress = TRUE)
 

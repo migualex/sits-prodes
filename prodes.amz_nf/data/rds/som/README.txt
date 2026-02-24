@@ -1,1 +1,1 @@
-This folder is intended for storing the som.
+This folder is intended to store the SOM.

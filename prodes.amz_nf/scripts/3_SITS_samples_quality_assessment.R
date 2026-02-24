@@ -25,7 +25,7 @@ mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 
 # Step 1.4 -- Define time range
-start_date    <- "2024-08-01"
+start_date    <- "2023-08-01"
 end_date      <- "2025-07-31"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
@@ -88,30 +88,7 @@ mm_cube <- sits_cube(
 
 # Step 2.5 -- Merge the Training Cube with Mixture Model Cube
 cube_merge_lsmm <- sits_merge(mm_cube, cube)
-
-# obtain the DEM cube
-dem_cube <- sits_cube(
-  source = "MPC",
-  collection = "COP-DEM-GLO-30",
-  bands = "ELEVATION",
-  tiles = c("20NPK","20NPJ", "20NQJ", "20NQK", "20NRJ", "20NRK")
-)
-
-# regularize DEM cube
-dem_cube_reg <- sits_regularize(
-  cube = dem_cube,
-  res = 10,
-  tiles = c("014002","015002"),
-  grid_system = "BDC_SM_V2",
-  crs = cube$crs,
-  bands = "ELEVATION",
-  memsize = 24,
-  output_dir = images_path
-)
-
-#cube_merge_lsmm_train <- sits_add_base_cube(cube_merge_lsmm, dem_cube_reg)
-cube_merge_lsmm_train <- sits_merge(cube_merge_lsmm, dem_cube_reg)
-plot(cube_merge_lsmm_train, band = "ELEVATION", palette = "Spectral", rev = FALSE)
+cube_merge_lsmm_train <- sits_merge(cube_merge_lsmm, cube)
 
 
 # ============================================================

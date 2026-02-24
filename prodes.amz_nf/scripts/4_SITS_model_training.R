@@ -16,8 +16,10 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-rds_path    <- "data/rds/"
-plots_path  <- "data/plots/"
+time_series_name  <- "samples_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_11h57m" #add the time series name
+rds_path          <- "data/rds/"
+plots_path        <- "data/plots/"
+time_series_path  <- paste0("data/rds/time_series/", time_series_name)
 
 # Step 1.4 -- Identifier to distinguish this model run from previous versions | Keep it the same as the samples' identifier
 var <- "nf"
@@ -43,7 +45,7 @@ my_colors <- c(
 )
 
 # Step 1.6 -- Define time range
-start_date    <- "2024-08-01"
+start_date    <- "2023-08-01"
 end_date      <- "2025-07-31"
 
 # ============================================================
@@ -74,7 +76,7 @@ tiles_train <- paste(cube$tile, collapse = "-")
 # ============================================================
 
 # Step 3.1 -- Reading training samples
-train_samples <- readRDS("~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/rds/time_series/samples_mde_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-23_15h14m.rds")
+train_samples <- readRDS(time_series_path)
 
 # Step 3.2 -- Using k-fold validation
 sits_kfold_validate_start <- Sys.time()
