@@ -19,7 +19,7 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name    <- "RF-model_mde2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-23_15h14m" #add the model name
+model_name    <- "RF-model_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_14h43m" #add the model name
 seg_version   <- "lsmm-snic-spac10-comp05-pad0-rectangular-2026-02-23"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
@@ -80,6 +80,7 @@ local_segs_cube <- sits_cube(
   version     = seg_version, 
   parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version")
 )
+
 
 # ============================================================
 # 3. Probability and Classification Mapping
