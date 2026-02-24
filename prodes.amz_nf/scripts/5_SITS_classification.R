@@ -19,11 +19,11 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name    <- "RF-model_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_14h43m" #add the model name
+model_name    <- "RF-model_2-tiles-014002-015002_2y-period-2023-07-28_2025-07-28_nf_2026-02-24_11h48m.rds" #add the model name
 seg_version   <- "lsmm-snic-spac10-comp05-pad0-rectangular-2026-02-23"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
-rds_path      <- paste0("data/rds/model/random_forest/", model_name)
+rds_path      <- file.path("data/rds/model/random_forest", model_name)
 mixture_path  <- "data/raw/mixture_model"
 images_path   <- "data/raw/images"
 

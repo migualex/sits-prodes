@@ -17,9 +17,9 @@ date_process <- format(Sys.Date(), "%Y-%m-%d")
 # ============================================================
 
 # Step 1.1 -- Define Start_date, End_date and tiles for cube 
-start_date <- '2023-08-01'
+start_date <- '2024-08-01'
 end_date   <- '2025-07-31'
-tiles      <- c('014002')
+tiles      <- c('015002')
 
 # Step 1.2 -- Create a cube from Fraction Images features 
 mm_cube_fraction_features <- sits_cube(

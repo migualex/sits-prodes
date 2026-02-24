@@ -16,13 +16,13 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-time_series_name  <- "samples_2-tiles-014002-015002_0y-period-2024-07-27_2025-07-28_nf_2026-02-20_11h57m" #add the time series name
+time_series_name  <- "samples_2-tiles-014002-015002_2y-period-2023-07-28_2025-07-28_nf_2026-02-24_11h08m" #add the time series name
 rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
-time_series_path  <- paste0("data/rds/time_series/", time_series_name)
+time_series_path  <- file.path("data/rds/time_series/", time_series_name)
 
 # Step 1.4 -- Identifier to distinguish this model run from previous versions | Keep it the same as the samples' identifier
-var <- "nf"
+var <- "nf-samples-crude"
 
 # Step 1.5 -- Define a list with preference colours for each class
 my_colors <- c(
@@ -154,6 +154,6 @@ ggsave(
 )
 
 # Step 4.4 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_mde", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
 print("Model has been trained!")

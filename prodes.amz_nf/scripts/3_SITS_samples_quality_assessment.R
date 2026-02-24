@@ -87,8 +87,7 @@ mm_cube <- sits_cube(
 )
 
 # Step 2.5 -- Merge the Training Cube with Mixture Model Cube
-cube_merge_lsmm <- sits_merge(mm_cube, cube)
-cube_merge_lsmm_train <- sits_merge(cube_merge_lsmm, cube)
+cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 
 
 # ============================================================
@@ -117,13 +116,13 @@ plot(sits_patterns(samples))
 
 # Step 3.2.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
-  sits_select(bands = c("ELEVATION"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
+  sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2023-08-13', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 
 # Step 3.3 -- Save the samples Time Series to a R file
 saveRDS(samples, 
-        paste0(rds_path,"time_series/", "samples_mde_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+        paste0(rds_path,"time_series/", "samples_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
 
 # ============================================================
