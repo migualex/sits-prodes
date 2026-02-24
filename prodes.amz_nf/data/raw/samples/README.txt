@@ -1,1 +1,1 @@
-This folder is intended for storing the training samples.
+This folder is intended to store the training samples.
