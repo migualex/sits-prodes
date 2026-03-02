@@ -20,17 +20,20 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-class_dir <- "data/class"
+model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_2y-period-2023-07-28_2025-07-28_2y-all-classes_2026-02-25_17h58m.rds" #add the model name
+model            <- file.path("data/rds/model/random_forest", model_name)
+class_dir        <- "data/class"
 class_raster_dir <- "data/class/raster" # classified raster file cannot be in the same folder as the classified gpkg file
-samples_dir <- "data/raw/samples/validation_samples"
-plots_path    <- "data/plots"
-aux_dir <- "data/raw/auxiliary"
-model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_sem-arv-rema_2026-02-25_13h09m.rds")
-version <- "rf-1y-012014-sem-arv-rema"
+samples_dir      <- "data/raw/samples/validation_samples"
+plots_path       <- "data/plots"
+aux_dir          <- "data/raw/auxiliary"
+version          <- "rf-2y-012014-all-classes"
 
-samples_valition_list <- dir(samples_dir,
-                             pattern = "*.gpkg",
-                             full.names = TRUE)
+samples_validation_list <- dir(
+  samples_dir,
+  pattern = paste0(".*_", version, "_.*\\.gpkg$"),
+  full.names = TRUE
+)
 
 # ============================================================
 # 2. Create raster file from classified vector map
@@ -223,7 +226,7 @@ sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 # 5. Accuracy assessment of Full Map classified images
 # ============================================================
 # Step 5.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*full-map*", samples_valition_list, value = TRUE)) #full map validation samples
+samples_validation <- st_read(grep("*full-map*", samples_validation_list, value = TRUE)) #full map validation samples
 
 # Step 5.2 -- Calculate accuracy
 area_acc_full_map <- sits_accuracy(cube,
@@ -447,7 +450,7 @@ sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 # 8. Accuracy assessment of PRODES Adjusted Map classified images
 # ============================================================
 # Step 8.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*prodes-adjusted*", samples_valition_list, value = TRUE)) #prodes adjusted validation samples
+samples_validation <- st_read(grep("*prodes-adjusted*", samples_validation_list, value = TRUE)) #prodes adjusted validation samples
 
 # Step 8.2 -- Calculate accuracy
 area_acc_prodes <- sits_accuracy(cube_reclass, 
@@ -644,7 +647,7 @@ sf::st_write(samples_sf, samples_sf_file_path, delete_dsn = TRUE, append = FALSE
 # 11. Accuracy assessment of PRODES Degradation Adjusted Map classified images
 # ============================================================
 # Step 11.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*prodes-degrad*", samples_valition_list, value = TRUE)) #prodes adjusted validation samples with degradation classes
+samples_validation <- st_read(grep("*prodes-degrad*", samples_validation_list, value = TRUE)) #prodes adjusted validation samples with degradation classes
 
 # Step 11.2 -- Calculate accuracy
 area_acc_prodes <- sits_accuracy(cube_reclass, 
