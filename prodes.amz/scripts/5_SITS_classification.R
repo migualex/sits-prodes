@@ -19,18 +19,18 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds" #add the model name
+model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_21h03m" #add the model name
 seg_version   <- "snic-1ymlme-rectangular-compactness-05"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
-rds_path      <- paste0("data/rds/model/random_forest/", model_name)
+rds_path      <- file.path("data/rds/model/random_forest", model_name)
 mixture_path  <- "data/raw/mixture_model"
 
 # Step 1.4 -- Identifier to distinguish the file from previous versions 
-var <- "with-df-mask"
+var <- "all_samples_new_pol_avg_false"
 
 # Step 1.5 -- Define time range
-start_date    <- "2023-08-01"
+start_date    <- "2024-08-01"
 end_date      <- "2025-07-31"
 
 
@@ -52,7 +52,7 @@ cube <- sits_cube(
 # Step 2.2 -- Extract tiles, timeline and duration from the cube (in years)
 tiles_class <- paste(cube$tile, collapse = "-")
 dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(

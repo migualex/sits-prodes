@@ -20,24 +20,23 @@ rds_path    <- "data/rds/"
 plots_path  <- "data/plots/"
 
 # Step 1.4 -- Identifier to distinguish this model run from previous versions | Keep it the same as the samples' identifier
-var <- "with-df-mask-with-all-samples"
+var <- "all-classes"
 
 # Step 1.5 -- Define a list with preference colours for each class
 my_colors <- c(
-  "OOB"                       = "black",
-  "AGUA"                      = "#2980B9",
-  "DESMAT_ARVORE_REMANESCE"   = "#a19c0a",
-  "DESMAT_CORTE_RASO"         = "#f39c12",
-  "DESMAT_CORTE_RASO_DM"      = "#f39c12",
-  "DESMAT_DEGRAD_FOGO"        = "#EC7063",
-  "DESMAT_VEG"                = "#D8DA83",
-  "DESMAT_VEG_DM"             = "#D8DA83",
-  "FLO_DEGRAD"                = "#9da676",
-  "FLO_DEGRAD_FOGO"           = "#e6b0aa",
-  "FLORESTA"                  = "#1E8449",
-  "NF"                        = "#C0D665",
-  "ROCHA"                     = "#229C59",
-  "WETLANDS"                  = "#A0B9C8" 
+  "Corpo_Dagua"                           = "#2980B9",
+  "Corte_Raso_Com_Arvores_Remanescentes"  = "#a19c0a",
+  "Corte_Raso"                            = "#f39c12",
+  "Corte_Raso_Antigo"                     = "#D39750",
+  "Corte_Raso_Com_Fogo"                   = "#CD6155",
+  "Corte_Raso_Com_Vegetacao"              = "#D8DA83",
+  "Corte_Raso_Antigo_Com_Vegetacao"       = "#B2B46D",
+  "Degradacao"                            = "#9da676",
+  "Degradacao_Por_Fogo"                   = "#e6b0aa",
+  "Floresta"                              = "#1E8449",
+  "Floresta_Transicional"                 = "#E0DD22",  
+  "Vegetacao_Natural_Nao_Florestal"       = "#C0D665",
+  "Area_Inundavel"                        = "#A0B9C8" 
 )
 
 # Step 1.6 -- Define time range
@@ -55,13 +54,13 @@ cube <- sits_cube(
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
   tiles       = c("012014","012015","013014","013015"),
   start_date  = start_date,
-  end_date    = "2025-07-31",
+  end_date    = end_date,
   progress    = TRUE
 )
 
 # Step 2.2 -- Calculate the number of years in the training cube
 cube_dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")
@@ -72,7 +71,7 @@ tiles_train <- paste(cube$tile, collapse = "-")
 # ============================================================
 
 # Step 3.1 -- Reading training samples
-train_samples <- readRDS("~/sits-prodes/prodes.amz/data/rds/time_series/2026-01-21_10h10m_012015-012014-013015-013014_with-df-mask_clean-samples.rds")
+train_samples <- readRDS("data/rds/time_series/samples_4-tiles-012015-012014-013015-013014_2y-period-2023-07-28_2025-07-28_all_samples_new_2026-02-25_16h16m.rds")
 
 # Step 3.2 -- Using k-fold validation
 sits_kfold_validate_start <- Sys.time()
@@ -80,7 +79,7 @@ rfor_validate <- sits_kfold_validate(
   samples = train_samples,
   folds = 5, # how many times to split the data (default = 5)
   ml_method = sits_rfor(),
-  multicores = 12,
+  multicores = 28,
   progress = TRUE) # adapt to your computer CPU core availability
 sits_kfold_validate_end <- Sys.time()
 sits_kfold_validate_time <- as.numeric(sits_kfold_validate_end - sits_kfold_validate_start, units = "secs")

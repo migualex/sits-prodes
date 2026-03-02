@@ -24,11 +24,11 @@ mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 
 # Step 1.4 -- Define time range
-start_date    <- "2024-08-01"
+start_date    <- "2023-08-01"
 end_date      <- "2025-07-31"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
-var <- "no-remaining-trees"
+var <- "all_samples_new"
 
 # Step 1.6 -- Define a list with preference colors for each class
 my_colors <- c(
@@ -65,7 +65,7 @@ cube <- sits_cube(
 
 # Step 2.2 -- Calculate the number of years in the training cube
 cube_dates <- sits_timeline(cube)
-no.years <- paste0(floor(lubridate::interval(start_date, end_date) / lubridate::years(1)), "y")
+no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")
@@ -91,7 +91,7 @@ cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
-samples_train <- sf::st_read(file.path(sample_path, "amostras_poligonos_012014_012015_em_refinamento.gpkg"))
+samples_train <- sf::st_read(file.path(sample_path, "amostras_amazonia_24_02_2026.gpkg"))
 
 # Step 3.2 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
@@ -99,9 +99,9 @@ samples <- sits_get_data(
   cube        = cube_merge_lsmm_train,
   samples     = samples_train,
   n_sam_pol   = 16,
-  pol_avg     = TRUE,
+  pol_avg     = FALSE,
   label       = "label",
-  multicores  = 28,       # adapt to your computer CPU core availability
+  multicores  = 1,       # adapt to your computer CPU core availability
   progress    = TRUE)
 sits_get_data_end <- Sys.time()
 sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units = "secs")

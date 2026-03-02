@@ -22,12 +22,15 @@ process_version <- paste0(date_process, time_process)
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 class_dir <- "data/class"
 class_raster_dir <- "data/class/raster" # classified raster file cannot be in the same folder as the classified gpkg file
-samples_dir <- "data/raw/samples/validation_samples/"
-plots_path    <- "data/plots/"
+samples_dir <- "data/raw/samples/validation_samples"
+plots_path    <- "data/plots"
 aux_dir <- "data/raw/auxiliary"
-model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_3y-period-2022-07-28_2025-07-28_with-df-mask-with-all-samples_2026-01-22_09h35m.rds")
-version <- "rf-1y-012014-all-classes"
+model <- readRDS("data/rds/model/random_forest/RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_sem-arv-rema_2026-02-25_13h09m.rds")
+version <- "rf-1y-012014-sem-arv-rema"
 
+samples_valition_list <- dir(samples_dir,
+                             pattern = "*.gpkg",
+                             full.names = TRUE)
 
 # ============================================================
 # 2. Create raster file from classified vector map
@@ -130,8 +133,8 @@ style <- tibble::tibble(
 )
 
 # Step 2.3 -- Aplly rasterize function to all files in directory that has the same version and gpkg extension
-to_raster <- paste0("*class_", version, "*.gpkg")
-raster_files <- fs::dir_ls(class_dir, glob = to_raster) |>
+to_raster <- paste0(".*_class_", version, ".*\\.gpkg$")
+raster_files <- fs::dir_ls(class_dir, regexp = to_raster) |>
   purrr::map(function(file) {
     file_name <- fs::path_file(file)
     
@@ -141,7 +144,7 @@ raster_files <- fs::dir_ls(class_dir, glob = to_raster) |>
       file       = file,
       res        = 10,
       style      = style,
-      output_dir = class_raster_dir
+      class_raster_dir = class_raster_dir
     )
   })
 
@@ -149,73 +152,11 @@ raster_files <- fs::dir_ls(class_dir, glob = to_raster) |>
 # ============================================================
 # 3. SITS Cube
 # ============================================================
-
-<<<<<<< HEAD
-# Step 3.1 -- Get labels associated to the trained model data set
-sits_labels(model)
-
-# Step 3.2 -- Labels of the classified image (Enumerate them in the order they appear according to "sits_labels(model)")
-labels <- c(  
-  "1" = "AGUA",
-  "2" = "DESMAT_CORTE_RASO",
-  "3" = "DESMAT_CORTE_RASO_DM",
-  "4" = "DESMAT_DEGRAD_FOGO",
-  "5" = "DESMAT_VEG",
-  "6" = "DESMAT_VEG_DM",
-  "7" = "FLO_DEGRAD",
-  "8" = "FLO_DEGRAD_FOGO",
-  "9" = "FLORESTA",
-  "10" = "NF",
-  "11" = "ROCHA",
-  "12" = "WETLANDS"
-)
-
-
-  # "1" = "AGUA",
-  # "2" = "DESMAT_ARVORE_REMANESCE",
-  # "3" = "DESMAT_CORTE_RASO",
-  # "4" = "DESMAT_DEGRAD_FOGO",
-  # "5" = "DESMAT_VEG",
-  # "6" = "FLO_DEGRAD",
-  # "7" = "FLO_DEGRAD_FOGO",
-  # "8" = "FLORESTA",
-  # "9" = "NF",
-  # "10" = "ROCHA",
-  # "11" = "WETLANDS"
-
-  # "1" = "AGUA",
-  # "2" = "DESMAT_CORTE_RASO",
-  # "3" = "DESMAT_CORTE_RASO_DM",
-  # "4" = "DESMAT_DEGRAD_FOGO",
-  # "5" = "DESMAT_VEG",
-  # "6" = "DESMAT_VEG_DM",
-  # "7" = "FLO_DEGRAD",
-  # "8" = "FLO_DEGRAD_FOGO",
-  # "9" = "FLORESTA",
-  # "10" = "NF",
-  # "11" = "ROCHA",
-  # "12" = "WETLANDS"
- 
-  #"1" = "AGUA",
-  #"2" = "DESMAT_ARVORE_REMANESCE",
-  # "3" = "DESMAT_CORTE_RASO",
-  # "4" = "DESMAT_CORTE_RASO_DM",
-  # "5" = "DESMAT_DEGRAD_FOGO",
-  # "6" = "DESMAT_VEG",
-  # "7" = "DESMAT_VEG_DM",
-  # "8" = "FLO_DEGRAD",
-  # "9" = "FLO_DEGRAD_FOGO",
-  # "10" = "FLORESTA",
-  # "11" = "NF",
-  # "12" = "ROCHA",
-  # "13" = "WETLANDS"
-=======
 # Step 3.1 -- Get labels associated to the trained model data set (Enumerate them in the order they appear according to "sits_labels(model)")
 labels <- c(
   x = sits_labels(model)
   )
 names(labels) <- 1:length(labels)
->>>>>>> a983493843bed8cc6efa9b52ce7eb4f8224114cf
 
 # Step 3.2 -- Load the original cube with classified raster file
 cube <- sits_cube(
@@ -238,20 +179,20 @@ cube <- sits_cube(
 sampling_design <- sits_sampling_design(
   cube = cube,
   expected_ua = c(
-    "AGUA" = 0.95,
-    "DESMAT_ARVORE_REMANESCE" = 0.10, 
-    "DESMAT_CORTE_RASO" = 0.70, 
-    "DESMAT_CORTE_RASO_DM" = 0.85, # ok
-    "DESMAT_DEGRAD_FOGO" = 0.70, 
-    "DESMAT_VEG" = 0.70,
-    "DESMAT_VEG_DM" = 0.85, # ok
-    "FLO_DEGRAD" = 0.70, 
-    "FLO_DEGRAD_FOGO" = 0.70,
-    "FLORESTA" = 0.95,
-    "NF" = 0.70,
-    "ROCHA" = 0.10,
-    "WETLANDS" = 0.70
-  ),
+        "Corpo_Dagua"                           = 0.95,
+        "Corte_Raso_Com_Arvores_Remanescentes"  = 0.10,
+        "Corte_Raso"                            = 0.70,
+        "Corte_Raso_Antigo"                     = 0.85,
+        #"Corte_Raso_Com_Fogo"                   = 0.70,
+        "Corte_Raso_Com_Vegetacao"              = 0.70,
+        "Corte_Raso_Antigo_Com_Vegetacao"       = 0.85,
+        "Degradacao"                            = 0.70,
+        "Degradacao_Por_Fogo"                   = 0.70,
+        "Floresta"                              = 0.95,
+        #"Floresta_Transicional"                 = DEFINIR,  
+        "Vegetacao_Natural_Nao_Florestal"       = 0.70,
+        "Area_Inundavel"                        = 0.70
+        ),
   alloc_options = c(120, 100, 75, 50, 30),
   std_err = 0.01,
   rare_class_prop = 0.025
@@ -281,60 +222,13 @@ sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 # ============================================================
 # 5. Accuracy assessment of Full Map classified images
 # ============================================================
-
 # Step 5.1 -- Get validation samples points (in geographical coordinates - lat/long)
-<<<<<<< HEAD
-samples_validation <- st_read("data/raw/samples_validation/samples-validation-desmat-degrad_rf-1y-012014-all-classes_2026-02-11_11h57m.gpkg")
-
-aux_dir <- "data/class-raster-reclass"
-
-# 4.1 -- Reclassify classified cube
-mask_label <- c("1" = "Deforestation Mask",
-                "0" = "bla")
-
-cube_mask <- sits_cube(source = "BDC",
-                         collection = "SENTINEL-2-16D",
-                         data_dir = aux_dir,
-                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
-                         bands = "class",
-                         version = "v2024-f",
-                         labels = mask_label)
-
-cube_reclass <- sits_reclassify(cube = cube,
-                                mask = cube_mask,
-                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
-                                                                           "DESMAT_CORTE_RASO",
-                                                                           "DESMAT_VEG",
-                                                                           "DESMAT_DEGRAD_FOGO"
-                                ),
-                                "Degradation" = cube %in% c("FLO_DEGRAD",
-                                                            "FLO_DEGRAD_FOGO"
-                                ),
-                                "Other Classes" = cube %in% c("AGUA",
-                                                              "DESMAT_CORTE_RASO_DM",
-                                                              "DESMAT_VEG_DM",
-                                                              "FLORESTA",
-                                                              "NF",
-                                                              "ROCHA",
-                                                              "WETLANDS"
-                                )
-                                ),
-                                multicores = 24,
-                                memsize = 180,
-                                version = "v2024-f",
-                                output_dir = aux_dir,
-                                progress = TRUE)
-
+samples_validation <- st_read(grep("*full-map*", samples_valition_list, value = TRUE)) #full map validation samples
 
 # Step 5.2 -- Calculate accuracy
-area_acc <- sits_accuracy(cube_reclass, 
-=======
-samples_validation <- st_read(paste0(samples_dir, "")) #full map validation samples
-
-# Step 5.2 -- Calculate accuracy
-area_acc_full_map <- sits_accuracy(cube, 
->>>>>>> a983493843bed8cc6efa9b52ce7eb4f8224114cf
+area_acc_full_map <- sits_accuracy(cube,
                           validation = samples_validation,
+                          memsize = 180,
                           multicores = 28) # adapt to your computer CPU core availability
 
 # Step 5.3 -- Print the area estimated accuracy
@@ -346,22 +240,24 @@ area_acc_full_map$error_matrix
 # ============================================================
 # 6. Plotting Full Map Accuracy
 # ============================================================
+new_label <-c(
+  "Corpo_Dagua"                          = "Water",
+  "Corte_Raso_Com_Arvores_Remanescentes" = "Clear Cut Trees", 
+  "Corte_Raso"                           = "Clear Cut Bare Soil", 
+  "Corte_Raso_Antigo"                    = "Old Clear Cut Bare Soil",
+  "Corte_Raso_Com_Fogo"                  = "Fire Suppression", 
+  "Corte_Raso_Com_Vegetacao"             = "Clear Cut Vegetation",
+  "Corte_Raso_Antigo_Com_Vegetacao"      = "Old Clear Cut Vegetation",
+  "Degradacao"                           = "Degradation", 
+  "Degradacao_Por_Fogo"                  = "Fire Degradation",
+  "Floresta"                             = "Forest",
+  "Vegetacao_Natural_Nao_Florestal"      = "Non Forest Natural Vegetation",
+  "Floresta_Transicional"                = "Transitional Forest",
+  "Area_Inundavel"                       = "Wetland"
+ )
 
-# Change labels' names for plotting purpose (TIRAR ESSA PARTE QUANDO AS AMOSTRAS ESTIVEREM COM OS NOMES CORRETOS)
-new_label <-c("AGUA" = "Water",
-              "DESMAT_ARVORE_REMANESCE" = "Clear Cut Trees", 
-              "DESMAT_CORTE_RASO" = "Clear Cut Bare Soil", 
-              "DESMAT_CORTE_RASO_DM" = "Old Clear Cut Bare Soil",
-              "DESMAT_DEGRAD_FOGO" = "Fire Suppression", 
-              "DESMAT_VEG" = "Clear Cut Vegetation",
-              "DESMAT_VEG_DM" = "Old Clear Cut Vegetation",
-              "FLO_DEGRAD" = "Degradation", 
-              "FLO_DEGRAD_FOGO" = "Fire Degradation",
-              "FLORESTA" = "Forest",
-              "NF" = "Non Forest Natural Vegetation",
-              "ROCHA" = "Rock",
-              "WETLANDS" = "Wetland"
-              )
+#para manter os nomes originais 
+#new_label <- labels
 
 # Step 6.1 -- Create a tibble from error matrix
 matriz_conf_full_map <- tibble(as.data.frame(area_acc_full_map$error_matrix))
@@ -377,8 +273,8 @@ ggplot(matriz_conf_full_map, aes(x = Var2, y = Var1, fill = Freq)) +
         y = "Predicted", 
         title = "Confusion Matrix") +
   scale_y_discrete(limits = rev,
-                   labels = labels) +
-  scale_x_discrete(labels = labels) +
+                   labels = new_label) +
+  scale_x_discrete(labels = new_label) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 25,
                                    hjust = 1,
@@ -417,7 +313,7 @@ ggplot(acuracias_full_map, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
        title = "Accuracies",
        caption = paste0("Global Accuracy: ", round(area_acc_full_map$accuracy[[3]], 2))) +
   scale_y_discrete(limits = rev,
-                   labels = labels) +
+                   labels = new_label) +
   scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
                               "user_accuracy" = "User Acc")) +
   theme_minimal() +
@@ -437,7 +333,7 @@ ggsave(
 
 # Step 6.5 -- Convert Error-Adjusted Area (ha) results to a data frame
 class_areas_full_map <- data.frame(class = names(area_acc_full_map$area_pixels),
-                                   mapped_area_ha = round(as.numeric(area_acc_full_map$areas_pixels), 2),
+                                   mapped_area_ha = round(as.numeric(area_acc_full_map$area_pixels), 2),
                                    error_adj_area_ha = round(as.numeric(area_acc_full_map$error_ajusted_area), 2),
                                    conf_interval_ha = round(as.numeric(area_acc_full_map$conf_interval), 2)
                                   ) %>%
@@ -478,8 +374,8 @@ ggsave(
 # 7. PRODES Adjusted Map Accuracy
 # ============================================================
 # 7.1 -- Reclassify classified cube
-mask_label <- c("1" = "Deforestation Mask",
-                "0" = "Others")
+mask_label <- c("1" = "Natural Vegetation",
+                "0" = "Deforestation Mask")
 
 prodes_mask <- sits_cube(source = "BDC",
                          collection = "SENTINEL-2-16D",
@@ -491,35 +387,35 @@ prodes_mask <- sits_cube(source = "BDC",
 
 cube_reclass <- sits_reclassify(cube = cube,
                                 mask = prodes_mask,
-                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
-                                                                           "DESMAT_CORTE_RASO",
-                                                                           "DESMAT_VEG",
-                                                                           "DESMAT_DEGRAD_FOGO"
+                                rules = list("Deforestation" = cube %in% c("Corte_Raso_Com_Arvores_Remanescentes",
+                                                                           "Corte_Raso",
+                                                                           #"Corte_Raso_Com_Fogo",
+                                                                           "Corte_Raso_Com_Vegetacao"
                                                                           ),
-                                "Other Classes" = cube %in% c("AGUA",
-                                                              "DESMAT_CORTE_RASO_DM",
-                                                              "DESMAT_VEG_DM",
-                                                              "FLORESTA",
-                                                              "NF",
-                                                              "ROCHA",
-                                                              "WETLANDS",
-                                                              "FLO_DEGRAD",
-                                                              "FLO_DEGRAD_FOGO"
-                                                              )
+
+                                             "Other_Classes" = cube %in% c("Corpo_Dagua",
+                                                                          "Corte_Raso_Antigo",
+                                                                          "Corte_Raso_Antigo_Com_Vegetacao",
+                                                                          "Floresta",
+                                                                          "Vegetacao_Natural_Nao_Florestal",
+                                                                          "Floresta_Transicional",
+                                                                          "Area_Inundavel",
+                                                                          "Degradacao",
+                                                                          "Degradacao_Por_Fogo"
+                                                                          )
                                 ),
                                 multicores = 24,
                                 memsize = 180,
-                                version = "prodes",
+                                version = paste("prodes", version, sep = "-"),
                                 output_dir = class_raster_dir,
                                 progress = TRUE)
-plot(cube_reclass)
 
 # 7.2 -- Sampling design prodes
 sampling_design <- sits_sampling_design(
   cube = cube_reclass,
   expected_ua = c(
     "Deforestation" = 0.70,
-    "Other Classes" = 0.90
+    "Other_Classes" = 0.90
   ),
   alloc_options = c(120, 100),
   std_err = 0.01,
@@ -542,7 +438,7 @@ samples_sf <- sits_stratified_sampling(
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
 # 7.5 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-desmat_", version, "_", process_version, ".gpkg"))
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-prodes-adjusted_", version, "_", process_version, ".gpkg"))
 
 # 7.6 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
@@ -550,13 +446,13 @@ sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 # ============================================================
 # 8. Accuracy assessment of PRODES Adjusted Map classified images
 # ============================================================
-
 # Step 8.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(paste0(samples_dir, "")) #prodes adjusted validation samples
+samples_validation <- st_read(grep("*prodes-adjusted*", samples_valition_list, value = TRUE)) #prodes adjusted validation samples
 
 # Step 8.2 -- Calculate accuracy
 area_acc_prodes <- sits_accuracy(cube_reclass, 
                                  validation = samples_validation,
+                                 memsize = 180,
                                  multicores = 28) # adapt to your computer CPU core availability
 
 # Step 8.3 -- Print the area estimated accuracy
@@ -568,7 +464,6 @@ area_acc_prodes$error_matrix
 # ============================================================
 # 9. Plotting PRODES Adjusted Map Accuracy
 # ============================================================
-
 # Step 9.1 -- Create a tibble from error matrix
 matriz_conf_prodes <- tibble(as.data.frame(area_acc_prodes$error_matrix))
 
@@ -606,10 +501,10 @@ ggsave(
 acuracias_prodes <- data.frame(class = names(area_acc_prodes$accuracy[[1]]),
                                user_accuracy = round(as.numeric(area_acc_prodes$accuracy[[1]]), 2),
                                prod_accuracy = round(as.numeric(area_acc_prodes$accuracy[[2]]), 2)
-) %>% 
-  tidyr::pivot_longer(cols = -class,
-                      names_to = "tipo_acuracia",
-                      values_to = "acuracia")
+                              ) %>% 
+                    tidyr::pivot_longer(cols = -class,
+                                        names_to = "tipo_acuracia",
+                                        values_to = "acuracia")
 
 # Step 9.4 -- Plot accuracies metrics
 ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) + 
@@ -643,13 +538,13 @@ ggsave(
 
 # Step 9.5 -- Convert Error-Adjusted Area (ha) results to a data frame
 class_areas <- data.frame(class = names(area_acc_prodes$area_pixels),
-                          mapped_area_ha = round(as.numeric(area_acc_prodes$areas_pixels), 2),
+                          mapped_area_ha = round(as.numeric(area_acc_prodes$area_pixels), 2),
                           error_adj_area_ha = round(as.numeric(area_acc_prodes$error_ajusted_area), 2),
                           conf_interval_ha = round(as.numeric(area_acc_prodes$conf_interval), 2)
-) %>%
-  tidyr::pivot_longer(cols = -class,
-                      names_to = "tipo_area",
-                      values_to = "area")
+                          ) %>%
+              tidyr::pivot_longer(cols = -class,
+                                  names_to = "tipo_area",
+                                  values_to = "area")
 
 # Step 9.6 -- Plot Error-Adjusted Area (ha)
 ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) + 
@@ -660,7 +555,7 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
        x = "Metrics", 
        title = "Area Metrics") +
   scale_y_discrete(limits = rev,
-                   labels = labels) +
+                   labels = new_label) +
   scale_x_discrete(limits = rev,
                    labels = c("mapped_area_ha" = "Mapped Area (ha)",
                               "error_adj_area_ha" = "Error-Adjusted Area (ha)",
@@ -684,50 +579,40 @@ ggsave(
 # 10. PRODES Degradation Adjusted Map Accuracy
 # ============================================================
 # 10.1 -- Reclassify classified cube
-mask_label <- c("1" = "Deforestation Mask",
-                "0" = "Others")
-
-prodes_mask <- sits_cube(source = "BDC",
-                         collection = "SENTINEL-2-16D",
-                         data_dir = aux_dir,
-                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
-                         bands = "class",
-                         version = "v2024",
-                         labels = mask_label)
-
 cube_reclass <- sits_reclassify(cube = cube,
                                 mask = prodes_mask,
-                                rules = list("Deforestation" = cube %in% c("DESMAT_ARVORE_REMANESCE",
-                                                                           "DESMAT_CORTE_RASO",
-                                                                           "DESMAT_VEG",
-                                                                           "DESMAT_DEGRAD_FOGO"
+                                rules = list("Deforestation" = cube %in% c("Corte_Raso_Com_Arvores_Remanescentes",
+                                                                           "Corte_Raso",
+                                                                           #"Corte_Raso_Com_Fogo"
+                                                                           "Corte_Raso_Com_Vegetacao"
+                                                                            ),
+                                             
+                                              "Degradation" = cube %in% c("Degradacao",
+                                                                          "Degradacao_Por_Fogo"
                                                                           ),
-                                             "Degradation" = cube %in% c("FLO_DEGRAD",
-                                                                         "FLO_DEGRAD_FOGO"
-                                                                        ),
-                                             "Other Classes" = cube %in% c("AGUA",
-                                                                           "DESMAT_CORTE_RASO_DM",
-                                                                           "DESMAT_VEG_DM",
-                                                                           "FLORESTA",
-                                                                           "NF",
-                                                                           "ROCHA",
-                                                                           "WETLANDS"
-                                                                          )
-                                             ),
+                                             
+                                              "Other_Classes" = cube %in% c("Corpo_Dagua",
+                                                                            "Corte_Raso_Antigo",
+                                                                            "Corte_Raso_Antigo_Com_Vegetacao",
+                                                                            "Floresta",
+                                                                            "Vegetacao_Natural_Nao_Florestal",
+                                                                            "Floresta_Transicional",
+                                                                            "Area_Inundavel"
+                                                                            )
+                                ),
                                 multicores = 24,
                                 memsize = 180,
-                                version = "degradation",
+                                version = paste("prodes-degradation", version, sep = "-"),
                                 output_dir = class_raster_dir,
                                 progress = TRUE)
-plot(cube_reclass)
 
 # 10.2 -- Sampling design degradation
 sampling_design <- sits_sampling_design(
   cube = cube_reclass,
   expected_ua = c(
     "Deforestation" = 0.70,
-    "Degradation" = 0.50, 
-    "Other Classes" = 0.95
+    "Degradation" = 0.60, 
+    "Other_Classes" = 0.95
   ),
   alloc_options = c(120, 100),
   std_err = 0.01,
@@ -737,11 +622,12 @@ sampling_design <- sits_sampling_design(
 # 10.2 -- Show sampling design
 sampling_design
 
+
 # 10.3 -- Generate stratified samples
 samples_sf <- sits_stratified_sampling(
   cube = cube_reclass,
   sampling_design = sampling_design,
-  alloc = "alloc_120",
+  alloc = "alloc_100",
   overhead = 1.2, # overproportion to avoid border pixels
   progress = TRUE,
   multicores = 28)
@@ -750,21 +636,20 @@ samples_sf <- sits_stratified_sampling(
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
 # 10.5 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-desmat-degrad_", version, "_", process_version, ".gpkg"))
+samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-prodes-degrad_", version, "_", process_version, ".gpkg"))
 
 # 10.6 -- Save samples_sf object as GPKG file
-sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
-
+sf::st_write(samples_sf, samples_sf_file_path, delete_dsn = TRUE, append = FALSE)
 # ============================================================
 # 11. Accuracy assessment of PRODES Degradation Adjusted Map classified images
 # ============================================================
-
 # Step 11.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(paste0(samples_dir, "")) #prodes adjusted validation samples with degradation classes
+samples_validation <- st_read(grep("*prodes-degrad*", samples_valition_list, value = TRUE)) #prodes adjusted validation samples with degradation classes
 
 # Step 11.2 -- Calculate accuracy
 area_acc_prodes <- sits_accuracy(cube_reclass, 
                           validation = samples_validation,
+                          memsize = 180,
                           multicores = 28) # adapt to your computer CPU core availability
 
 # Step 11.3 -- Print the area estimated accuracy
@@ -791,8 +676,8 @@ ggplot(matriz_conf_prodes, aes(x = Var2, y = Var1, fill = Freq)) +
         y = "Predicted", 
         title = "Confusion Matrix") +
   scale_y_discrete(limits = rev,
-                   labels = new_label) +
-  scale_x_discrete(labels = new_label) +
+                   labels = c("Other_Classes" = "Other Classes")) +
+  scale_x_discrete(labels = c("Other_Classes" = "Other Classes")) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 25,
                                    hjust = 1,
@@ -814,10 +699,10 @@ ggsave(
 acuracias_prodes <- data.frame(class = names(area_acc_prodes$accuracy[[1]]),
                                user_accuracy = round(as.numeric(area_acc_prodes$accuracy[[1]]), 2),
                                prod_accuracy = round(as.numeric(area_acc_prodes$accuracy[[2]]), 2)
-) %>% 
-  tidyr::pivot_longer(cols = -class,
-                      names_to = "tipo_acuracia",
-                      values_to = "acuracia")
+                              ) %>% 
+                    tidyr::pivot_longer(cols = -class,
+                                        names_to = "tipo_acuracia",
+                                        values_to = "acuracia")
 
 # Step 12.4 -- Plot accuracies metrics
 ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) + 
@@ -831,7 +716,7 @@ ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
        title = "Accuracies",
        caption = paste0("Global Accuracy: ", round(area_acc_prodes$accuracy[[3]], 2))) +
   scale_y_discrete(limits = rev,
-                   labels = new_label) +
+                   labels = c("Other_Classes" = "Other Classes")) +
   scale_x_discrete(labels = c("prod_accuracy" = "Prod Acc",
                               "user_accuracy" = "User Acc")) +
   theme_minimal() +
@@ -851,7 +736,7 @@ ggsave(
 
 # Step 12.5 -- Convert Error-Adjusted Area (ha) results to a data frame 
 class_areas <- data.frame(class = names(area_acc_prodes$area_pixels),
-                          mapped_area_ha = round(as.numeric(area_acc_prodes$areas_pixels), 2),
+                          mapped_area_ha = round(as.numeric(area_acc_prodes$area_pixels), 2),
                           error_adj_area_ha = round(as.numeric(area_acc_prodes$error_ajusted_area), 2),
                           conf_interval_ha = round(as.numeric(area_acc_prodes$conf_interval), 2)
                          ) %>%
@@ -868,7 +753,7 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
        x = "Metrics", 
        title = "Area Metrics") +
   scale_y_discrete(limits = rev,
-                   labels = new_label) +
+                   labels = c("Other_Classes" = "Other Classes")) +
   scale_x_discrete(limits = rev,
                    labels = c("mapped_area_ha" = "Mapped Area (ha)",
                               "error_adj_area_ha" = "Error-Adjusted Area (ha)",
