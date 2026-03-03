@@ -51,7 +51,6 @@ my_colors <- c(
   "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo"           = "#A0522D"
 )
 
-
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
@@ -89,13 +88,12 @@ mm_cube <- sits_cube(
 # Step 2.5 -- Merge the Training Cube with Mixture Model Cube
 cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 
-
 # ============================================================
 # 3. Load and Explore Train Sample Data
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
-samples_train <- sf::st_read(file.path(sample_path, "samples-2-tiles.gpkg"))
+samples_train <- sf::st_read(file.path(sample_path, "samples-training-nf-014002-015002-2026-03-03.gpkg"))
 
 # Step 3.2 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
@@ -123,7 +121,6 @@ samples |>
 # Step 3.3 -- Save the samples Time Series to a R file
 saveRDS(samples, 
         paste0(rds_path,"time_series/", "samples_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
-
 
 # ============================================================
 # 4. Analyse quality (SOM - 1)
@@ -187,7 +184,6 @@ ggsave(
   units = "px",
   dpi = 350,
 )
-
 
 # ============================================================
 # 5. Analyse quality, filter (SOM - 2)

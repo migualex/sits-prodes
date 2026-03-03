@@ -19,7 +19,7 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name    <- "RF-model_2-tiles-014002-015002_2y-period-2023-07-28_2025-07-28_nf_2026-02-24_11h48m.rds" #add the model name
+model_name    <- "RF-model_2-tiles-014002-015002_2y-period-2023-07-28_2025-07-28_nf-samples-crude_2026-03-03_15h36m.rds" #add the model name
 seg_version   <- "lsmm-snic-spac10-comp05-pad0-rectangular-2026-02-23"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
@@ -33,7 +33,6 @@ var <- "nf-samples-crude"
 # Step 1.5 -- Define time range
 start_date    <- "2023-08-01"
 end_date      <- "2025-07-31"
-
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -81,6 +80,13 @@ local_segs_cube <- sits_cube(
   parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version")
 )
 
+# 2.6 Create output directory per tile and period
+tile_id <- unique(cube$tile)
+period_id <- no.years
+
+tile_period_dir <- file.path(class_path, tile_id, period_id)
+
+dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
 # 3. Probability and Classification Mapping
@@ -99,7 +105,7 @@ class_prob <- sits_classify(
   ml_model    = rf_model,
   multicores  = 28,  # adapt to your computer CPU core availability
   memsize     = 180, # adapt to your computer memory availability
-  output_dir =  class_path,
+  output_dir =  tile_period_dir,
   version     = version, # version should be a lower case character vector with no underlines
   n_sam_pol   = 16, #  Number of time series per segment to be classified (integer, min = 10, max = 50)
   verbose     = TRUE,
@@ -114,7 +120,7 @@ vector_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   raster_cube = cube_merge_lsmm_class,
-  vector_dir  = class_path,
+  vector_dir  = tile_period_dir,
   vector_band = "probs",
   version     = version, # do not use underline character
   parse_info  = c("X1", "X2", "tile", "start_date", "end_date", "band", "version")
@@ -123,7 +129,7 @@ vector_cube <- sits_cube(
 # Step 3.5 -- Generate Final Classified Map of Segments
 class_map <- sits_label_classification(
   cube        = class_prob,
-  output_dir  = class_path,
+  output_dir  = tile_period_dir,
   version     = version,
   multicores  = 28,  # adapt to your computer CPU core availability
   memsize     = 180, # adapt to your computer memory availability
@@ -142,14 +148,14 @@ uncertainty <- sits_uncertainty(
   type = "entropy",
   multicores = 28, # adapt to your computer CPU core availability
   memsize = 180, # adapt to your computer memory availability
-  output_dir = class_path,
+  output_dir = tile_period_dir,
   version = version,
   progress = TRUE
 )
 
-# Step 4.2 -- List the paths of the '.gpkg' files in 'class_path' containing 'entropy'
+# Step 4.2 -- List the paths of the '.gpkg' files in 'tile_period_dir' containing 'entropy'
 uncertainty_files <- list.files(
-  path = class_path, 
+  path = tile_period_dir, 
   pattern = "entropy.*\\.gpkg$", 
   full.names = TRUE
 )
@@ -183,7 +189,7 @@ plot(uncertainty_raster_uint16,
 # Step 4.7 -- Save the final file with the desired data type
 writeRaster(
   uncertainty_raster_uint16, 
-  filename = file.path(class_path, paste0(tools::file_path_sans_ext(basename(uncertainty_file)), "_raster.tif")),
+  filename = file.path(tile_period_dir, paste0(tools::file_path_sans_ext(basename(uncertainty_file)), "_raster.tif")),
   datatype = "INT2U",  # This is the code for Uint16
   overwrite = TRUE,
   gdal = c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9") # Additional compression to reduce file size
