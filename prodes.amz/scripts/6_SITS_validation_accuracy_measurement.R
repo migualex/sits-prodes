@@ -135,22 +135,34 @@ style <- tibble::tibble(
   color = pals::cols25(length(sits_labels(model)))
 )
 
-# Step 2.3 -- Aplly rasterize function to all files in directory that has the same version and gpkg extension
+# Step 2.3 -- Apply the rasterize function to all files in the directory that have the same version and the .gpkg extension
 to_raster <- paste0(".*_class_", version, ".*\\.gpkg$")
-raster_files <- fs::dir_ls(class_dir, regexp = to_raster) |>
-  purrr::map(function(file) {
-    file_name <- fs::path_file(file)
-    
-    cli::cli_inform("Processing: {file_name}")
-    
-    sits_rasterize_segments(
-      file       = file,
-      res        = 10,
-      style      = style,
-      class_raster_dir = class_raster_dir
-    )
-  })
 
+class_files <- list.files(
+  path = class_dir,
+  pattern = to_raster,
+  full.names = TRUE,
+  recursive = TRUE
+)
+
+raster_files <- purrr::map(class_files, function(file) {
+  
+  file_name <- fs::path_file(file)
+  cli::cli_inform("Processing: {file_name}")
+  
+  tile_id <- stringr::str_extract(file_name, "\\d{6}")
+  period_id <- stringr::str_extract(file_name, "\\d+y")
+  
+  tile_period_dir <- file.path(class_raster_dir, tile_id, period_id)
+  fs::dir_create(tile_period_dir, recurse = TRUE)
+  
+  sits_rasterize_segments(
+    file = file,
+    res = 10,
+    style = style,
+    class_raster_dir = tile_period_dir
+  )
+})
 
 # ============================================================
 # 3. SITS Cube
@@ -172,7 +184,6 @@ cube <- sits_cube(
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version")
   )
-
 
 # ============================================================
 # 4. Full Map Stratified random sampling

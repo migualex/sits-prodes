@@ -79,12 +79,9 @@ local_segs_cube <- sits_cube(
   parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version")
 )
 
-# ============================================================
-# Create output directory per tile and period
-# ============================================================
-
+# 2.6 Create output directory per tile and period
 tile_id <- unique(cube$tile)
-period_id <- no.years  # já é "1y" ou "2y"
+period_id <- no.years
 
 tile_period_dir <- file.path(class_path, tile_id, period_id)
 
