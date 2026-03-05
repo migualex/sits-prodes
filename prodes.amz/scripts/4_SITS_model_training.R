@@ -118,7 +118,7 @@ plot(rf_model)
 # Step 4.2.2 -- Save the plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,

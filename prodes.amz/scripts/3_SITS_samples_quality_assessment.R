@@ -13,8 +13,8 @@ library(dplyr)
 library(ggplot2)
 
 # Step 1.2 -- Define the date and time for the start of processing
-date_process <- format(Sys.Date(), "%Y-%m-%d_")
-time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
+date_process    <- format(Sys.Date(), "%Y-%m-%d_")
+time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
@@ -46,7 +46,6 @@ my_colors <- c(
   "Vegetacao_Natural_Nao_Florestal"       = "#C0D665",
   "Area_Inundavel"                        = "#A0B9C8" 
 )
-
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -85,6 +84,12 @@ mm_cube <- sits_cube(
 # Step 2.5 -- Merge the Training Cube with Mixture Model Cube
 cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 
+# Step 2.6 -- Create output directory per tile and period
+tiles_id <- paste(sort(unique(cube_merge_lsmm_train$tile)), collapse = "_")
+
+tile_period_dir <- file.path(plots_path, tiles_id, no.years)
+
+dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
 # 3. Load and Explore Train Sample Data
@@ -120,7 +125,6 @@ samples |>
 saveRDS(samples, 
         paste0(rds_path,"time_series/", "samples_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
-
 # ============================================================
 # 4. Analyse quality (SOM - 1)
 # ============================================================
@@ -146,7 +150,7 @@ plot(som_cluster)
 # Step 4.1.2 -- Save SOM map plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train, "_", var, "_som-eval.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -176,14 +180,13 @@ plot(som_eval) +
 # Step 4.3.2 -- Save the plot of summary of the mixed labels
 ggsave(
   filename = paste0(process_version, "_", tiles_train, "_", var, "_confusion-cluster.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,
   units = "px",
   dpi = 350,
 )
-
 
 # ============================================================
 # 5. Analyse quality, filter (SOM - 2)
@@ -202,7 +205,7 @@ plot(all_samples)
 # Step 5.1.2 -- Save the plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train, "_", var, "_all-samples.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -238,7 +241,7 @@ plot(som_cluster_clean)
 # Step 5.4.2 -- Save the plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train, "_", var, "_som-eval-clean.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -268,7 +271,7 @@ plot(som_eval_clean) +
 # Step 5.5.2 -- Save the plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train, "_", var, "_confusion-cluster-clean.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -316,7 +319,7 @@ plot(som_cluster_clean_balanced)
 # Step 6.3.2 -- Save the plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train, "_", var, "_som-eval-clean-balanced.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -341,7 +344,7 @@ plot(som_eval_clean_balanced) +
 # Step 6.4.3 -- Save the plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train,  var, "_confusao-cluster-clean-balanced.png"),
-  path = plots_path,
+  path = tile_period_dir,
   scale = 1,
   width = 3529,
   height = 1578,
