@@ -55,7 +55,7 @@ digraph SITS_AMZ_PIPELINE {
   // Legend
   // -------------------------
   subgraph cluster_legend {
-    label = \"Legend\"
+    label = <<B>Legend</B>>
     style = rounded
     color = gray50
     fontname = Helvetica
@@ -68,9 +68,11 @@ digraph SITS_AMZ_PIPELINE {
   }
   
   subgraph cluster_script1 {
-    label = \"Step 1\"
+    label = <<B>Step 1</B>>
     style = rounded
     color = gray50
+    fontname = Helvetica
+    fontsize = 14
 
     S1_Cube [label=\"Load Sentinel-2 Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]
     S1_Endm [label=\"Define Endmembers\\nSoil / Veg / Dark\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]
@@ -85,9 +87,11 @@ digraph SITS_AMZ_PIPELINE {
   }
 
   subgraph cluster_script2 {
-    label = \"Step 2\"
+    label = <<B>Step 2</B>>
     style = rounded
     color = gray50
+    fontname = Helvetica
+    fontsize = 14
 
     S2_LoadMM [label=\"Load LSMM cube\\nsits_cube(data_dir)\", fillcolor=\"#E1F5FE\"]
     S2_SNIC   [label=\"Segment LSMM cube\\nsits_segment()\\nseg_fn = sits_snic()\", fillcolor=\"#FFF9C4\"]
@@ -97,9 +101,11 @@ digraph SITS_AMZ_PIPELINE {
   }
 
   subgraph cluster_script3 {
-    label = \"Step 3\"
+    label = <<B>Step 3</B>>
     style = rounded
     color = gray50
+    fontname = Helvetica
+    fontsize = 14
 
     S3_CubeS2   [label=\"Load Training Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]
     S3_LoadMM   [label=\"Load LSMM cube\\nSoil / Veg / Dark\", fillcolor=\"#E1F5FE\"]
@@ -107,7 +113,7 @@ digraph SITS_AMZ_PIPELINE {
 
     S3_Samples  [label=\"Load Training Samples\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]
     S3_GetData  [label=\"Extract time series\\nsits_get_data()\", fillcolor=\"#FFF9C4\"]
-    S3_TS       [label=\"Time Series Samples\", fillcolor=\"#E1F5FE\"]
+    S3_TS       [label=\"Time Series\", fillcolor=\"#E1F5FE\"]
     S3_SaveTS   [label=\"Save original\\nsaveRDS(time_series)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]
 
     S3_SOM1     [label=\"SOM clustering (1)\\nsits_som_map()\", fillcolor=\"#FFF9C4\"]
@@ -138,9 +144,11 @@ digraph SITS_AMZ_PIPELINE {
   }
 
   subgraph cluster_script4 {
-    label = \"Step 4\"
+    label = <<B>Step 4</B>>
     style = rounded
     color = gray50
+    fontname = Helvetica
+    fontsize = 14
 
     S4_LoadTS [label=\"Load training\\nreadRDS(cleaned & balanced)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]
     S4_Kfold  [label=\"Cross-validation\\nsits_kfold_validate()\", fillcolor=\"#FFF9C4\"]
@@ -153,9 +161,11 @@ digraph SITS_AMZ_PIPELINE {
   }
 
   subgraph cluster_script5 {
-    label = \"Step 5\"
+    label = <<B>Step 5</B>>
     style = rounded
     color = gray50
+    fontname = Helvetica
+    fontsize = 14
 
     S5_Cube    [label=\"Load classification cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]
     S5_LoadMM  [label=\"Load LSMM fractions\\nsits_cube()\", fillcolor=\"#E1F5FE\"]
@@ -180,9 +190,12 @@ digraph SITS_AMZ_PIPELINE {
   }
 
   subgraph cluster_script6 {
-    label = \"Step 6\"
+    label = <<B>Step 6</B>>
     style = rounded
     color = gray50
+    labeljust = \"l\"
+    fontname = Helvetica
+    fontsize = 14
 
     S6_Rast    [label=\"Rasterize classified vectors\\nsits_rasterize_segments()\", fillcolor=\"#FFF9C4\"]
     S6_Cube    [label=\"Load classified raster cube\\nsits_cube(bands=class)\", fillcolor=\"#E1F5FE\"]
@@ -202,9 +215,11 @@ digraph SITS_AMZ_PIPELINE {
   }
 
   subgraph cluster_script7 {
-    label = \"Step 7\"
+    label = <<B>Step 7</B>>
     style = rounded
     color = gray50
+    fontname = Helvetica
+    fontsize = 14
 
     S7_Class    [label=\"Load classified vectors\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]
     S7_Filter   [label=\"Filter deforestation classes\", fillcolor=\"#FFF9C4\"]
@@ -229,11 +244,10 @@ digraph SITS_AMZ_PIPELINE {
 
   S3_SaveBal -> S4_LoadTS
   S4_Save -> S5_Model
-
+  
   S5_Map -> ROUTE_ML [arrowhead=none, color=gray35]
   ROUTE_ML -> S6_Rast
   ROUTE_ML -> S7_Class
-
 }
 ")
 ```
