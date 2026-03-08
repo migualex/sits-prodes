@@ -1,0 +1,1 @@
+This folder is intended to store the SITS-AMZ pipeline flowchart.
