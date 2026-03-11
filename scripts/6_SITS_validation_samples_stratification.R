@@ -1,5 +1,5 @@
 # ============================================================
-#  Validation and accuracy measurement
+#  Stratification of validation samples
 # ============================================================
 
 # ============================================================
@@ -32,8 +32,10 @@ plots_path       <- "data/plots"
 aux_dir          <- "data/raw/auxiliary"
 version          <- "rf-2y-012014-all-classes-2y"
 
+# Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
 dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
 
+# Step 1.5 -- Get the list of validation sample files matching the version pattern in the samples directory
 samples_validation_list <- dir(
   samples_dir,
   pattern = paste0(".*_", version, "_.*\\.gpkg$"),
@@ -205,7 +207,7 @@ cube <- sits_cube(
 )
 
 # ============================================================
-# 4. Full Map Stratified random sampling
+# 4. Full Map Stratified Random Sampling
 # ============================================================
 
 # 4.1 -- Sampling design

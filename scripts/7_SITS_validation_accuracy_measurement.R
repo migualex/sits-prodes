@@ -23,17 +23,19 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_2y-period-2023-07-28_2025-07-28_2y-all-classes_2026-02-25_17h58m.rds"
+model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_21h03m.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
 class_raster_dir <- "data/class/raster"
 samples_dir      <- "data/raw/samples/validation_samples"
 plots_path       <- "data/plots"
 aux_dir          <- "data/raw/auxiliary"
-version          <- "rf-2y-012014-all-classes-2y"
+version          <- "rf-1y-013014-all-classes"
 
+# Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
 dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
 
+# Step 1.5 -- Get the list of validation sample files matching the version pattern in the samples directory
 samples_validation_list <- dir(
   samples_dir,
   pattern = paste0(".*_", version, "_.*\\.gpkg$"),
@@ -54,12 +56,13 @@ cube_dirs <- cube_dirs[
   })
 ]
 
+# Step 2.2 -- Store the labels from the trained model using sits_labels and assign them to a named vector
 labels <- c(
   x = sits_labels(model)
 )
 names(labels) <- 1:length(labels)
 
-# Step 2.2 -- Load the original cube with classified raster file
+# Step 2.3 -- Load the original cube with classified raster file
 cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
@@ -226,8 +229,19 @@ ggsave(
 # ============================================================
 # 5. PRODES Degradation Adjusted Map Accuracy
 # ============================================================
+# 5.1 -- Reclassify classified cube
+mask_label <- c("1" = "Natural Vegetation",
+                "0" = "Deforestation Mask")
 
-# 5.1 -- Detect tiles and period automatically
+prodes_mask <- sits_cube(source = "BDC",
+                         collection = "SENTINEL-2-16D",
+                         data_dir = aux_dir,
+                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         bands = "class",
+                         version = "v2024",
+                         labels = mask_label)
+
+# 5.2 -- Detect tiles and period automatically
 tile_version <- stringr::str_extract(version, "\\d{6}")
 period_version <- stringr::str_extract(version, "\\d+y")
 
@@ -236,7 +250,8 @@ cube_dirs_filtered <- cube_dirs[
     grepl(period_version, cube_dirs)
 ]
 
-sits_cube <- purrr::map(cube_dirs_filtered, function(dir_path) {
+# 5.3 -- Create the raster cube
+cube_reclass <- purrr::map(cube_dirs_filtered, function(dir_path) {
   tile_id <- basename(dirname(dir_path))
   period_id <- basename(dir_path)
   cli::cli_inform("Reclassifying tile {tile_id} period {period_id}")
@@ -269,12 +284,12 @@ sits_cube <- purrr::map(cube_dirs_filtered, function(dir_path) {
     multicores = 24,
     memsize = 180,
     version = paste("prodes-degradation", version, sep = "-"),
-    data_dir = dir_path,
+    output_dir = dir_path,
     progress = TRUE
   )
 })
 
-# 5.2 -- Extract the cube REQUIRED
+# 5.4 -- Extract the cube REQUIRED
 cube_reclass <- cube_reclass[[1]]
 
 # ============================================================
@@ -282,7 +297,7 @@ cube_reclass <- cube_reclass[[1]]
 # ============================================================
 
 # Step 6.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*prodes-degrad*", samples_validation_list, value = TRUE)) #prodes adjusted validation samples with degradation classes
+samples_validation <- st_read(grep("*desmat-degrad*", samples_validation_list, value = TRUE)) #prodes adjusted validation samples with degradation classes
 
 # Step 6.2 -- Calculate accuracy
 area_acc_prodes <- sits_accuracy(cube_reclass, 
