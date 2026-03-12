@@ -38,7 +38,7 @@ dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
 # Step 1.5 -- Get the list of validation sample files matching the version pattern in the samples directory
 samples_validation_list <- dir(
   samples_dir,
-  pattern = paste0(".*_", version, "_.*\\.gpkg$"),
+  pattern = paste0(".*", version, ".*\\.gpkg$"),
   full.names = TRUE
 )
 
