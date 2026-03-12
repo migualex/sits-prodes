@@ -12,13 +12,14 @@ This flowchart shows the pipeline used in the PRODES-AMZ project, developed with
 
 ### Description
 
-1.  [Creating Linear Spectral Mixture Model (LSMM) for features training and classification.](https://github.com/migualex/sits-prodes/blob/main/prodes.amz/scripts/1_SITS_mixture_model.R)
-2.  [Segmentation from Linear Spectral Mixture Model (LSMM) for features training and classification.](https://github.com/migualex/sits-prodes/blob/main/prodes.amz/scripts/2_SITS_segmentation.R)
-3.  [Samples quality assessment, filtering and balancing.](https://github.com/migualex/sits-prodes/blob/main/prodes.amz/scripts/3_SITS_samples_quality_assessment.R)
-4.  [Train Machine Learning Model.](https://github.com/migualex/sits-prodes/blob/main/prodes.amz/scripts/4_SITS_model_training.R)
-5.  [Classification of Vector Data Cube.](https://github.com/migualex/sits-prodes/blob/main/prodes.amz/scripts/5_SITS_classification.R)
-6.  [Validation and accuracy measurement.](https://github.com/migualex/sits-prodes/blob/main/prodes.amz/scripts/6_SITS_validation_accuracy_measurement.R)
-7.  [Post-Processing.](https://github.com/migualex/sits-prodes/blob/main/prodes.amz/scripts/7_SITS_post_processing.R)
+1.  [Creating Linear Spectral Mixture Model (LSMM) for features training and classification.](https://github.com/migualex/sits-prodes/blob/main/scripts/1_SITS_mixture_model.R)
+2.  [Segmentation from Linear Spectral Mixture Model (LSMM) for features training and classification.](https://github.com/migualex/sits-prodes/blob/main/scripts/2_SITS_segmentation.R)
+3.  [Samples quality assessment, filtering and balancing.](https://github.com/migualex/sits-prodes/blob/main/scripts/3_SITS_samples_quality_assessment.R)
+4.  [Train Machine Learning Model.](https://github.com/migualex/sits-prodes/blob/main/scripts/4_SITS_model_training.R)
+5.  [Classification of Vector Data Cube.](https://github.com/migualex/sits-prodes/blob/main/scripts/5_SITS_classification.R)
+6.  [Stratification of validation samples.](https://github.com/migualex/sits-prodes/blob/main/scripts/6_SITS_validation_samples_stratification.R)
+7.  [Validation and accuracy measurement.](https://github.com/migualex/sits-prodes/blob/main/scripts/7_SITS_validation_accuracy_measurement.R)
+8.  [Post-Processing.](https://github.com/migualex/sits-prodes/blob/main/scripts/7_SITS_post_processing.R)
 
 ```{r echo=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
