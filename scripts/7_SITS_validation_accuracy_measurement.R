@@ -38,7 +38,7 @@ dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
 # Step 1.5 -- Get the list of validation sample files matching the version pattern in the samples directory
 samples_validation_list <- dir(
   samples_dir,
-  pattern = paste0(".*_", version, "_.*\\.gpkg$"),
+  pattern = paste0(".*", version, ".*\\.gpkg$"),
   full.names = TRUE
 )
 
@@ -68,7 +68,7 @@ cube <- sits_cube(
   collection = "SENTINEL-2-16D",
   bands = "class",
   labels = labels,
-  data_dir = cube_dirs, # classified raster file cannot be in the same folder as the classified gpkg file
+  data_dir = cube_dirs,
   version = version,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version")
@@ -297,7 +297,7 @@ cube_reclass <- cube_reclass[[1]]
 # ============================================================
 
 # Step 6.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*desmat-degrad*", samples_validation_list, value = TRUE)) #prodes adjusted validation samples with degradation classes
+samples_validation <- st_read(grep("*desmat-degrad*", samples_validation_list, value = TRUE))
 
 # Step 6.2 -- Calculate accuracy
 area_acc_prodes <- sits_accuracy(cube_reclass, 
