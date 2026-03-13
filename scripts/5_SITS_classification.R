@@ -28,6 +28,7 @@ mixture_path  <- "data/raw/mixture_model"
 
 # Step 1.4 -- Identifier to distinguish the file from previous versions 
 var <- "all-classes"
+tile <- "012014"
 
 # Step 1.5 -- Define time range
 start_date    <- "2023-08-01"
@@ -42,7 +43,7 @@ cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
-  tiles       = "012014",
+  tiles       = tile,
   start_date  = start_date,
   end_date    = end_date,
   progress    = TRUE
@@ -56,7 +57,7 @@ no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)
 # Step 2.3 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
   source = "BDC",
-  tiles = '012014',
+  tiles = tile,
   collection = "SENTINEL-2-16D",
   bands = c("SOIL", "VEG", "WATER"),
   data_dir = mixture_path,
@@ -191,5 +192,6 @@ writeRaster(
   filename = file.path(tile_period_dir, paste0(tools::file_path_sans_ext(basename(uncertainty_file)), "_raster.tif")),
   datatype = "INT2U",  # This is the code for Uint16
   overwrite = TRUE,
-  gdal = c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9") # Additional compression to reduce file size
+  gdal = c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9"), # Additional compression to reduce file size
+  progress = TRUE
 )
