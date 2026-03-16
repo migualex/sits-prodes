@@ -8,7 +8,7 @@ library(sits)
 # Define the paths for files and folders needed in the processing
 mixture_path  <- "data/raw/mixture_model"
 segments_path <- "data/segments"
-texture_path  <- "data/texture/window_3"
+texture_path  <- "data/raw/texture/window_3"
 
 # Define the date and time for the start of processing
 date_process <- format(Sys.Date(), "%Y-%m-%d")
