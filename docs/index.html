@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SITS-AMZ Pipeline — BiomasBR</title>
+  <title>SITS-AMZ Pipeline · BiomasBR</title>
   <meta name="description" content="End-to-end land use classification pipeline for the Brazilian Amazon using the SITS R package."/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1422,8 +1422,8 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <a href="#step3" class="sb-item"><span class="sb-item-num">3</span>Sample Quality Assessment</a>
   <a href="#step4" class="sb-item"><span class="sb-item-num">4</span>Model Training</a>
   <a href="#step5" class="sb-item"><span class="sb-item-num">5</span>Classification</a>
-  <a href="#step6" class="sb-item"><span class="sb-item-num">6</span>Validation — Stratification</a>
-  <a href="#step7" class="sb-item"><span class="sb-item-num">7</span>Validation — Accuracy</a>
+  <a href="#step6" class="sb-item"><span class="sb-item-num">6</span>Validation: Stratification</a>
+  <a href="#step7" class="sb-item"><span class="sb-item-num">7</span>Validation: Accuracy</a>
   <a href="#step8" class="sb-item"><span class="sb-item-num">8</span>Post-Processing</a>
   <hr class="sb-divider">
   <div class="sb-part">Reference</div>
@@ -1457,9 +1457,9 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     </div>
   </div>
 
-  <p>This book documents the complete processing pipeline of the <strong>PRODES-AMZ</strong> project — an application of the <a href="https://github.com/e-sensing/sits" target="_blank"><code>sits</code></a> R package (v1.5.4) for annual deforestation and degradation monitoring in the Brazilian Legal Amazon. The pipeline runs on Sentinel-2 16-day composites from the <a href="https://brazildatacube.org/" target="_blank">Brazil Data Cube (BDC)</a>, covering tiles <code>012014</code>, <code>012015</code>, <code>013014</code>, <code>013015</code> for the 2023-08–2025-07 reference period.</p>
+  <p>This book documents the complete processing pipeline of the <strong>PRODES-AMZ</strong> project, an application of the <a href="https://github.com/e-sensing/sits" target="_blank"><code>sits</code></a> R package (v1.5.4) for annual deforestation and degradation monitoring in the Brazilian Legal Amazon. The pipeline runs on Sentinel-2 16-day composites from the <a href="https://brazildatacube.org/" target="_blank">Brazil Data Cube (BDC)</a>, covering tiles <code>012014</code>, <code>012015</code>, <code>013014</code>, <code>013015</code> for the 2023-08–2025-07 reference period.</p>
 
-  <p>The pipeline follows a <strong>time-first, space-later</strong> paradigm: each spatial unit is associated with a multivariate time series of spectral bands, a machine learning model classifies those time series, and spatial post-processing rules refine the map. Unlike standard SITS workflows, classification is performed at <strong>segment level</strong> (Object-Based Image Analysis) using vector data cubes — producing results compatible with INPE's PRODES polygon-based outputs.</p>
+  <p>The pipeline follows a <strong>time-first, space-later</strong> paradigm: each spatial unit is associated with a multivariate time series of spectral bands, a machine learning model classifies those time series, and spatial post-processing rules refine the map. Unlike standard SITS workflows, classification is performed at <strong>segment level</strong> (Object-Based Image Analysis) using vector data cubes, producing results compatible with INPE's PRODES polygon-based outputs.</p>
 
   <div class="callout note">
     <div class="callout-title">📖 Note</div>
@@ -1470,13 +1470,13 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <div class="tbl-wrap"><table>
     <thead><tr><th>#</th><th>Script</th><th>Description</th></tr></thead>
     <tbody>
-      <tr><td class="mono">01</td><td><code>1_SITS_mixture_model.R</code></td><td>Generate LSMM fraction bands — Soil, Veg, Water</td></tr>
+      <tr><td class="mono">01</td><td><code>1_SITS_mixture_model.R</code></td><td>Generate LSMM fraction bands (Soil, Veg, Water)</td></tr>
       <tr><td class="mono">02</td><td><code>2_1_SITS_segmentation.R</code></td><td>Segment LSMM cube with SNIC → vector data cube</td></tr>
       <tr><td class="mono">03</td><td><code>3_SITS_samples_quality_assessment.R</code></td><td>Extract time series, 3× SOM QC, balance classes</td></tr>
       <tr><td class="mono">04</td><td><code>4_SITS_model_training.R</code></td><td>K-fold cross-validation, train RF (100 trees)</td></tr>
       <tr><td class="mono">05</td><td><code>5_SITS_classification.R</code></td><td>Classify vector cube, label map + entropy uncertainty</td></tr>
       <tr><td class="mono">06</td><td><code>6_SITS_validation_samples_stratification.R</code></td><td>Rasterize map, stratified sample design + reclassification</td></tr>
-      <tr><td class="mono">07</td><td><code>7_SITS_validation_accuracy_measurement.R</code></td><td>Area-adjusted accuracy — full map + PRODES-Degradation</td></tr>
+      <tr><td class="mono">07</td><td><code>7_SITS_validation_accuracy_measurement.R</code></td><td>Area-adjusted accuracy: full map and PRODES-Degradation</td></tr>
       <tr><td class="mono">08</td><td><code>8_SITS_post_processing.R</code></td><td>PRODES mask, 1 ha MMU, spatial adjacency rule</td></tr>
     </tbody>
   </table></div><div class="page-nav">
@@ -1494,16 +1494,16 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   </div>
 
   <h2 id="prodes"><span class="sec-num">1.1</span>PRODES and BiomasBR</h2>
-  <p>The <strong>PRODES program</strong>, operated by INPE, has continuously mapped deforestation in the Brazilian Legal Amazon since 1988. PRODES tracks gross annual deforestation — primary forest removed within each 12-month reference year (August–July) — using Landsat-class imagery and polygon-based shapefiles with a 1 ha minimum mapping unit. This pipeline extends PRODES compatible mapping to include <strong>forest degradation</strong> classes (Degradacao, Degradacao_Por_Fogo) alongside the standard deforestation classes, using Sentinel-2 time series and OBIA classification.</p>
+  <p>The <strong>PRODES program</strong>, operated by INPE, has continuously mapped deforestation in the Brazilian Legal Amazon since 1988. PRODES tracks gross annual deforestation, defined as primary forest removed within each 12-month reference year (August to July), using Landsat-class imagery and polygon-based shapefiles with a 1 ha minimum mapping unit. This pipeline extends PRODES compatible mapping to include <strong>forest degradation</strong> classes (Degradacao, Degradacao_Por_Fogo) alongside the standard deforestation classes, using Sentinel-2 time series and OBIA classification.</p>
 
   <h2 id="time-first"><span class="sec-num">1.2</span>Time-First, Space-Later</h2>
-  <p>The <code>sits</code> package follows a <strong>time-first, space-later</strong> paradigm (SITS Book, Introduction). In the <em>time-first</em> phase, each pixel or segment is represented as a multivariate time series across all acquisition dates. A machine learning model classifies these time series. In the <em>space-later</em> phase, spatial post-processing rules refine the map. This captures seasonal phenological patterns — e.g., the NDVI cycle of pasture vs. native vegetation — that single-date composites cannot discriminate.</p>
+  <p>The <code>sits</code> package follows a <strong>time-first, space-later</strong> paradigm (SITS Book, Introduction). In the <em>time-first</em> phase, each pixel or segment is represented as a multivariate time series across all acquisition dates. A machine learning model classifies these time series. In the <em>space-later</em> phase, spatial post-processing rules refine the map. This captures seasonal phenological patterns, such as the NDVI cycle of pasture versus native vegetation, that single-date composites cannot discriminate.</p>
 
   <h2 id="obia-concept"><span class="sec-num">1.3</span>Object-Based Image Analysis with Vector Data Cubes</h2>
   <p>Rather than classifying individual pixels, this pipeline segments the image into spatially homogeneous objects (SNIC superpixels), assembles them into a <strong>vector data cube</strong> (SITS Book, Ch. 25), and classifies the time series extracted per segment. This eliminates salt-and-pepper noise, produces polygon outputs compatible with the PRODES data model, and allows setting a minimum mapping unit before classification by controlling segment size.</p>
 
   <h2 id="bdc-source"><span class="sec-num">1.4</span>Brazil Data Cube as Data Source</h2>
-  <p>All imagery is sourced from the <a href="https://brazildatacube.org/" target="_blank">Brazil Data Cube (BDC)</a> collection <code>SENTINEL-2-16D</code> — analysis-ready 16-day best-pixel composites at 10 m resolution. The BDC applies cloud masking and compositing, making the cube directly suitable for time series analysis without additional preprocessing. Bands used: B02, B03, B04, B05, B06, B07, B08, B8A, B11, B12, NDVI, NBR, EVI, CLOUD.</p>
+  <p>All imagery is sourced from the <a href="https://brazildatacube.org/" target="_blank">Brazil Data Cube (BDC)</a> collection <code>SENTINEL-2-16D</code>, which provides analysis-ready 16-day best-pixel composites at 10 m resolution. The BDC applies cloud masking and compositing, making the cube directly suitable for time series analysis without additional preprocessing. Bands used: B02, B03, B04, B05, B06, B07, B08, B8A, B11, B12, NDVI, NBR, EVI, CLOUD.</p>
 
   <div class="page-nav">
     <a class="pnav-btn" href="#preface"><span class="pnav-dir">← Previous</span><span class="pnav-title">Preface</span></a>
@@ -1557,7 +1557,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 
   <div class="page-nav">
     <a class="pnav-btn" href="#introduction"><span class="pnav-dir">← Previous</span><span class="pnav-title">Introduction</span></a>
-    <a class="pnav-btn pnav-next" href="#step1"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 1 — LSMM</span></a>
+    <a class="pnav-btn pnav-next" href="#step1"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 1: LSMM</span></a>
   </div>
 </section>
 
@@ -1570,7 +1570,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   </div>
   <div class="step-badge">1_SITS_mixture_model.R</div>
 
-  <p><code>sits_mixture_model()</code> (SITS Book, Ch. 9) decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> using non-negative least squares (NNLS). This pipeline uses <strong>Soil, Vegetation, and Water</strong> endmembers — band values taken from Small &amp; Sousa (2022) for Sentinel-2 MSI. The resulting fraction bands (0–10 000 scale) enrich the feature space used for classification, improving separability in mixed transition zones common in the Amazon.</p>
+  <p><code>sits_mixture_model()</code> (SITS Book, Ch. 9) decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> using non-negative least squares (NNLS). This pipeline uses <strong>Soil, Vegetation, and Water</strong> endmembers, with band values taken from Small &amp; Sousa (2022) for Sentinel-2 MSI. The resulting fraction bands (0–10 000 scale) enrich the feature space used for classification, improving separability in mixed transition zones common in the Amazon.</p>
 
   <div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val">BDC <code>SENTINEL-2-16D</code> cube<br>Tiles: 012014, 012015, 013014, 013015<br>2023-08-01 → 2025-07-31</div></div>
@@ -1620,7 +1620,7 @@ mm_cube <span class="o">&lt;-</span> <span class="nf">sits_mixture_model</span>(
 
   <div class="page-nav">
     <a class="pnav-btn" href="#setup"><span class="pnav-dir">← Previous</span><span class="pnav-title">Setup</span></a>
-    <a class="pnav-btn pnav-next" href="#step2"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 2 — Segmentation</span></a>
+    <a class="pnav-btn pnav-next" href="#step2"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 2: Segmentation</span></a>
   </div>
 </section>
 
@@ -1687,8 +1687,8 @@ mm_cube_segments <span class="o">&lt;-</span> <span class="nf">sits_segment</spa
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step1"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 1 — LSMM</span></a>
-    <a class="pnav-btn pnav-next" href="#step3"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 3 — Sample QA</span></a>
+    <a class="pnav-btn" href="#step1"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 1: LSMM</span></a>
+    <a class="pnav-btn pnav-next" href="#step3"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 3: Sample QA</span></a>
   </div>
 </section>
 
@@ -1701,7 +1701,7 @@ mm_cube_segments <span class="o">&lt;-</span> <span class="nf">sits_segment</spa
   </div>
   <div class="step-badge">3_SITS_samples_quality_assessment.R</div>
 
-  <p>Training samples are loaded from <code>amostras_amazonia_24_02_2026.gpkg</code>. Time series are extracted at <code>n_sam_pol = 16</code> internal points per polygon with <code>pol_avg = FALSE</code> (individual points, not the polygon mean), maximising within-class spectral variability. Quality control uses SOM (SITS Book, Ch. 14) with DTW distance — more robust to temporal distortions than Euclidean distance for time series comparison.</p>
+  <p>Training samples are loaded from <code>amostras_amazonia_24_02_2026.gpkg</code>. Time series are extracted at <code>n_sam_pol = 16</code> internal points per polygon with <code>pol_avg = FALSE</code> (individual points, not the polygon mean), maximising within-class spectral variability. Quality control uses SOM (SITS Book, Ch. 14) with DTW distance, which is more robust to temporal distortions than Euclidean distance for time series comparison.</p>
 
   <p>Thresholds are stricter than defaults: <code>prior ≥ 0.80</code> and <code>posterior ≥ 0.70</code>. The rare class <code>DESMAT_DEGRAD_FOGO</code> is always retained regardless of SOM score to prevent it from being eliminated by strict filtering. Imbalance reduction targets 300–500 samples per class.</p>
 
@@ -1774,8 +1774,8 @@ som_eval_clean_balanced <span class="o">&lt;-</span> <span class="nf">sits_som_e
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step2"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 2 — Segmentation</span></a>
-    <a class="pnav-btn pnav-next" href="#step4"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 4 — Training</span></a>
+    <a class="pnav-btn" href="#step2"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 2: Segmentation</span></a>
+    <a class="pnav-btn pnav-next" href="#step4"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 4: Training</span></a>
   </div>
 </section>
 
@@ -1788,7 +1788,7 @@ som_eval_clean_balanced <span class="o">&lt;-</span> <span class="nf">sits_som_e
   </div>
   <div class="step-badge">4_SITS_model_training.R</div>
 
-  <p>The script uses <code>sits_rfor()</code> — the Random Forest implementation in <code>sits</code> — with <code>num_trees = 100</code> for the final model (after cross-validation with <code>folds = 5</code>). <code>set.seed(88)</code> ensures reproducibility. The script also exports the model via <code>sits_model_export()</code> to inspect OOB error curves by number of trees, verifying that 100 trees is sufficient for convergence.</p>
+  <p>The script uses <code>sits_rfor()</code>, the Random Forest implementation in <code>sits</code>, with <code>num_trees = 100</code> for the final model (after cross-validation with <code>folds = 5</code>). <code>set.seed(88)</code> ensures reproducibility. The script also exports the model via <code>sits_model_export()</code> to inspect OOB error curves by number of trees, verifying that 100 trees is sufficient for convergence.</p>
 
   <div class="callout warning">
     <div class="callout-title">⚠ Cross-validation ≠ Map accuracy</div>
@@ -1837,8 +1837,8 @@ rf_model2 <span class="o">&lt;-</span> <span class="nf">sits_model_export</span>
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step3"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 3 — Sample QA</span></a>
-    <a class="pnav-btn pnav-next" href="#step5"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 5 — Classification</span></a>
+    <a class="pnav-btn" href="#step3"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 3: Sample QA</span></a>
+    <a class="pnav-btn pnav-next" href="#step5"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 5: Classification</span></a>
   </div>
 </section>
 
@@ -1851,11 +1851,11 @@ rf_model2 <span class="o">&lt;-</span> <span class="nf">sits_model_export</span>
   </div>
   <div class="step-badge">5_SITS_classification.R</div>
 
-  <p><code>sits_classify()</code> applies the trained RF to the vector data cube at <code>n_sam_pol = 16</code> — the same sampling density used during training, ensuring consistent feature extraction. <code>sits_label_classification()</code> assigns the majority-probability class to each segment. The uncertainty step rasterizes entropy values, scales by ×10 000 to UInt16, and saves with DEFLATE compression. This raster is used directly in the validation stratification (Script 6).</p>
+  <p><code>sits_classify()</code> applies the trained RF to the vector data cube at <code>n_sam_pol = 16</code>, the same sampling density used during training, ensuring consistent feature extraction. <code>sits_label_classification()</code> assigns the majority-probability class to each segment. The uncertainty step rasterizes entropy values, scales by ×10 000 to UInt16, and saves with DEFLATE compression. This raster is used directly in the validation stratification (Script 6).</p>
 
   <div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val">Segmented vector cube (segments/)<br>Merged S2 + LSMM cube · RF model</div></div>
-    <div class="io-box"><div class="io-label">Output</div><div class="io-val"><code>*_probs_*.gpkg</code> — per-class probabilities<br><code>*_class_*.gpkg</code> — final label map<br><code>*_entropy_*_raster.tif</code> — uncertainty</div></div>
+    <div class="io-box"><div class="io-label">Output</div><div class="io-val"><code>*_probs_*.gpkg</code>: per-class probabilities<br><code>*_class_*.gpkg</code>: final label map<br><code>*_entropy_*_raster.tif</code>: uncertainty</div></div>
   </div>
 
   <h2 id="step5-code"><span class="sec-num">7.1</span>Code</h2>
@@ -1919,8 +1919,8 @@ uncertainty_raster_uint16 <span class="o">&lt;-</span> <span class="nf">round</s
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step4"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 4 — Training</span></a>
-    <a class="pnav-btn pnav-next" href="#step6"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 6 — Validation Stratification</span></a>
+    <a class="pnav-btn" href="#step4"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 4: Training</span></a>
+    <a class="pnav-btn pnav-next" href="#step6"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 6: Validation Stratification</span></a>
   </div>
 </section>
 
@@ -1928,7 +1928,7 @@ uncertainty_raster_uint16 <span class="o">&lt;-</span> <span class="nf">round</s
 <section id="step6" class="section">
   <div class="page-header">
     <div class="page-eyebrow">Chapter 8 · Step 6</div>
-    <h1 class="page-title">Validation — Sample Stratification</h1>
+    <h1 class="page-title">Validation: Sample Stratification</h1>
     <p class="page-subtitle">Rasterize map, design stratified sampling, and reclassify for PRODES compatibility</p>
   </div>
   <div class="step-badge">6_SITS_validation_samples_stratification.R</div>
@@ -2004,8 +2004,8 @@ cube_reclass <span class="o">&lt;-</span> <span class="nf">sits_reclassify</span
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step5"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 5 — Classification</span></a>
-    <a class="pnav-btn pnav-next" href="#step7"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 7 — Accuracy</span></a>
+    <a class="pnav-btn" href="#step5"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 5: Classification</span></a>
+    <a class="pnav-btn pnav-next" href="#step7"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 7: Accuracy</span></a>
   </div>
 </section>
 
@@ -2013,14 +2013,14 @@ cube_reclass <span class="o">&lt;-</span> <span class="nf">sits_reclassify</span
 <section id="step7" class="section">
   <div class="page-header">
     <div class="page-eyebrow">Chapter 9 · Step 7</div>
-    <h1 class="page-title">Validation — Accuracy Assessment</h1>
+    <h1 class="page-title">Validation: Accuracy Assessment</h1>
     <p class="page-subtitle">Area-adjusted accuracy for full map and PRODES-Degradation classes</p>
   </div>
   <div class="step-badge">7_SITS_validation_accuracy_measurement.R</div>
 
   <p><code>sits_accuracy()</code> (SITS Book, Ch. 24) implements the design-based area-adjusted framework of Olofsson et al. (2014). Because mapped area proportions are biased estimators of true area in the presence of classification error, the estimator weights confusion matrix entries by the mapped area of each stratum. This yields unbiased area estimates with confidence intervals.</p>
 
-  <p>The script runs accuracy assessment <strong>twice</strong>: once for the full 13-class map and once for the 3-class PRODES-Degradation reclassification (Deforestation / Degradation / Other_Classes). Each assessment produces a confusion matrix, per-class user's and producer's accuracies, error-adjusted area estimates in hectares, and 95% confidence intervals — all exported as plots via <code>ggplot2</code>.</p>
+  <p>The script runs accuracy assessment <strong>twice</strong>: once for the full 13-class map and once for the 3-class PRODES-Degradation reclassification (Deforestation / Degradation / Other_Classes). Each assessment produces a confusion matrix, per-class user's and producer's accuracies, error-adjusted area estimates in hectares, and 95% confidence intervals, all exported as plots via <code>ggplot2</code>.</p>
 
   <div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val">Classified raster cube (<code>data/class/raster/</code>)<br>Labeled validation samples (.gpkg)</div></div>
@@ -2067,8 +2067,8 @@ area_acc_prodes<span class="o">$</span>error_ajusted_area  <span class="c"># are
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step6"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 6 — Stratification</span></a>
-    <a class="pnav-btn pnav-next" href="#step8"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 8 — Post-Processing</span></a>
+    <a class="pnav-btn" href="#step6"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 6: Stratification</span></a>
+    <a class="pnav-btn pnav-next" href="#step8"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 8: Post-Processing</span></a>
   </div>
 </section>
 
@@ -2081,7 +2081,7 @@ area_acc_prodes<span class="o">$</span>error_ajusted_area  <span class="c"># are
   </div>
   <div class="step-badge">8_SITS_post_processing.R</div>
 
-  <p>Five sequential spatial operations produce a PRODES-compatible deforestation layer. The pipeline applies the <strong>PRODES historical mask</strong> (<code>st_difference()</code>) to retain only new deforestation not covered by prior PRODES years, enforces the <strong>1 ha minimum mapping unit</strong>, and applies a <strong>class-specific spatial adjacency rule</strong>: polygons of class <code>DESMAT_ARVORE_REMANESCE</code> (deforestation with remnant trees) are retained only if they are spatially adjacent to other deforestation classes <em>and</em> have area ≥ 6.25 ha — a stricter MMU for this ambiguous class. All processing is done in SIRGAS 2000 / Albers Equal-Area projection.</p>
+  <p>Five sequential spatial operations produce a PRODES-compatible deforestation layer. The pipeline applies the <strong>PRODES historical mask</strong> (<code>st_difference()</code>) to retain only new deforestation not covered by prior PRODES years, enforces the <strong>1 ha minimum mapping unit</strong>, and applies a <strong>class-specific spatial adjacency rule</strong>: polygons of class <code>DESMAT_ARVORE_REMANESCE</code> (deforestation with remnant trees) are retained only if they are spatially adjacent to other deforestation classes <em>and</em> have area ≥ 6.25 ha, a stricter MMU for this ambiguous class. All processing is done in SIRGAS 2000 / Albers Equal-Area projection.</p>
 
   <div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val">Classified map: <code>*_class_*.gpkg</code><br>PRODES mask: <code>grade_bdc_acumulado_24_10857.gpkg</code></div></div>
@@ -2142,7 +2142,7 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step7"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 7 — Accuracy</span></a>
+    <a class="pnav-btn" href="#step7"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 7: Accuracy</span></a>
     <a class="pnav-btn pnav-next" href="#flowchart"><span class="pnav-dir">Next →</span><span class="pnav-title">Pipeline Flowchart</span></a>
   </div>
 </section>
@@ -2177,7 +2177,7 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#step8"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 8 — Post-Processing</span></a>
+    <a class="pnav-btn" href="#step8"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 8: Post-Processing</span></a>
     <a class="pnav-btn pnav-next" href="#references"><span class="pnav-dir">Next →</span><span class="pnav-title">References</span></a>
   </div>
 </section>
@@ -2213,14 +2213,14 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
   <a class="toc-link toc-sub" href="#pipeline-overview">Pipeline Overview</a>
   <a class="toc-link" href="#introduction">Introduction</a>
   <a class="toc-link" href="#setup">Setup</a>
-  <a class="toc-link" href="#step1">Step 1 — LSMM</a>
-  <a class="toc-link" href="#step2">Step 2 — Segmentation</a>
-  <a class="toc-link" href="#step3">Step 3 — Sample QA</a>
-  <a class="toc-link" href="#step4">Step 4 — Training</a>
-  <a class="toc-link" href="#step5">Step 5 — Classification</a>
-  <a class="toc-link" href="#step6">Step 6 — Stratification</a>
-  <a class="toc-link" href="#step7">Step 7 — Accuracy</a>
-  <a class="toc-link" href="#step8">Step 8 — Post-Processing</a>
+  <a class="toc-link" href="#step1">Step 1: LSMM</a>
+  <a class="toc-link" href="#step2">Step 2: Segmentation</a>
+  <a class="toc-link" href="#step3">Step 3: Sample QA</a>
+  <a class="toc-link" href="#step4">Step 4: Training</a>
+  <a class="toc-link" href="#step5">Step 5: Classification</a>
+  <a class="toc-link" href="#step6">Step 6: Stratification</a>
+  <a class="toc-link" href="#step7">Step 7: Accuracy</a>
+  <a class="toc-link" href="#step8">Step 8: Post-Processing</a>
   <a class="toc-link" href="#flowchart">Flowchart</a>
   <a class="toc-link" href="#references">References</a>
 </aside>
@@ -2230,7 +2230,7 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
 <!-- ── Zoom Overlay ── -->
 <div class="zoom-overlay" id="zoomOverlay">
   <div class="zoom-toolbar">
-    <div class="zt-title">SITS-AMZ Pipeline — Full Diagram</div>
+    <div class="zt-title">SITS-AMZ Pipeline: Full Diagram</div>
     <div class="zt-controls">
       <button class="zt-btn" onclick="zoomIn()">＋ Zoom In</button>
       <button class="zt-btn" onclick="zoomOut()">－ Zoom Out</button>
