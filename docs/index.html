@@ -1471,7 +1471,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     <thead><tr><th>#</th><th>Script</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td class="mono">01</td><td><code>1_SITS_mixture_model.R</code></td><td>Generate LSMM fraction bands — Soil, Veg, Water</td></tr>
-      <tr><td class="mono">02</td><td><code>2_SITS_segmentation.R</code></td><td>Segment LSMM cube with SNIC → vector data cube</td></tr>
+      <tr><td class="mono">02</td><td><code>2_1_SITS_segmentation.R</code></td><td>Segment LSMM cube with SNIC → vector data cube</td></tr>
       <tr><td class="mono">03</td><td><code>3_SITS_samples_quality_assessment.R</code></td><td>Extract time series, 3× SOM QC, balance classes</td></tr>
       <tr><td class="mono">04</td><td><code>4_SITS_model_training.R</code></td><td>K-fold cross-validation, train RF (100 trees)</td></tr>
       <tr><td class="mono">05</td><td><code>5_SITS_classification.R</code></td><td>Classify vector cube, label map + entropy uncertainty</td></tr>
@@ -1479,26 +1479,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
       <tr><td class="mono">07</td><td><code>7_SITS_validation_accuracy_measurement.R</code></td><td>Area-adjusted accuracy — full map + PRODES-Degradation</td></tr>
       <tr><td class="mono">08</td><td><code>8_SITS_post_processing.R</code></td><td>PRODES mask, 1 ha MMU, spatial adjacency rule</td></tr>
     </tbody>
-  </table></div>
-
-  <h2 id="classes"><span class="sec-num">0.2</span>Classification Schema (13 Classes)</h2>
-  <div class="class-grid">
-    <div class="class-item"><div class="csw" style="background:#2980B9"></div>Corpo_Dagua</div>
-    <div class="class-item"><div class="csw" style="background:#a19c0a"></div>Corte_Raso_Com_Arvores_Remanescentes</div>
-    <div class="class-item"><div class="csw" style="background:#f39c12"></div>Corte_Raso</div>
-    <div class="class-item"><div class="csw" style="background:#D39750"></div>Corte_Raso_Antigo</div>
-    <div class="class-item"><div class="csw" style="background:#CD6155"></div>Corte_Raso_Com_Fogo</div>
-    <div class="class-item"><div class="csw" style="background:#D8DA83"></div>Corte_Raso_Com_Vegetacao</div>
-    <div class="class-item"><div class="csw" style="background:#B2B46D"></div>Corte_Raso_Antigo_Com_Vegetacao</div>
-    <div class="class-item"><div class="csw" style="background:#9da676"></div>Degradacao</div>
-    <div class="class-item"><div class="csw" style="background:#e6b0aa"></div>Degradacao_Por_Fogo</div>
-    <div class="class-item"><div class="csw" style="background:#1E8449"></div>Floresta</div>
-    <div class="class-item"><div class="csw" style="background:#E0DD22"></div>Floresta_Transicional</div>
-    <div class="class-item"><div class="csw" style="background:#C0D665"></div>Vegetacao_Natural_Nao_Florestal</div>
-    <div class="class-item"><div class="csw" style="background:#A0B9C8"></div>Area_Inundavel</div>
-  </div>
-
-  <div class="page-nav">
+  </table></div><div class="page-nav">
     <span></span>
     <a class="pnav-btn pnav-next" href="#introduction"><span class="pnav-dir">Next →</span><span class="pnav-title">Introduction</span></a>
   </div>
@@ -1587,7 +1568,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     <h1 class="page-title">Spectral Mixture Model (LSMM)</h1>
     <p class="page-subtitle">Decompose pixels into Soil, Vegetation, and Water fraction bands</p>
   </div>
-  <div class="step-badge">01 · 1_SITS_mixture_model.R</div>
+  <div class="step-badge">1_SITS_mixture_model.R</div>
 
   <p><code>sits_mixture_model()</code> (SITS Book, Ch. 9) decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> using non-negative least squares (NNLS). This pipeline uses <strong>Soil, Vegetation, and Water</strong> endmembers — band values taken from Small &amp; Sousa (2022) for Sentinel-2 MSI. The resulting fraction bands (0–10 000 scale) enrich the feature space used for classification, improving separability in mixed transition zones common in the Amazon.</p>
 
@@ -1650,7 +1631,7 @@ mm_cube <span class="o">&lt;-</span> <span class="nf">sits_mixture_model</span>(
     <h1 class="page-title">Segmentation (OBIA)</h1>
     <p class="page-subtitle">Partition the LSMM cube into spatially homogeneous objects</p>
   </div>
-  <div class="step-badge">02 · 2_SITS_segmentation.R</div>
+  <div class="step-badge">2_1_SITS_segmentation.R</div>
 
   <p><code>sits_segment()</code> (SITS Book, Ch. 25) applies <strong>SNIC (Simple Non-Iterative Clustering)</strong> to the LSMM fraction bands. Three parameters control output: <code>spacing</code> (target segment radius in pixels), <code>compactness</code> (trade-off between spectral and spatial homogeneity), and <code>padding</code> (border pixel handling). The version string encodes all parameters automatically, ensuring reproducibility. Only one tile (<code>012014</code>) is processed per run; repeat for each tile.</p>
 
@@ -1661,7 +1642,7 @@ mm_cube <span class="o">&lt;-</span> <span class="nf">sits_mixture_model</span>(
 
   <h2 id="step2-code"><span class="sec-num">4.1</span>Code</h2>
   <div class="code-block">
-    <div class="code-header"><div class="code-dots"><div class="cd cd-r"></div><div class="cd cd-y"></div><div class="cd cd-g"></div></div>2_SITS_segmentation.R</div>
+    <div class="code-header"><div class="code-dots"><div class="cd cd-r"></div><div class="cd cd-y"></div><div class="cd cd-g"></div></div>2_1_SITS_segmentation.R</div>
     <pre class="code-pre"><span class="c"># Step 1 -- Load LSMM cube (SOIL, VEG, WATER fraction bands)</span>
 mm_cube_fraction_features <span class="o">&lt;-</span> <span class="nf">sits_cube</span>(
   source     <span class="o">=</span> <span class="s">"BDC"</span>,
@@ -1718,7 +1699,7 @@ mm_cube_segments <span class="o">&lt;-</span> <span class="nf">sits_segment</spa
     <h1 class="page-title">Sample Quality Assessment</h1>
     <p class="page-subtitle">3× SOM quality control, noise removal, and class balancing</p>
   </div>
-  <div class="step-badge">03 · 3_SITS_samples_quality_assessment.R</div>
+  <div class="step-badge">3_SITS_samples_quality_assessment.R</div>
 
   <p>Training samples are loaded from <code>amostras_amazonia_24_02_2026.gpkg</code>. Time series are extracted at <code>n_sam_pol = 16</code> internal points per polygon with <code>pol_avg = FALSE</code> (individual points, not the polygon mean), maximising within-class spectral variability. Quality control uses SOM (SITS Book, Ch. 14) with DTW distance — more robust to temporal distortions than Euclidean distance for time series comparison.</p>
 
@@ -1805,7 +1786,7 @@ som_eval_clean_balanced <span class="o">&lt;-</span> <span class="nf">sits_som_e
     <h1 class="page-title">Model Training</h1>
     <p class="page-subtitle">K-fold cross-validation and Random Forest training</p>
   </div>
-  <div class="step-badge">04 · 4_SITS_model_training.R</div>
+  <div class="step-badge">4_SITS_model_training.R</div>
 
   <p>The script uses <code>sits_rfor()</code> — the Random Forest implementation in <code>sits</code> — with <code>num_trees = 100</code> for the final model (after cross-validation with <code>folds = 5</code>). <code>set.seed(88)</code> ensures reproducibility. The script also exports the model via <code>sits_model_export()</code> to inspect OOB error curves by number of trees, verifying that 100 trees is sufficient for convergence.</p>
 
@@ -1868,7 +1849,7 @@ rf_model2 <span class="o">&lt;-</span> <span class="nf">sits_model_export</span>
     <h1 class="page-title">Classification</h1>
     <p class="page-subtitle">Classify vector data cube and compute entropy uncertainty</p>
   </div>
-  <div class="step-badge">05 · 5_SITS_classification.R</div>
+  <div class="step-badge">5_SITS_classification.R</div>
 
   <p><code>sits_classify()</code> applies the trained RF to the vector data cube at <code>n_sam_pol = 16</code> — the same sampling density used during training, ensuring consistent feature extraction. <code>sits_label_classification()</code> assigns the majority-probability class to each segment. The uncertainty step rasterizes entropy values, scales by ×10 000 to UInt16, and saves with DEFLATE compression. This raster is used directly in the validation stratification (Script 6).</p>
 
@@ -1928,7 +1909,8 @@ uncertainty_raster_uint16 <span class="o">&lt;-</span> <span class="nf">round</s
 <span class="nf">writeRaster</span>(uncertainty_raster_uint16,
             filename <span class="o">=</span> file.path(tile_period_dir, <span class="s">"entropy_raster.tif"</span>),
             datatype <span class="o">=</span> <span class="s">"INT2U"</span>,
-            gdal     <span class="o">=</span> <span class="nf">c</span>(<span class="s">"COMPRESS=DEFLATE"</span>, <span class="s">"PREDICTOR=2"</span>, <span class="s">"ZLEVEL=9"</span>))</pre>
+            gdal     <span class="o">=</span> <span class="nf">c</span>(<span class="s">"COMPRESS=DEFLATE"</span>, <span class="s">"PREDICTOR=2"</span>, <span class="s">"ZLEVEL=9"</span>),
+  progress <span class="o">=</span> <span class="kc">TRUE</span>)</pre>
   </div>
 
   <div class="callout tip">
@@ -1949,7 +1931,7 @@ uncertainty_raster_uint16 <span class="o">&lt;-</span> <span class="nf">round</s
     <h1 class="page-title">Validation — Sample Stratification</h1>
     <p class="page-subtitle">Rasterize map, design stratified sampling, and reclassify for PRODES compatibility</p>
   </div>
-  <div class="step-badge">06 · 6_SITS_validation_samples_stratification.R</div>
+  <div class="step-badge">6_SITS_validation_samples_stratification.R</div>
 
   <p>This script performs two distinct tasks. First, it rasterizes the classified vector map to a 10 m GeoTIFF using a custom <code>sits_rasterize_segments()</code> function (based on <code>gdal_rasterize</code>), which assigns integer class codes matching the trained model's label order and generates a QGIS-compatible QML style file. Second, it generates two sets of stratified validation samples: one for the <strong>full 13-class map</strong> and one for a <strong>3-class PRODES-Degradation reclassification</strong> (Deforestation / Degradation / Other_Classes).</p>
 
@@ -2034,7 +2016,7 @@ cube_reclass <span class="o">&lt;-</span> <span class="nf">sits_reclassify</span
     <h1 class="page-title">Validation — Accuracy Assessment</h1>
     <p class="page-subtitle">Area-adjusted accuracy for full map and PRODES-Degradation classes</p>
   </div>
-  <div class="step-badge">07 · 7_SITS_validation_accuracy_measurement.R</div>
+  <div class="step-badge">7_SITS_validation_accuracy_measurement.R</div>
 
   <p><code>sits_accuracy()</code> (SITS Book, Ch. 24) implements the design-based area-adjusted framework of Olofsson et al. (2014). Because mapped area proportions are biased estimators of true area in the presence of classification error, the estimator weights confusion matrix entries by the mapped area of each stratum. This yields unbiased area estimates with confidence intervals.</p>
 
@@ -2097,7 +2079,7 @@ area_acc_prodes<span class="o">$</span>error_ajusted_area  <span class="c"># are
     <h1 class="page-title">Post-Processing</h1>
     <p class="page-subtitle">PRODES mask, minimum mapping unit, and spatial adjacency rules</p>
   </div>
-  <div class="step-badge">08 · 8_SITS_post_processing.R</div>
+  <div class="step-badge">8_SITS_post_processing.R</div>
 
   <p>Five sequential spatial operations produce a PRODES-compatible deforestation layer. The pipeline applies the <strong>PRODES historical mask</strong> (<code>st_difference()</code>) to retain only new deforestation not covered by prior PRODES years, enforces the <strong>1 ha minimum mapping unit</strong>, and applies a <strong>class-specific spatial adjacency rule</strong>: polygons of class <code>DESMAT_ARVORE_REMANESCE</code> (deforestation with remnant trees) are retained only if they are spatially adjacent to other deforestation classes <em>and</em> have area ≥ 6.25 ha — a stricter MMU for this ambiguous class. All processing is done in SIRGAS 2000 / Albers Equal-Area projection.</p>
 
@@ -2175,14 +2157,6 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
 
   <p>The diagram shows all steps, intermediate artifacts, SITS functions, and decision nodes. Click <strong>🔍 Expand Diagram</strong> to open the interactive zoom viewer.</p>
 
-  <h2 id="legend"><span class="sec-num">R.1</span>Legend</h2>
-  <div class="legend-grid">
-    <div class="legend-item"><div class="lsw lsw-cube"></div>Data Cube / Object</div>
-    <div class="legend-item"><div class="lsw lsw-func"></div>Function / Process</div>
-    <div class="legend-item"><div class="lsw lsw-file"></div>Saved File (.gpkg / .rds)</div>
-    <div class="legend-item"><div class="lsw lsw-logic"></div>Decision / Logic</div>
-  </div>
-
   <h2 id="diagram"><span class="sec-num">R.2</span>Full Diagram</h2>
   <div class="diagram-wrap">
     <div class="diagram-head">
@@ -2191,8 +2165,15 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
     </div>
     <div class="diagram-body">
       <div class="grViz html-widget html-fill-item" id="htmlwidget-b10e5f1091fb2e84974d" style="width:100%;height:600px;"></div>
-      <script type="application/json" data-for="htmlwidget-b10e5f1091fb2e84974d">{"x":{"diagram":"\ndigraph SITS_AMZ_PIPELINE {\n\n  graph [\n    layout = dot,\n    rankdir = TB,\n    splines = ortho,\n    fontsize = 18,\n    fontname = Helvetica,\n    labelloc = t\n  ]\n\n  node [\n    shape = box,\n    style = filled,\n    fontname = Helvetica,\n    fontsize = 11\n  ]\n\n  edge [\n    fontname = Helvetica,\n    fontsize = 10,\n    color = gray30,\n    arrowhead = vee\n  ]\n  \n  // -------------------------\n  // Legend\n  // -------------------------\n  subgraph cluster_legend {\n    label = <<B>Legend<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n    \n  node_cube   [fillcolor=\"#E1F5FE\", color=\"#01579B\"]\n  node_func   [fillcolor=\"#FFF9C4\", color=\"#F9A825\"]\n  node_file   [fillcolor=\"#E8F5E9\", color=\"#2E7D32\", style=\"filled,dashed\"]\n  node_logic  [shape=diamond, fillcolor=\"#F3E5F5\", color=\"#7B1FA2\"]\n  }\n  \n  subgraph cluster_script1 {\n    label = <<B>Step 1<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S1_Cube [label=\"Load Sentinel-2 Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S1_Endm [label=\"Define Endmembers\\nSoil / Veg / Dark\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S1_LSMM [label=\"Generate LSMM Fractions\\nsits_mixture_model()\", fillcolor=\"#FFF9C4\"]\n    S1_Out  [label=\"LSMM Cube\\nSoil / Veg / Dark\", fillcolor=\"#E1F5FE\"]\n    S1_Dir  [label=\"Saved LSMM cube\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S1_Cube -> S1_LSMM\n    S1_Endm -> S1_LSMM\n    S1_LSMM -> S1_Out\n    S1_LSMM -> S1_Dir\n  }\n\n  subgraph cluster_script2 {\n    label = <<B>Step 2<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S2_LoadMM [label=\"Load LSMM cube\\nsits_cube(data_dir)\", fillcolor=\"#E1F5FE\"]\n    S2_SNIC   [label=\"Segment LSMM cube\\nsits_segment()\\nseg_fn = sits_snic()\", fillcolor=\"#FFF9C4\"]\n    S2_SegVec [label=\"Saved segments\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S2_LoadMM -> S2_SNIC -> S2_SegVec\n  }\n\n  subgraph cluster_script3 {\n    label = <<B>Step 3<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S3_CubeS2   [label=\"Load Training Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S3_LoadMM   [label=\"Load LSMM cube\\nSoil / Veg / Dark\", fillcolor=\"#E1F5FE\"]\n    S3_Merge    [label=\"Merge features\\nsits_merge()\", fillcolor=\"#FFF9C4\"]\n\n    S3_Samples  [label=\"Load Training Samples\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S3_GetData  [label=\"Extract time series\\nsits_get_data()\", fillcolor=\"#FFF9C4\"]\n    S3_TS       [label=\"Time Series\", fillcolor=\"#E1F5FE\"]\n    S3_SaveTS   [label=\"Save original\\nsaveRDS(time_series)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S3_SOM1     [label=\"SOM clustering (1)\\nsits_som_map()\", fillcolor=\"#FFF9C4\"]\n    S3_Eval1    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster()\", fillcolor=\"#FFF9C4\"]\n    S3_Clean    [label=\"Clean samples\\nsits_som_clean_samples()\", fillcolor=\"#FFF9C4\"]\n\n    S3_SOM2     [label=\"SOM clustering (2)\\nsits_som_map(cleaned)\", fillcolor=\"#FFF9C4\"]\n    S3_Eval2    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster(cleaned)\", fillcolor=\"#FFF9C4\"]\n\n    S3_Balance  [label=\"Reduce imbalance\\nsits_reduce_imbalance()\", fillcolor=\"#FFF9C4\"]\n    S3_SaveBal  [label=\"Save cleaned & balanced\\nsaveRDS(new_time_series)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S3_SOM3     [label=\"SOM clustering (3)\\nsits_som_map(cleaned + balanced)\", fillcolor=\"#FFF9C4\"]\n    S3_Eval3    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster(cleaned + balanced)\", fillcolor=\"#FFF9C4\"]\n\n    S3_CubeS2 -> S3_Merge\n    S3_LoadMM -> S3_Merge\n\n    S3_Samples -> S3_GetData\n    S3_Merge   -> S3_GetData\n\n    S3_GetData -> S3_TS -> S3_SaveTS\n\n    S3_TS -> S3_SOM1 -> S3_Eval1 -> S3_Clean\n    S3_Clean -> S3_SOM2 -> S3_Eval2\n    S3_Clean -> S3_Balance -> S3_SaveBal\n    S3_SaveBal -> S3_SOM3 -> S3_Eval3\n  }\n\n  subgraph cluster_script4 {\n    label = <<B>Step 4<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S4_LoadTS [label=\"Load training\\nreadRDS(cleaned & balanced)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S4_Kfold  [label=\"Cross-validation\\nsits_kfold_validate()\", fillcolor=\"#FFF9C4\"]\n    S4_Train  [label=\"Train Model\\nsits_train()\", fillcolor=\"#FFF9C4\"]\n    S4_Model  [label=\"Trained Model\", fillcolor=\"#E1F5FE\"]\n    S4_Save   [label=\"Save model\\nsaveRDS()\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S4_LoadTS -> S4_Kfold -> S4_Train -> S4_Model\n    S4_Model -> S4_Save\n  }\n\n  subgraph cluster_script5 {\n    label = <<B>Step 5<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S5_Cube    [label=\"Load classification cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S5_LoadMM  [label=\"Load LSMM fractions\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S5_Merge   [label=\"Merge features\\nsits_merge()\", fillcolor=\"#FFF9C4\"]\n    S5_Seg     [label=\"Load segmented vector cube\\nsits_cube(vector_dir)\", fillcolor=\"#E1F5FE\"]\n    S5_Model   [label=\"Load RF model\\nreadRDS()\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S5_Class   [label=\"Classify segments\\nsits_classify()\", fillcolor=\"#FFF9C4\"]\n    S5_Label   [label=\"Generate final class map\\nsits_label_classification()\", fillcolor=\"#FFF9C4\"]\n    S5_Map     [label=\"Classified vector map\\n(class_*.gpkg)\", fillcolor=\"#E1F5FE\"]\n    S5_Unc     [label=\"Entropy uncertainty\\nsits_uncertainty()\", fillcolor=\"#FFF9C4\"]\n    S5_UncOut  [label=\"Uncertainty raster\\n(entropy_*.tif)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S5_Cube -> S5_Merge\n    S5_LoadMM -> S5_Merge\n    S5_Merge -> S5_Seg\n\n    S5_Model -> S5_Class\n    S5_Seg -> S5_Class\n\n    S5_Class -> S5_Label -> S5_Map\n    S5_Map -> S5_Unc -> S5_UncOut\n  }\n\n  subgraph cluster_script6 {\n    label = <<B>Step 6<\/B>>\n    style = rounded\n    color = gray50\n    labeljust = \"l\"\n    fontname = Helvetica\n    fontsize = 14\n\n    S6_Rast    [label=\"Rasterize classified vectors\\nsits_rasterize_segments()\", fillcolor=\"#FFF9C4\"]\n    S6_Cube    [label=\"Load classified raster cube\\nsits_cube(bands=class)\", fillcolor=\"#E1F5FE\"]\n    S6_Desi    [label=\"Sampling Design\\nsits_sampling_design()\", fillcolor=\"#FFF9C4\"]\n    S6_Strat   [label=\"Stratified random sampling\\nsits_stratified_sampling()\", fillcolor=\"#FFF9C4\"]\n    S6_Val     [label=\"Validation samples\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S6_Acc     [label=\"Accuracy assessment\\nsits_accuracy()\", fillcolor=\"#FFF9C4\"]\n    S6_CM      [label=\"Confusion matrix\", fillcolor=\"#E1F5FE\"]\n    S6_ME      [label=\"Metrics\", fillcolor=\"#E1F5FE\"]\n\n    S6_Rast -> S6_Cube -> S6_Desi\n    S6_Desi -> S6_Strat -> S6_Val\n    S6_Val -> S6_Acc\n    S6_Cube -> S6_Acc\n    S6_Acc -> S6_CM\n    S6_Acc -> S6_ME\n  }\n\n  subgraph cluster_script7 {\n    label = <<B>Step 7<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S7_Class    [label=\"Load classified vectors\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S7_Filter   [label=\"Filter deforestation classes\", fillcolor=\"#FFF9C4\"]\n    S7_Dissolve [label=\"Dissolve + explode polygons\\nst_union() + st_cast()\", fillcolor=\"#FFF9C4\"]\n    S7_Prodes   [label=\"Load PRODES mask\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S7_Diff     [label=\"Apply mask difference\\nst_difference()\", fillcolor=\"#FFF9C4\"]\n    S7_Area     [label=\"Area threshold\\n≥ 1 ha\", shape=diamond, fillcolor=\"#F3E5F5\"]\n    S7_Spatial  [label=\"Spatial rule\\nkeep tree remnants\\n(if not disjoint)\", shape=diamond, fillcolor=\"#F3E5F5\"]\n    S7_Final    [label=\"Final post-processed output\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S7_Class -> S7_Filter -> S7_Dissolve\n    S7_Prodes -> S7_Diff\n    S7_Dissolve -> S7_Diff -> S7_Area -> S7_Spatial -> S7_Final\n  }\n\n  ROUTE_MM [shape=point, width=0.01, label=\"\", style=invis]\n  ROUTE_ML [shape=point, width=0.01, label=\"\", style=invis]\n\n  S1_Out -> ROUTE_MM [arrowhead=none, color=gray35]\n  ROUTE_MM -> S2_LoadMM\n  ROUTE_MM -> S3_LoadMM\n\n  S3_SaveBal -> S4_LoadTS\n  S4_Save -> S5_Model\n  \n  S5_Map -> ROUTE_ML [arrowhead=none, color=gray35]\n  ROUTE_ML -> S6_Rast\n  ROUTE_ML -> S7_Class\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+      <script type="application/json" data-for="htmlwidget-b10e5f1091fb2e84974d">{"x":{"diagram":"\ndigraph SITS_AMZ_PIPELINE {\n\n  graph [\n    layout = dot,\n    rankdir = TB,\n    splines = ortho,\n    fontsize = 18,\n    fontname = Helvetica,\n    labelloc = t\n  ]\n\n  node [\n    shape = box,\n    style = filled,\n    fontname = Helvetica,\n    fontsize = 11\n  ]\n\n  edge [\n    fontname = Helvetica,\n    fontsize = 10,\n    color = gray30,\n    arrowhead = vee\n  ]\n  \n  subgraph cluster_script1 {\n    label = <<B>Step 1<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S1_Cube [label=\"Load Sentinel-2 Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S1_Endm [label=\"Define Endmembers\\nSoil / Veg / Dark\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S1_LSMM [label=\"Generate LSMM Fractions\\nsits_mixture_model()\", fillcolor=\"#FFF9C4\"]\n    S1_Out  [label=\"LSMM Cube\\nSoil / Veg / Dark\", fillcolor=\"#E1F5FE\"]\n    S1_Dir  [label=\"Saved LSMM cube\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S1_Cube -> S1_LSMM\n    S1_Endm -> S1_LSMM\n    S1_LSMM -> S1_Out\n    S1_LSMM -> S1_Dir\n  }\n\n  subgraph cluster_script2 {\n    label = <<B>Step 2<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S2_LoadMM [label=\"Load LSMM cube\\nsits_cube(data_dir)\", fillcolor=\"#E1F5FE\"]\n    S2_SNIC   [label=\"Segment LSMM cube\\nsits_segment()\\nseg_fn = sits_snic()\", fillcolor=\"#FFF9C4\"]\n    S2_SegVec [label=\"Saved segments\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S2_LoadMM -> S2_SNIC -> S2_SegVec\n  }\n\n  subgraph cluster_script3 {\n    label = <<B>Step 3<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S3_CubeS2   [label=\"Load Training Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S3_LoadMM   [label=\"Load LSMM cube\\nSoil / Veg / Dark\", fillcolor=\"#E1F5FE\"]\n    S3_Merge    [label=\"Merge features\\nsits_merge()\", fillcolor=\"#FFF9C4\"]\n\n    S3_Samples  [label=\"Load Training Samples\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S3_GetData  [label=\"Extract time series\\nsits_get_data()\", fillcolor=\"#FFF9C4\"]\n    S3_TS       [label=\"Time Series\", fillcolor=\"#E1F5FE\"]\n    S3_SaveTS   [label=\"Save original\\nsaveRDS(time_series)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S3_SOM1     [label=\"SOM clustering (1)\\nsits_som_map()\", fillcolor=\"#FFF9C4\"]\n    S3_Eval1    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster()\", fillcolor=\"#FFF9C4\"]\n    S3_Clean    [label=\"Clean samples\\nsits_som_clean_samples()\", fillcolor=\"#FFF9C4\"]\n\n    S3_SOM2     [label=\"SOM clustering (2)\\nsits_som_map(cleaned)\", fillcolor=\"#FFF9C4\"]\n    S3_Eval2    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster(cleaned)\", fillcolor=\"#FFF9C4\"]\n\n    S3_Balance  [label=\"Reduce imbalance\\nsits_reduce_imbalance()\", fillcolor=\"#FFF9C4\"]\n    S3_SaveBal  [label=\"Save cleaned & balanced\\nsaveRDS(new_time_series)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S3_SOM3     [label=\"SOM clustering (3)\\nsits_som_map(cleaned + balanced)\", fillcolor=\"#FFF9C4\"]\n    S3_Eval3    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster(cleaned + balanced)\", fillcolor=\"#FFF9C4\"]\n\n    S3_CubeS2 -> S3_Merge\n    S3_LoadMM -> S3_Merge\n\n    S3_Samples -> S3_GetData\n    S3_Merge   -> S3_GetData\n\n    S3_GetData -> S3_TS -> S3_SaveTS\n\n    S3_TS -> S3_SOM1 -> S3_Eval1 -> S3_Clean\n    S3_Clean -> S3_SOM2 -> S3_Eval2\n    S3_Clean -> S3_Balance -> S3_SaveBal\n    S3_SaveBal -> S3_SOM3 -> S3_Eval3\n  }\n\n  subgraph cluster_script4 {\n    label = <<B>Step 4<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S4_LoadTS [label=\"Load training\\nreadRDS(cleaned & balanced)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S4_Kfold  [label=\"Cross-validation\\nsits_kfold_validate()\", fillcolor=\"#FFF9C4\"]\n    S4_Train  [label=\"Train Model\\nsits_train()\", fillcolor=\"#FFF9C4\"]\n    S4_Model  [label=\"Trained Model\", fillcolor=\"#E1F5FE\"]\n    S4_Save   [label=\"Save model\\nsaveRDS()\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S4_LoadTS -> S4_Kfold -> S4_Train -> S4_Model\n    S4_Model -> S4_Save\n  }\n\n  subgraph cluster_script5 {\n    label = <<B>Step 5<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S5_Cube    [label=\"Load classification cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S5_LoadMM  [label=\"Load LSMM fractions\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S5_Merge   [label=\"Merge features\\nsits_merge()\", fillcolor=\"#FFF9C4\"]\n    S5_Seg     [label=\"Load segmented vector cube\\nsits_cube(vector_dir)\", fillcolor=\"#E1F5FE\"]\n    S5_Model   [label=\"Load RF model\\nreadRDS()\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S5_Class   [label=\"Classify segments\\nsits_classify()\", fillcolor=\"#FFF9C4\"]\n    S5_Label   [label=\"Generate final class map\\nsits_label_classification()\", fillcolor=\"#FFF9C4\"]\n    S5_Map     [label=\"Classified vector map\\n(class_*.gpkg)\", fillcolor=\"#E1F5FE\"]\n    S5_Unc     [label=\"Entropy uncertainty\\nsits_uncertainty()\", fillcolor=\"#FFF9C4\"]\n    S5_UncOut  [label=\"Uncertainty raster\\n(entropy_*.tif)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S5_Cube -> S5_Merge\n    S5_LoadMM -> S5_Merge\n    S5_Merge -> S5_Seg\n\n    S5_Model -> S5_Class\n    S5_Seg -> S5_Class\n\n    S5_Class -> S5_Label -> S5_Map\n    S5_Map -> S5_Unc -> S5_UncOut\n  }\n\n  subgraph cluster_script6 {\n    label = <<B>Step 6<\/B>>\n    style = rounded\n    color = gray50\n    labeljust = \"l\"\n    fontname = Helvetica\n    fontsize = 14\n\n    S6_Rast    [label=\"Rasterize classified vectors\\nsits_rasterize_segments()\", fillcolor=\"#FFF9C4\"]\n    S6_Cube    [label=\"Load classified raster cube\\nsits_cube(bands=class)\", fillcolor=\"#E1F5FE\"]\n    S6_Desi    [label=\"Sampling Design\\nsits_sampling_design()\", fillcolor=\"#FFF9C4\"]\n    S6_Strat   [label=\"Stratified random sampling\\nsits_stratified_sampling()\", fillcolor=\"#FFF9C4\"]\n    S6_Val     [label=\"Validation samples\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S6_Acc     [label=\"Accuracy assessment\\nsits_accuracy()\", fillcolor=\"#FFF9C4\"]\n    S6_CM      [label=\"Confusion matrix\", fillcolor=\"#E1F5FE\"]\n    S6_ME      [label=\"Metrics\", fillcolor=\"#E1F5FE\"]\n\n    S6_Rast -> S6_Cube -> S6_Desi\n    S6_Desi -> S6_Strat -> S6_Val\n    S6_Val -> S6_Acc\n    S6_Cube -> S6_Acc\n    S6_Acc -> S6_CM\n    S6_Acc -> S6_ME\n  }\n\n  subgraph cluster_script7 {\n    label = <<B>Step 7<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S7_Class    [label=\"Load classified vectors\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S7_Filter   [label=\"Filter deforestation classes\", fillcolor=\"#FFF9C4\"]\n    S7_Dissolve [label=\"Dissolve + explode polygons\\nst_union() + st_cast()\", fillcolor=\"#FFF9C4\"]\n    S7_Prodes   [label=\"Load PRODES mask\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S7_Diff     [label=\"Apply mask difference\\nst_difference()\", fillcolor=\"#FFF9C4\"]\n    S7_Area     [label=\"Area threshold\\n≥ 1 ha\", shape=diamond, fillcolor=\"#F3E5F5\"]\n    S7_Spatial  [label=\"Spatial rule\\nkeep tree remnants\\n(if not disjoint)\", shape=diamond, fillcolor=\"#F3E5F5\"]\n    S7_Final    [label=\"Final post-processed output\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S7_Class -> S7_Filter -> S7_Dissolve\n    S7_Prodes -> S7_Diff\n    S7_Dissolve -> S7_Diff -> S7_Area -> S7_Spatial -> S7_Final\n  }\n\n  ROUTE_MM [shape=point, width=0.01, label=\"\", style=invis]\n  ROUTE_ML [shape=point, width=0.01, label=\"\", style=invis]\n\n  S1_Out -> ROUTE_MM [arrowhead=none, color=gray35]\n  ROUTE_MM -> S2_LoadMM\n  ROUTE_MM -> S3_LoadMM\n\n  S3_SaveBal -> S4_LoadTS\n  S4_Save -> S5_Model\n  \n  S5_Map -> ROUTE_ML [arrowhead=none, color=gray35]\n  ROUTE_ML -> S6_Rast\n  ROUTE_ML -> S7_Class\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
     </div>
+  </div>
+  <h3 id="legend">Legend</h3>
+  <div class="legend-grid">
+    <div class="legend-item"><div class="lsw lsw-cube"></div>Data Cube / Object</div>
+    <div class="legend-item"><div class="lsw lsw-func"></div>Function / Process</div>
+    <div class="legend-item"><div class="lsw lsw-file"></div>Saved File (.gpkg / .rds)</div>
+    <div class="legend-item"><div class="lsw lsw-logic"></div>Decision / Logic</div>
   </div>
 
   <div class="page-nav">
@@ -2208,13 +2189,13 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
     <h1 class="page-title">References</h1>
   </div>
   <div style="font-family:var(--sans);font-size:.9rem;line-height:1.9">
-    <p><strong>Camara, G., Simoes, R., Souza, F., Carlos, F., Pelletier, C., Andrade, P. R., Ferreira, K., &amp; Queiroz, G.</strong> (2024). <em>Satellite Image Time Series Analysis on Earth Observation Data Cubes.</em> INPE. <a href="https://e-sensing.github.io/sitsbook/" target="_blank">e-sensing.github.io/sitsbook</a></p>
-    <p><strong>Simoes, R., Camara, G., Queiroz, G., Souza, F., Andrade, P. R., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021). Satellite Image Time Series Analysis for Big Earth Observation Data. <em>Remote Sensing, 13</em>(13), 2428. <a href="https://doi.org/10.3390/rs13132428" target="_blank">doi:10.3390/rs13132428</a></p>
-    <p><strong>Santos, L., Ferreira, K., Camara, G., Picoli, M., &amp; Simoes, R.</strong> (2021). Quality control and class noise reduction of satellite image time series. <em>ISPRS J. Photogramm. Remote Sens., 177</em>, 75–88. <a href="https://doi.org/10.1016/j.isprsjprs.2021.04.014" target="_blank">doi:10.1016/j.isprsjprs.2021.04.014</a></p>
-    <p><strong>Olofsson, P., Foody, G. M., Herold, M., Stehman, S. V., Woodcock, C. E., &amp; Wulder, M. A.</strong> (2014). Good practices for estimating area and assessing accuracy of land change. <em>Remote Sensing of Environment, 148</em>, 42–57. <a href="https://doi.org/10.1016/j.rse.2014.02.015" target="_blank">doi:10.1016/j.rse.2014.02.015</a></p>
-    <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14</em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p>
-    <p><strong>Kohonen, T.</strong> (2001). <em>Self-Organizing Maps</em> (3rd ed.). Springer. <a href="https://doi.org/10.1007/978-3-642-56927-2" target="_blank">doi:10.1007/978-3-642-56927-2</a></p>
-    <p><strong>INPE.</strong> (2023). PRODES: Deforestation Monitoring Program in the Brazilian Amazon. <a href="http://www.obt.inpe.br/OBT/assuntos/programas/amazonia/prodes" target="_blank">obt.inpe.br/prodes</a></p>
+    <p><strong>Camara, G., Simoes, R., Souza, F., Carlos, F., Pelletier, C., Andrade, P. R., Ferreira, K., &amp; Queiroz, G.</strong> (2024). <em>Satellite Image Time Series Analysis on Earth Observation Data Cubes.</em> INPE. Available at: <a href="https://e-sensing.github.io/sitsbook/" target="_blank">e-sensing.github.io/sitsbook</a></p>
+    <p><strong>Simoes, R., Camara, G., Queiroz, G., Souza, F., Andrade, P. R., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021). Satellite Image Time Series Analysis for Big Earth Observation Data. <em>Remote Sensing, 13</em>(13), 2428. Available at: <a href="https://doi.org/10.3390/rs13132428" target="_blank">doi:10.3390/rs13132428</a></p>
+    <p><strong>Santos, L., Ferreira, K., Camara, G., Picoli, M., &amp; Simoes, R.</strong> (2021). Quality control and class noise reduction of satellite image time series. <em>ISPRS J. Photogramm. Remote Sens., 177</em>, 75–88. Available at: <a href="https://doi.org/10.1016/j.isprsjprs.2021.04.014" target="_blank">doi:10.1016/j.isprsjprs.2021.04.014</a></p>
+    <p><strong>Olofsson, P., Foody, G. M., Herold, M., Stehman, S. V., Woodcock, C. E., &amp; Wulder, M. A.</strong> (2014). Good practices for estimating area and assessing accuracy of land change. <em>Remote Sensing of Environment, 148</em>, 42–57. Available at: <a href="https://doi.org/10.1016/j.rse.2014.02.015" target="_blank">doi:10.1016/j.rse.2014.02.015</a></p>
+    <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14</em>(22), 5748. Available at: <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p>
+    <p><strong>Kohonen, T.</strong> (2001). <em>Self-Organizing Maps</em> (3rd ed.). Springer. Available at: <a href="https://doi.org/10.1007/978-3-642-56927-2" target="_blank">doi:10.1007/978-3-642-56927-2</a></p>
+    <p><strong>INPE.</strong> (2023). PRODES: Deforestation Monitoring Program in the Brazilian Amazon. Available at: <a href="http://www.obt.inpe.br/OBT/assuntos/programas/amazonia/prodes" target="_blank">obt.inpe.br/prodes</a></p>
   </div>
   <div class="page-nav">
     <a class="pnav-btn" href="#flowchart"><span class="pnav-dir">← Previous</span><span class="pnav-title">Flowchart</span></a>
@@ -2230,7 +2211,6 @@ sf<span class="o">::</span><span class="nf">st_write</span>(final_result, output
   <div class="toc-label">On this page</div>
   <a class="toc-link active" href="#preface">Preface</a>
   <a class="toc-link toc-sub" href="#pipeline-overview">Pipeline Overview</a>
-  <a class="toc-link toc-sub" href="#classes">13 Classes</a>
   <a class="toc-link" href="#introduction">Introduction</a>
   <a class="toc-link" href="#setup">Setup</a>
   <a class="toc-link" href="#step1">Step 1 — LSMM</a>
