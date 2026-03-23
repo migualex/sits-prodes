@@ -44,7 +44,7 @@ my_colors <- c(
   "Corte_Raso_Com_Fogo"                   = "#CD6155",
   "Corte_Raso_Com_Arvores_Remanescentes"  = "#a19c0a",
   "Corte_Raso_Com_Vegetacao"              = "#D8DA83",
-  "Corte_Raso_Antigo"                     = "#D39750",
+  "Corte_Raso_Antigo"                     = "#D39750"
 )
 
 # ============================================================
