@@ -71,9 +71,9 @@ tiles_train <- paste(cube$tile, collapse = "-")
 # Step 2.4 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
   source      = "BDC",
-  tiles       = c('012014', '012015', '013014', '013015'),
   collection  = "SENTINEL-2-16D",
   bands       = c("SOIL", "VEG", "WATER"),
+  tiles       = c('012014', '012015', '013014', '013015'),
   data_dir    = mixture_path,
   start_date  = start_date,
   end_date    = end_date,

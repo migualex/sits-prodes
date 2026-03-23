@@ -36,9 +36,9 @@ cube <- sits_cube(
 mm_cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
+  bands = c("SOIL", "VEG", "WATER"),
   tiles = tiles,
   data_dir = mixture_path,
-  bands = c("SOIL", "VEG", "WATER"),
   start_date = start_date,
   end_date = end_date,
   progress = TRUE)
@@ -49,9 +49,9 @@ mm_cube_fraction <- sits_merge(mm_cube_fraction, cube)
 radar_cube_pol <- sits_cube(
   source = "MPC",
   collection = "SENTINEL-1-RTC",
+  bands = c("VV", "VH"),
   tiles = tiles,
   data_dir = s1_path,
-  bands = c("VV", "VH"),
   start_date = start_date,
   end_date = end_date,
   progress = TRUE)
@@ -60,10 +60,10 @@ radar_cube_pol <- sits_cube(
 # radar_cube_texture <- sits_cube(
 #   source = "MPC",
 #   collection = "SENTINEL-1-RTC",
-#   tiles = tiles,
-#   data_dir = texture_path,
 #   bands = c("VVVAR", "VVMEAN", "VVHOMO", "VVENER", "VVCORR", "VVCONT", "VVASM", 
 #             "VHVAR", "VHMEAN", "VHHOMO", "VHENER", "VHCORR", "VHCONT", "VHASM"),
+#   tiles = tiles,
+#   data_dir = texture_path,
 #   start_date = start_date,
 #   end_date = end_date,
 #   progress = TRUE)

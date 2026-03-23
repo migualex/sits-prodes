@@ -27,8 +27,9 @@ class_path    <- "data/class"
 mixture_path  <- "data/raw/mixture_model"
 
 # Step 1.4 -- Define time range
-start_date    <- "2024-08-01"
-end_date      <- "2025-07-31"
+start_date   <- "2024-08-01"
+end_date     <- "2025-07-31"
+tile         <- '012014'
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
 var <- "all_samples_new"
@@ -54,14 +55,14 @@ no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)
 
 # Step 2.3 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
-  source = "BDC",
-  tiles = tile,
-  collection = "SENTINEL-2-16D",
-  bands = c("SOIL", "VEG", "WATER"),
-  data_dir = mixture_path,
+  source      = "BDC",
+  collection  = "SENTINEL-2-16D",
+  bands       = c("SOIL", "VEG", "WATER"),
+  tiles       = tile,
+  data_dir    = mixture_path,
   start_date  = start_date,
   end_date    = end_date,
-  progress = TRUE)
+  progress    = TRUE)
 
 # Step 2.4 -- Merge the Classification Cube with Mixture Model Cube
 cube_merge_lsmm_class <- sits_merge(mm_cube, cube)
@@ -101,7 +102,7 @@ class_prob <- sits_classify(
   ml_model    = rf_model,
   multicores  = 28,  # adapt to your computer CPU core availability
   memsize     = 180, # adapt to your computer memory availability
-  output_dir =  tile_period_dir,
+  output_dir  =  tile_period_dir,
   version     = version,
   n_sam_pol   = 16, #  Number of time series per segment to be classified (integer, min = 10, max = 50)
   verbose     = TRUE,

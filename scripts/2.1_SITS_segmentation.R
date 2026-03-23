@@ -34,9 +34,9 @@ cube <- sits_cube(
 mm_cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
+  bands = c("SOIL", "VEG", "WATER"),
   tiles = tiles,
   data_dir = mixture_path,
-  bands = c("SOIL", "VEG", "WATER"),
   start_date = start_date,
   end_date = end_date,
   progress = TRUE)
