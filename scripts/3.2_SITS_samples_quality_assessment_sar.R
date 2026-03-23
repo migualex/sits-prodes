@@ -85,7 +85,7 @@ cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 # Step 2.6 -- Create output directory per tile and period
 tiles_id <- paste(sort(unique(cube_merge_lsmm_train$tile)), collapse = "_")
 
-tile_period_dir <- file.path(plots_path, tiles_id, no.years)
+tile_period_dir <- file.path(plots_path, var)
 
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 

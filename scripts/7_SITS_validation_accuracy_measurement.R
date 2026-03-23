@@ -29,11 +29,13 @@ class_dir        <- "data/class"
 class_raster_dir <- "data/class/raster"
 samples_dir      <- "data/raw/samples/validation_samples"
 plots_path       <- "data/plots"
+plots_dir        <- file.path(plots_path, version)
 aux_dir          <- "data/raw/auxiliary"
 version          <- "rf-1y-013014-all-classes"
 
 # Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
 dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Step 1.5 -- Get the list of validation sample files matching the version pattern in the samples directory
 samples_validation_list <- dir(
@@ -139,7 +141,7 @@ ggplot(matriz_conf_full_map, aes(x = Var2, y = Var1, fill = Freq)) +
 
 ggsave(
   filename = paste(version, "matrix-confusion-full-map.png", sep = "_"),
-  path = plots_path,
+  path = plots_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -178,7 +180,7 @@ ggplot(acuracias_full_map, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
 
 ggsave(
   filename = paste(version, "accuracies-full-map.png", sep = "_"),
-  path = plots_path,
+  path = plots_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -217,7 +219,7 @@ ggplot(class_areas_full_map, aes(x = tipo_area, y = class, fill = area)) +
 
 ggsave(
   filename = paste(version, "areas-full-map.png", sep = "_"),
-  path = plots_path,
+  path = plots_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -339,7 +341,7 @@ ggplot(matriz_conf_prodes, aes(x = Var2, y = Var1, fill = Freq)) +
 
 ggsave(
   filename = paste(version, "matrix-confusion-prodes-degrad.png", sep = "_"),
-  path = plots_path,
+  path = plots_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -378,7 +380,7 @@ ggplot(acuracias_prodes, aes(x = tipo_acuracia, y = class, fill = acuracia)) +
 
 ggsave(
   filename = paste(version, "accuracies-prodes-degrad.png", sep = "_"),
-  path = plots_path,
+  path = plots_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -417,7 +419,7 @@ ggplot(class_areas, aes(x = tipo_area, y = class, fill = area)) +
 
 ggsave(
   filename = paste(version, "areas-prodes-degrad.png", sep = "_"),
-  path = plots_path,
+  path = plots_dir,
   scale = 1,
   width = 3529,
   height = 1578,

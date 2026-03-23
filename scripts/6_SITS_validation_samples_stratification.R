@@ -28,7 +28,6 @@ model            <- readRDS(file.path("data/rds/model/random_forest", model_name
 class_dir        <- "data/class"
 class_raster_dir <- "data/class/raster"
 samples_dir      <- "data/raw/samples/validation_samples"
-plots_path       <- "data/plots"
 aux_dir          <- "data/raw/auxiliary"
 version          <- "rf-1y-013014-all-classes"
 

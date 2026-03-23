@@ -69,7 +69,7 @@ tiles_train <- paste(cube$tile, collapse = "-")
 # 2.4 Create output directory per tile and period
 tiles_id <- paste(sort(unique(tiles_train)), collapse = "_")
 
-tile_period_dir <- file.path(plots_path, tiles_id, no.years)
+tile_period_dir <- file.path(plots_path, var)
 
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
