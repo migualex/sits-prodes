@@ -21,29 +21,29 @@ time_series_path  <- file.path("data/rds/time_series/", time_series_name)
 rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
 
-# Step 1.4 -- Identifier to distinguish this model run from previous versions | Keep it the same as the samples' identifier
-var <- "all-classes"
+# Step 1.4 -- Define time range
+start_date    <- "2024-08-01"
+end_date      <- "2025-07-31"
 
-# Step 1.5 -- Define a list with preference colours for each class
+# Step 1.5 -- Identifier to distinguish this model run from previous versions
+var <- "all_samples_new"
+
+# Step 1.6 -- Define a list with preference colors for each class
 my_colors <- c(
   "Corpo_Dagua"                           = "#2980B9",
-  "Corte_Raso_Com_Arvores_Remanescentes"  = "#a19c0a",
-  "Corte_Raso"                            = "#f39c12",
-  "Corte_Raso_Antigo"                     = "#D39750",
-  "Corte_Raso_Com_Fogo"                   = "#CD6155",
-  "Corte_Raso_Com_Vegetacao"              = "#D8DA83",
-  "Corte_Raso_Antigo_Com_Vegetacao"       = "#B2B46D",
+  "Area_Inundavel"                        = "#A0B9C8",
+  "Floresta"                              = "#1E8449",
+  "Floresta_Transicional"                 = "#E0DD22", 
+  "Vegetacao_Natural_Nao_Florestal"       = "#C0D665",
   "Degradacao"                            = "#9da676",
   "Degradacao_Por_Fogo"                   = "#e6b0aa",
-  "Floresta"                              = "#1E8449",
-  "Floresta_Transicional"                 = "#E0DD22",  
-  "Vegetacao_Natural_Nao_Florestal"       = "#C0D665",
-  "Area_Inundavel"                        = "#A0B9C8" 
+  "Corte_Raso"                            = "#f39c12",
+  "Corte_Raso_Antigo_Com_Vegetacao"       = "#B2B46D",
+  "Corte_Raso_Com_Fogo"                   = "#CD6155",
+  "Corte_Raso_Com_Arvores_Remanescentes"  = "#a19c0a",
+  "Corte_Raso_Com_Vegetacao"              = "#D8DA83",
+  "Corte_Raso_Antigo"                     = "#D39750",
 )
-
-# Step 1.6 -- Define time range
-start_date    <- "2023-08-01"
-end_date      <- "2025-07-31"
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -57,8 +57,7 @@ cube <- sits_cube(
   tiles       = c("012014","012015","013014","013015"),
   start_date  = start_date,
   end_date    = end_date,
-  progress    = TRUE
-)
+  progress    = TRUE)
 
 # Step 2.2 -- Calculate the number of years in the training cube
 cube_dates <- sits_timeline(cube)

@@ -71,8 +71,7 @@ cube <- sits_cube(
   data_dir = cube_dirs,
   version = version,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
-                 "band", "version")
-)
+                 "band", "version"))
 
 # ============================================================
 # 3. Accuracy assessment of Full Map classified images

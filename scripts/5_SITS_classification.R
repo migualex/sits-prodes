@@ -26,13 +26,12 @@ vector_path   <- "data/segments"
 class_path    <- "data/class"
 mixture_path  <- "data/raw/mixture_model"
 
-# Step 1.4 -- Identifier to distinguish the file from previous versions 
-var <- "all-classes"
-tile <- "012014"
-
-# Step 1.5 -- Define time range
-start_date    <- "2023-08-01"
+# Step 1.4 -- Define time range
+start_date    <- "2024-08-01"
 end_date      <- "2025-07-31"
+
+# Step 1.5 -- Identifier to distinguish this model run from previous versions
+var <- "all_samples_new"
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -46,8 +45,7 @@ cube <- sits_cube(
   tiles       = tile,
   start_date  = start_date,
   end_date    = end_date,
-  progress    = TRUE
-)
+  progress    = TRUE)
 
 # Step 2.2 -- Extract tiles, timeline and duration from the cube (in years)
 tiles_class <- paste(cube$tile, collapse = "-")
@@ -63,8 +61,7 @@ mm_cube <- sits_cube(
   data_dir = mixture_path,
   start_date  = start_date,
   end_date    = end_date,
-  progress = TRUE
-)
+  progress = TRUE)
 
 # Step 2.4 -- Merge the Classification Cube with Mixture Model Cube
 cube_merge_lsmm_class <- sits_merge(mm_cube, cube)
@@ -77,8 +74,7 @@ local_segs_cube <- sits_cube(
   vector_dir  = vector_path,
   vector_band = "segments",
   version     = seg_version, 
-  parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version")
-)
+  parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version"))
 
 # 2.6 Create output directory per tile and period
 tile_id <- unique(cube$tile)

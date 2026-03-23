@@ -30,7 +30,7 @@ class_raster_dir <- "data/class/raster"
 samples_dir      <- "data/raw/samples/validation_samples"
 plots_path       <- "data/plots"
 aux_dir          <- "data/raw/auxiliary"
-version          <- "rf-2y-012014-all-classes-2y"
+version          <- "rf-1y-013014-all-classes"
 
 # Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
 dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
@@ -203,8 +203,7 @@ cube <- sits_cube(
   data_dir = cube_dirs, # classified raster file cannot be in the same folder as the classified gpkg file
   version = version,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
-                 "band", "version")
-)
+                 "band", "version"))
 
 # ============================================================
 # 4. Full Map Stratified Random Sampling
