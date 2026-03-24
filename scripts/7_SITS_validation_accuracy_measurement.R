@@ -29,9 +29,9 @@ class_dir        <- "data/class"
 class_raster_dir <- "data/class/raster"
 samples_dir      <- "data/raw/samples/validation_samples"
 plots_path       <- "data/plots"
-plots_dir        <- file.path(plots_path, version)
 aux_dir          <- "data/raw/auxiliary"
 version          <- "rf-1y-013014-all-classes"
+plots_dir        <- file.path(plots_path, version)
 
 # Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
 dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
