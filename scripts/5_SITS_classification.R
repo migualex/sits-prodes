@@ -81,7 +81,7 @@ local_segs_cube <- sits_cube(
 tile_id <- unique(cube$tile)
 period_id <- no.years
 
-tile_period_dir <- file.path(class_path, tile_id, period_id)
+tile_period_dir <- file.path(class_path, tile_id, "original_class")
 
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 

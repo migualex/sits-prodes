@@ -26,12 +26,12 @@ process_version <- paste0(date_process, time_process)
 model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_21h03m.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
-class_raster_dir <- "data/class/raster"
 samples_dir      <- "data/raw/samples/validation_samples"
 plots_path       <- "data/plots"
 aux_dir          <- "data/raw/auxiliary"
-version          <- "rf-1y-013014-all-classes"
+version          <- "rf-1y-012014-new-segments-compact03"
 plots_dir        <- file.path(plots_path, version)
+class_raster_dir <- file.path(class_dir, str_split_i(version, pattern = "-", 3), "raster")
 
 # Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
 dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
@@ -40,7 +40,7 @@ dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
 # Step 1.5 -- Get the list of validation sample files matching the version pattern in the samples directory
 samples_validation_list <- dir(
   samples_dir,
-  pattern = paste0(".*", version, ".*\\.gpkg$"),
+  pattern = paste0(".*", str_split_i(version, pattern = "-", 3), ".*\\.gpkg$"),
   full.names = TRUE
 )
 
@@ -80,7 +80,7 @@ cube <- sits_cube(
 # ============================================================
 
 # Step 3.1 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*full-map*", samples_validation_list, value = TRUE)) #full map validation samples
+samples_validation <- st_read(grep("*full-map*", samples_validation_list, value = TRUE)[1]) #full map validation samples
 
 # Step 3.2 -- Calculate accuracy
 area_acc_full_map <- sits_accuracy(cube,
@@ -247,8 +247,7 @@ tile_version <- stringr::str_extract(version, "\\d{6}")
 period_version <- stringr::str_extract(version, "\\d+y")
 
 cube_dirs_filtered <- cube_dirs[
-  grepl(tile_version, cube_dirs) &
-    grepl(period_version, cube_dirs)
+  grepl(tile_version, cube_dirs)
 ]
 
 # 5.3 -- Create the raster cube

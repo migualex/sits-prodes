@@ -23,23 +23,17 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_2y-period-2023-07-28_2025-07-28_2y-all-classes_2026-02-25_17h58m.rds"
+model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_21h03m.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
-class_raster_dir <- "data/class/raster"
 samples_dir      <- "data/raw/samples/validation_samples"
 aux_dir          <- "data/raw/auxiliary"
-version          <- "rf-1y-013014-all-classes"
+version          <- "rf-1y-012014-new-segments-compact03"
 
 # Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
-dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
+class_raster_dir <- file.path(class_dir, str_split_i(version, pattern = "-", 3), "raster")
 
-# Step 1.5 -- Get the list of validation sample files matching the version pattern in the samples directory
-samples_validation_list <- dir(
-  samples_dir,
-  pattern = paste0(".*", version, ".*\\.gpkg$"),
-  full.names = TRUE
-)
+dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
 # 2. Create raster file from classified vector map
@@ -222,7 +216,7 @@ sampling_design <- sits_sampling_design(
     "Degradacao"                            = 0.70,
     "Degradacao_Por_Fogo"                   = 0.70,
     "Floresta"                              = 0.95,
-    #"Floresta_Transicional"                 = DEFINIR,  
+    "Floresta_Transicional"                 = 0.70,  
     "Vegetacao_Natural_Nao_Florestal"       = 0.70,
     "Area_Inundavel"                        = 0.70
   ),
