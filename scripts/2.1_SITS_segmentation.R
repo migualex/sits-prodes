@@ -49,7 +49,7 @@ mm_cube_fraction <- sits_merge(mm_cube, cube)
 
 # Step 2.1 -- Define parameters for SNIC segmentation
 spacing      <- 10
-compactness  <- 0.5
+compactness  <- 0.3
 padding      <- 0
 grid_seeding <- "rectangular"
 
