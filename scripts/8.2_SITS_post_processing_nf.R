@@ -10,8 +10,8 @@ library(units)
 library(smoothr)
 
 # Read SITS classification
-mask_path <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/raw/auxiliary/mask_geral_nf.gpkg"
-sits_classification_path <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/class/015002/2y/SENTINEL-2_MSI_015002_2023-08-13_2025-07-28_class_rf-2y-015002-nf-classes-novas.gpkg"
+mask_path <- "data/raw/auxiliary/mask_geral_nf.gpkg"
+sits_classification_path <- "data/class/015001/original_class/SENTINEL-2_MSI_015001_2023-08-13_2025-07-28_class_rf-2y-015001-novos-segmentos.gpkg"
 sits_classification_raw <- sf::st_read(sits_classification_path, quiet = TRUE)
 output_dir <- sub("/SENTINEL.*", "", sits_classification_path)
 
@@ -79,9 +79,6 @@ sits_reclassification <- sits_reclassification |>
   dplyr::group_by(class) |>
   dplyr::summarise(geometry = sf::st_union(geom), .groups = "drop") |>
   sf::st_cast("MULTIPOLYGON")
-
-# Salvar resultado parcial
-sf::st_write(sits_reclassification, file.path(output_dir, "sits_reclassification.gpkg"))
 
 # =============================================================================
 # STAGE 2 — Extraction of cloud features
@@ -175,11 +172,12 @@ extract_cloud_mask <- function(
   scl_raster_crop <- terra::crop(scl_mask, class_bbox)
   
   # ---------------------------------------------------------------------------
-  # 6. Vetorizar máscara de nuvens
+  # 6. Vetorizar e preencher buracos na máscara de nuvens
   # ---------------------------------------------------------------------------
   cloud_vec <- terra::as.polygons(scl_raster_crop, dissolve = TRUE) |>
     sf::st_as_sf() |>
-    sf::st_transform(sf::st_crs(sits_reclassification))
+    sf::st_transform(sf::st_crs(sits_reclassification)) |>
+    smoothr::fill_holes(threshold = Inf)  # [NOVO] preenche buracos de todos os tamanhos
   
   # ---------------------------------------------------------------------------
   # 7. Salvar resultado (opcional)
@@ -192,10 +190,14 @@ extract_cloud_mask <- function(
       ".gpkg"
     )
     output_path <- file.path(output_dir, output_filename)
-    sf::st_write(cloud_vec, output_path, append = FALSE)
-    message("  -> Vetor de nuvens salvo em: ", output_path)
+    
+    cloud_vec |>
+      sf::st_transform(4674) |>   # [NOVO] reprojetar para EPSG:4674 apenas para salvar
+      sf::st_write(output_path, append = FALSE)
+    
+    message("  -> Vetor de nuvens salvo em EPSG:4674: ", output_path)
   }
-
+  
   # ---------------------------------------------------------------------------
   # 8. Retornar lista com vetor de nuvens e metadados extraídos
   # --------------------------------------------------------------------------- 
@@ -219,32 +221,25 @@ cloud_vec    <- result$cloud_vec
 tile_id      <- result$tile_id
 end_date_scl <- result$end_date_scl
 
-# Recarregar vetor salvo
-cloud_vec <- sf::st_read(file.path(
-  output_dir,
-  paste0("cloud_vec_", tile_id, "_", end_date_scl, ".gpkg")
-))
-
 # =============================================================================
 # STAGE 3 — Difference with cloud/shadow
 # =============================================================================
 
-# Remove all regions covered by cloud/shadow from the classified areas (suppress)
+# Step 3.1 -- Dissolve
+Cloud_union <- sf::st_union(cloud_vec)
+
+# Step 3.2 -- Buffer 100m
+cloud_vec_buffer <- sf::st_buffer(Cloud_union, dist =  100)
+
+# Step 3.3 --  Remove all regions covered by cloud/shadow from the classified areas (suppress)
 sits_classification_cloud_cleaned <- sf::st_difference(
   sits_reclassification,
-  sf::st_union(cloud_vec)
+  cloud_vec_buffer
 ) |>
   sf::st_cast("MULTIPOLYGON")
 
-# Salvar resultado parcial
-sf::st_write(sits_classification_cloud_cleaned, 
-             file.path(
-               output_dir,
-               paste0("sits_classification_cloud_cleaned_", tile_id, "_", end_date_scl, ".gpkg")
-             ))
-
 # =============================================================================
-# STAGE 4 — Fill holes < 1.5 hectares
+# STAGE 4 — Fill holes < 1 hectares / First round
 # =============================================================================
 
 # Step 4.1 -- Read accumulated deforestation data, filtering only for the tile under analysis
@@ -266,23 +261,14 @@ merged <- sf::st_union(
   )
 )
 
-# Step 4.4 -- Fills internal holes smaller than 1.5 hectares (15000 m²)
+# Step 4.4 -- Fills internal holes smaller than 1 hectare (10000 m²)
 smoothed <- smoothr::fill_holes(
   merged, 
-  threshold = units::set_units(15000, "m^2")
+  threshold = units::set_units(10000, "m^2")
 )
 
-
-# Salvar resultado parcial
-sf::st_write(smoothed, 
-             file.path(
-               output_dir,
-               paste0("smoothed_", tile_id, "_", end_date_scl, ".gpkg")
-             ))
-
-
 # =============================================================================
-# STAGE 5 - Difference with the deforestation mask
+# STAGE 5 - Difference with the deforestation mask / First round
 # =============================================================================
 
 # Step 5.1 -- Ensure consistent CRS prior to space operation
@@ -307,57 +293,86 @@ class_diff_mask <- sf::st_difference(
   sf::st_cast("POLYGON") |>
   sf::st_sf()
 
-
-# Salvar resultado parcial
-sf::st_write(class_diff_mask, 
-             file.path(
-               output_dir,
-               paste0("class_diff_mask_", tile_id, "_", end_date_scl, ".gpkg")
-             ))
-
 # =============================================================================
 # STAGE 6 — Fill in "bays" and smooth edges
 # =============================================================================
 
 # Step 6.1 -- Mathematical morphology / Positive buffer then negative buffer
 class_diff_mask_filled_bays <- class_diff_mask |>
-  sf::st_buffer(dist =  40)                    |>
-  sf::st_buffer(dist = -40)                    |>
+  sf::st_buffer(dist =  50)                    |>
+  sf::st_buffer(dist = -50)                    |>
   sf::st_cast("POLYGON")                       |>
   tibble::rowid_to_column("id")
 
-
-# Salvar resultado parcial
-sf::st_write(class_diff_mask_filled_bays, 
-             file.path(
-               output_dir,
-               paste0("40m_class_diff_mask_filled_bays_", tile_id, "_", end_date_scl, ".gpkg")
-             ))
-
 # =============================================================================
-# STAGE 7 — Exclude polygons < 1 hectares
+# STAGE 7 — Fill holes < 1 hectares / Second round
 # =============================================================================
 
-# Step 7.1 -- Calculate the area of each polygon (in m²)
-class_diff_mask_filled_bays$area_m2 <- as.numeric(sf::st_area(class_diff_mask_filled_bays))
+# Step 7.1 -- Merge reclassification with the accumulated mask, 
+# dissolving all geometries into a single continuous set
+merged_2 <- sf::st_union(
+  dplyr::bind_rows(
+    class_diff_mask_filled_bays,
+    mask
+  )
+)
 
-# Step 7.2 -- Convert square meters to hectares
-class_diff_mask_filled_bays$area_ha <- class_diff_mask_filled_bays$area_m2 / 10000
+# Step 7.2 -- Fills internal holes smaller than 1 hectare (10000 m²)
+smoothed_2 <- smoothr::fill_holes(
+  merged_2, 
+  threshold = units::set_units(10000, "m^2")
+)
 
-# Step 7.3 -- Keep only polygons with an area greater than or equal to 1 hectare
-class_diff_mask_bigger_than_1ha <- class_diff_mask_filled_bays |>
+# =============================================================================
+# STAGE 8 - Difference with the deforestation mask / Second round
+# =============================================================================
+
+# Step 8.1 -- Ensure consistent CRS prior to space operation
+smoothed_2 <- sf::st_transform(smoothed_2, sf::st_crs(mask))
+
+# Step 8.2 -- Fix geometries
+smoothed_2 <- smoothed |>
+  st_make_valid()
+mask <- mask |>
+  st_make_valid()
+
+# Step 8.3 -- Make a union
+mask_union_2 <- mask |>
+  st_union() |>
+  st_make_valid()
+
+# Step 8.4 -- Remove areas already present in the deforestation mask
+class_diff_mask_2 <- sf::st_difference(
+  smoothed_2,
+  mask_union_2
+) |>
+  sf::st_cast("POLYGON") |>
+  sf::st_sf()
+
+# =============================================================================
+# STAGE 9 — Exclude polygons < 1 hectares
+# =============================================================================
+
+# Step 9.1 -- Calculate the area of each polygon (in m²)
+class_diff_mask_2$area_m2 <- as.numeric(sf::st_area(class_diff_mask_2))
+
+# Step 9.2 -- Convert square meters to hectares
+class_diff_mask_2$area_ha <- class_diff_mask_2$area_m2 / 10000
+
+# Step 9.3 -- Keep only polygons with an area greater than or equal to 1 hectare
+class_diff_mask_bigger_than_1ha <- class_diff_mask_2 |>
   dplyr::filter(area_ha >= 1)
 
 # =============================================================================
-# ETAPA 8 —  Save final result
+# STAGE 10 —  Save the final result
 # =============================================================================
 
-# Step 8.1 -- Reproject to EPSG:4674 (SIRGAS 2000)
+# Step 10.1 -- Reproject to EPSG:4674 (SIRGAS 2000)
 poligonos_supressao <- st_transform(class_diff_mask_bigger_than_1ha, crs = 4674)
 
-# Step 8.2 -- Save final result
+# Step 10.2 -- Save the final result
 sf::st_write(poligonos_supressao, 
              file.path(
                output_dir,
-               paste0("sits_classification_final_", tile_id, "_", end_date_scl, ".gpkg")
+               paste0("sits-classification-post-processed", tile_id, "_", end_date_scl, ".gpkg")
              ))
