@@ -21,7 +21,7 @@ process_version <- paste0(date_process, time_process)
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_2y-period-2023-07-28_2025-07-28_2y-all-classes_2026-02-25_17h58m.rds" #add the model name
 rds_path      <- file.path("data/rds/model/random_forest", model_name)
-seg_version   <- "snic-1ymlme-rectangular-compactness-05"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
+seg_version   <- "lsmm-snic-spac10-comp03-pad0-rectangular-date"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
 mixture_path  <- "data/raw/mixture_model"

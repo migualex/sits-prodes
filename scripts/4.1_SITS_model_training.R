@@ -11,8 +11,8 @@ library(sits)
 library(ggplot2)
 
 # Step 1.2 -- Define the date and time for the start of processing
-date_process <- format(Sys.Date(), "%Y-%m-%d_")
-time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
+date_process    <- format(Sys.Date(), "%Y-%m-%d_")
+time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
@@ -22,8 +22,9 @@ rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
 
 # Step 1.4 -- Define time range
-start_date    <- "2024-08-01"
-end_date      <- "2025-07-31"
+start_date   <- "2024-08-01"
+end_date     <- "2025-07-31"
+tiles        <- c("012014","012015","013014","013015")
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
 var <- "all_samples_new"
@@ -54,7 +55,7 @@ cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
   bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
-  tiles       = c("012014","012015","013014","013015"),
+  tiles       = tiles,
   start_date  = start_date,
   end_date    = end_date,
   progress    = TRUE)
