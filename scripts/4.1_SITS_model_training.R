@@ -160,4 +160,4 @@ dev.off()
 # Step 4.4 -- Save the ML model to a R file
 saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 
-print("Model has been trained!")
+print("Train Model has been trained!")

@@ -15,8 +15,8 @@ library(units)
 library(smoothr)
 
 # Step 1.2 -- Define the paths for files and folders needed in the processing
-mask_path <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/raw/auxiliary/mask_geral_nf.gpkg"
-sits_classification_path <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/class/014001/original_class/SENTINEL-2_MSI_014001_2023-08-13_2025-07-28_class_rf-2y-014001-novos-segmentos.gpkg"
+mask_path <- "data/raw/auxiliary/mask_geral_nf.gpkg"
+sits_classification_path <- "data/class/014001/original_class/SENTINEL-2_MSI_014001_2023-08-13_2025-07-28_class_rf-2y-014001-novos-segmentos.gpkg"
 sits_classification_raw <- sf::st_read(sits_classification_path, quiet = TRUE)
 output_dir <- sub("/SENTINEL.*", "", sits_classification_path)
 
@@ -72,7 +72,7 @@ sits_classification <- sits_classification_raw |>
     "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto",
     "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo",
     "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo",
-    "Soma_Supressao" # adicionado no passo anterior
+    "Soma_Supressao" # added in the previous step
   ))
 
 # Step 2.6 -- Standardize the nomenclature of the classes
@@ -101,7 +101,7 @@ extract_cloud_mask <- function(
     date_window_days = 1
 ) {
   # ---------------------------------------------------------------------------
-  # 1. Extrair metadados do nome do arquivo
+  # 1. Extract metadata from the file name
   # ---------------------------------------------------------------------------
   filename_base <- basename(sits_classification_path)
   
@@ -111,7 +111,7 @@ extract_cloud_mask <- function(
   )[[1]]
   
   if (length(last_date_str) == 0) {
-    stop("Nenhuma data no formato YYYY-MM-DD encontrada no nome do arquivo: ", filename_base)
+    stop("No date in YYYY-MM-DD format found in the file name: ", filename_base)
   }
   
   last_date      <- as.Date(tail(last_date_str, 1))
@@ -124,14 +124,14 @@ extract_cloud_mask <- function(
   )
   
   if (length(tile_id) == 0 || tile_id == "") {
-    stop("Não foi possível extrair o tile_id do nome do arquivo: ", filename_base)
+    stop("Could not extract tile_id from the file name: ", filename_base)
   }
   
   message("  -> Tile: ", tile_id)
-  message("  -> Janela temporal SCL: ", start_date_scl, " a ", end_date_scl)
+  message("  -> SCL time window: ", start_date_scl, " to ", end_date_scl)
   
   # ---------------------------------------------------------------------------
-  # 2. Montar cubo BDC com banda SCL
+  # 2. Build BDC cube with SCL band
   # ---------------------------------------------------------------------------
   scl_cube <- sits::sits_cube(
     source     = "BDC",
@@ -143,21 +143,21 @@ extract_cloud_mask <- function(
   )
   
   # ---------------------------------------------------------------------------
-  # 3. Carregar raster SCL
+  # 3. Load SCL raster
   # ---------------------------------------------------------------------------
   scl_files <- scl_cube$file_info[[1]] |>
     dplyr::filter(band == "CLOUD", date == as.Date(end_date_scl)) |>
     dplyr::pull(path)
   
   if (length(scl_files) == 0) {
-    stop("Nenhum arquivo SCL encontrado para a data: ", end_date_scl)
+    stop("No SCL file found for the date: ", end_date_scl)
   }
   
   scl_raster <- terra::rast(scl_files[1])
-  message("  -> Arquivo SCL carregado: ", scl_files[1])
+  message("  -> SCL file loaded: ", scl_files[1])
   
   # ---------------------------------------------------------------------------
-  # 4. Criar máscara binária de nuvens/sombras
+  # 4. Create binary cloud/shadow mask
   # ---------------------------------------------------------------------------
   scl_mask <- terra::classify(
     scl_raster,
@@ -166,7 +166,7 @@ extract_cloud_mask <- function(
   )
   
   # ---------------------------------------------------------------------------
-  # 5. Recortar pela extensão da classificação
+  # 5. Crop by the classification extent
   # ---------------------------------------------------------------------------
   class_bbox <- sits_reclassification |>
     sf::st_transform(terra::crs(scl_mask)) |>
@@ -176,35 +176,35 @@ extract_cloud_mask <- function(
   scl_raster_crop <- terra::crop(scl_mask, class_bbox)
   
   # ---------------------------------------------------------------------------
-  # 6. Vetorizar e preencher buracos na máscara de nuvens
+  # 6. Vectorize and fill holes in the cloud mask
   # ---------------------------------------------------------------------------
   cloud_vec <- terra::as.polygons(scl_raster_crop, dissolve = TRUE) |>
     sf::st_as_sf() |>
     sf::st_transform(sf::st_crs(sits_reclassification)) |>
-    smoothr::fill_holes(threshold = Inf)  # [NOVO] preenche buracos de todos os tamanhos
+    smoothr::fill_holes(threshold = Inf)  # fills holes of all sizes
   
   # ---------------------------------------------------------------------------
-  # 7. Salvar resultado (opcional)
+  # 7. Save result (optional)
   # ---------------------------------------------------------------------------
   if (!is.null(output_dir)) {
     output_filename <- paste0(
       "cloud_vec_",
       tile_id, "_",
-      end_date_scl,       # formato já é YYYY-MM-DD
+      end_date_scl,
       ".gpkg"
     )
     output_path <- file.path(output_dir, output_filename)
     
     cloud_vec |>
-      sf::st_transform(4674) |>   # [NOVO] reprojetar para EPSG:4674 apenas para salvar
+      sf::st_transform(4674) |>   # reproject to EPSG:4674 before saving
       sf::st_write(output_path, append = FALSE)
     
-    message("  -> Vetor de nuvens salvo em EPSG:4674: ", output_path)
+    message("  -> Cloud vector saved in EPSG:4674: ", output_path)
   }
   
   # ---------------------------------------------------------------------------
-  # 8. Retornar lista com vetor de nuvens e metadados extraídos
-  # --------------------------------------------------------------------------- 
+  # 8. Return list with cloud vector and extracted metadata
+  # ---------------------------------------------------------------------------
   return(invisible(list(
     cloud_vec    = cloud_vec,
     tile_id      = tile_id,
@@ -225,7 +225,6 @@ cloud_vec    <- result$cloud_vec
 tile_id      <- result$tile_id
 end_date_scl <- result$end_date_scl
 
-
 # ============================================================
 # 4. Difference with cloud/shadow
 # ============================================================
@@ -236,7 +235,7 @@ Cloud_union <- sf::st_union(cloud_vec)
 # Step 4.2 -- Buffer 100m
 cloud_vec_buffer <- sf::st_buffer(Cloud_union, dist =  100)
 
-# Step 4.3 --  Remove all regions covered by cloud/shadow from the classified areas (suppress)
+# Step 4.3 -- Remove all regions covered by cloud/shadow from the classified areas (suppress)
 sits_classification_cloud_cleaned <- sf::st_difference(
   sits_reclassification,
   cloud_vec_buffer
@@ -257,7 +256,7 @@ mask <- sf::st_transform(
   sf::st_crs(sits_classification_cloud_cleaned)
 )
 
-# Step 5.3 -- Merge reclassification with the accumulated mask, 
+# Step 5.3 -- Merge reclassification with the accumulated mask,
 # dissolving all geometries into a single continuous set
 merged <- list(sits_classification_cloud_cleaned, mask) |>
   purrr::map(sf::st_make_valid) |>
@@ -310,7 +309,7 @@ class_diff_mask_filled_bays <- class_diff_mask |>
   sf::st_cast("POLYGON")                       |>
   tibble::rowid_to_column("id")
 
-# Salva resultado parcial
+# Save partial result
 sf::st_write(class_diff_mask_filled_bays, 
              file.path(
                output_dir,
@@ -336,7 +335,7 @@ smoothed_2 <- smoothr::fill_holes(
   threshold = units::set_units(10000, "m^2")
 )
 
-# Salva resultado parcial
+# Save partial result
 sf::st_write(smoothed_2, 
              file.path(
                output_dir,
@@ -354,7 +353,7 @@ class_diff_mask_2 <- sf::st_difference(
   sf::st_cast("POLYGON") |>
   sf::st_sf()
 
-# Salva resultado parcial
+# Save partial result
 sf::st_write(class_diff_mask_2, 
              file.path(
                output_dir,
