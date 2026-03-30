@@ -46,6 +46,24 @@ my_colors <- c(
   "Corte_Raso_Antigo"                     = "#D39750"
 )
 
+# Step 1.6.1 -- Uncomment these lines if you are working in non-forest areas
+my_colors_nf <- c(
+  "Hidrografia_Lago"                                                         = "#EEEEEE",
+  "Hidrografia_Rio"                                                          = "#999999",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura"             = "#AAAAAA",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto"            = "#BBBBBB",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo"      = "#CCCCCC",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo"     = "#DDDDDD",
+  "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal"                          = "#888888",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa"              = "#777777",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa"             = "#666666",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Pos_Fogo"                   = "#555555",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida"                           = "#444444",
+  "Vegetacao_Natural_Nao_Florestal_Transicao_Florestal"                      = "#333333",
+  "Vegetacao_Natural_Nao_Florestal_Mata"                                     = "#222222",
+  "Vegetacao_Natural_Nao_Florestal_Vereda"                                   = "#111111"
+)
+
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
@@ -159,5 +177,4 @@ dev.off()
 
 # Step 4.4 -- Save the ML model to a R file
 saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
-
-print("Train Model has been trained!")
+print("Model trained successfully!")

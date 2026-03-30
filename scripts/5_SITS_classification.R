@@ -132,8 +132,7 @@ class_map <- sits_label_classification(
   memsize     = 180, # adapt to your computer memory availability
   progress    = TRUE
 )
-
-print("Classification has finished")
+print("Classification finished!")
 
 # ============================================================
 # 4. Uncertainty
