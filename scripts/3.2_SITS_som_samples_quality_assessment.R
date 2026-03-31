@@ -20,26 +20,44 @@ process_version <- paste0(date_process, time_process)
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 rds_path      <- "data/rds/"
 plots_path    <- "data/plots/"
-rds_filename  <- "2026-02-24_10h30m_samples_4-tiles-012014-012015-013014-013015_1y-period-2024-08-01_2025-07-28_all_samples_new_2026-02-24_10h30m.rds"
+rds_filename  <- "samples_4-tiles-012014-012015-013014-013015_1y-period-2024-08-01_2025-07-28_prodes-amz_2026-02-24_10h30m.rds"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
-var <- "all_samples_new"
+var <- "prodes-amz"
 
 # Step 1.6 -- Define a list with preference colors for each class
 my_colors <- c(
-  "Corpo_Dagua"                           = "#2980B9",
-  "Area_Inundavel"                        = "#A0B9C8",
-  "Floresta"                              = "#1E8449",
-  "Floresta_Transicional"                 = "#E0DD22", 
-  "Vegetacao_Natural_Nao_Florestal"       = "#C0D665",
-  "Degradacao"                            = "#9da676",
-  "Degradacao_Por_Fogo"                   = "#e6b0aa",
-  "Corte_Raso"                            = "#f39c12",
-  "Corte_Raso_Antigo_Com_Vegetacao"       = "#B2B46D",
-  "Corte_Raso_Com_Fogo"                   = "#CD6155",
-  "Corte_Raso_Com_Arvores_Remanescentes"  = "#a19c0a",
-  "Corte_Raso_Com_Vegetacao"              = "#D8DA83",
-  "Corte_Raso_Antigo"                     = "#D39750"
+  "Water"                         = "#2980B9",
+  "Wetland"                       = "#A0B9C8",
+  "Forest"                        = "#1E8449",
+  "Transition_Forest"             = "#E0DD22", 
+  "Non_Forest_Natural_Vegetation" = "#C0D665",
+  "Degradation"                   = "#9da676",
+  "Degradation_Fire"              = "#e6b0aa",
+  "Clear_Cut_Bare_Soil"           = "#f39c12",
+  "Old_Clear_Cut_With_Vegetation" = "#B2B46D",
+  "Clear_Cut_Burned_Area"         = "#CD6155",
+  "Clear_Cut_With_Trees"          = "#a19c0a",
+  "Clear_Cut_With_Vegetation"     = "#D8DA83",
+  "Old_Clear_Cut_Bare_Soil"       = "#D39750"
+)
+
+# ATTENTION: Use the palette below if you are working in Non-Forest areas
+my_colors <- c(
+  "Hydrography_Lake"                                      = "#2980b9",
+  "Hydrography_River"                                     = "#1f78b4",
+  "Conversion_To_Agriculture"                             = "#f0b27a",
+  "Conversion_To_Bare_Soil"                               = "#f39c12",
+  "Previous_Conversion_To_Agriculture"                    = "#b08b57",
+  "Previous_Conversion_To_Bare_Soil"                      = "#a0522d",
+  "Fire_In_Non_Forest_Natural_Vegetation"                 = "#cd6155",
+  "Non_Forest_Natural_Vegetation_Dry_High_Biomass"        = "#f6cc41",
+  "Non_Forest_Natural_Vegetation_Dry_Low_Biomass"         = "#dbebd8",
+  "Non_Forest_Natural_Vegetation_Post_Fire"               = "#e6b0aa",
+  "Non_Forest_Natural_Vegetation_Wet"                     = "#a0b9c8",
+  "Non_Forest_Natural_Vegetation_Forest_Transition"       = "#88cda2",
+  "Non_Forest_Natural_Vegetation_Woodland"                = "#1e8449",
+  "Non_Forest_Natural_Vegetation_Palm_Swamps"             = "#3ababa"
 )
 
 # ============================================================

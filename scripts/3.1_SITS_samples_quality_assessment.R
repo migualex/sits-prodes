@@ -29,42 +29,7 @@ end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
-var <- "all_samples_new"
-
-# Step 1.6 -- Define a list with preference colors for each class
-my_colors <- c(
-  "Corpo_Dagua"                           = "#2980B9",
-  "Area_Inundavel"                        = "#A0B9C8",
-  "Floresta"                              = "#1E8449",
-  "Floresta_Transicional"                 = "#E0DD22", 
-  "Vegetacao_Natural_Nao_Florestal"       = "#C0D665",
-  "Degradacao"                            = "#9da676",
-  "Degradacao_Por_Fogo"                   = "#e6b0aa",
-  "Corte_Raso"                            = "#f39c12",
-  "Corte_Raso_Antigo_Com_Vegetacao"       = "#B2B46D",
-  "Corte_Raso_Com_Fogo"                   = "#CD6155",
-  "Corte_Raso_Com_Arvores_Remanescentes"  = "#a19c0a",
-  "Corte_Raso_Com_Vegetacao"              = "#D8DA83",
-  "Corte_Raso_Antigo"                     = "#D39750"
-)
-
-# ATTENTION: uncomment below if you are working in Non-Forest areas
-# my_colors <- c(
-#   "Hidrografia_Lago"                                                         = "#EEEEEE",
-#   "Hidrografia_Rio"                                                          = "#999999",
-#   "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura"             = "#AAAAAA",
-#   "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto"            = "#BBBBBB",
-#   "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo"      = "#CCCCCC",
-#   "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo"     = "#DDDDDD",
-#   "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal"                          = "#888888",
-#   "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa"              = "#777777",
-#   "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa"             = "#666666",
-#   "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Pos_Fogo"                   = "#555555",
-#   "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida"                           = "#444444",
-#   "Vegetacao_Natural_Nao_Florestal_Transicao_Florestal"                      = "#333333",
-#   "Vegetacao_Natural_Nao_Florestal_Mata"                                     = "#222222",
-#   "Vegetacao_Natural_Nao_Florestal_Vereda"                                   = "#111111"
-# )
+var <- "prodes-amz"
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -113,9 +78,48 @@ dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
-samples_train <- sf::st_read(file.path(sample_path, "amostras_amazonia_24_02_2026.gpkg"))
+samples_train <- sf::st_read(file.path(sample_path, "sampling-training-012014-012015-013014-013015-2026-02-24.gpkg"))
 
-# Step 3.2 -- Extract Time Series from samples_train and calculate the process duration
+# Step 3.2 -- Convert class names to English
+class_translation <- c(
+  "Corpo_Dagua"                          = "Water",
+  "Area_Inundavel"                       = "Wetland",
+  "Floresta"                             = "Forest",
+  "Floresta_Transicional"                = "Transition_Forest",
+  "Vegetacao_Natural_Nao_Florestal"      = "Non_Forest_Natural_Vegetation",
+  "Degradacao"                           = "Degradation",
+  "Degradacao_Por_Fogo"                  = "Degradation_Fire",
+  "Corte_Raso"                           = "Clear_Cut_Bare_Soil",
+  "Corte_Raso_Antigo"                    = "Old_Clear_Cut_Bare_Soil",
+  "Corte_Raso_Com_Fogo"                  = "Clear_Cut_Burned_Area",
+  "Corte_Raso_Com_Arvores_Remanescentes" = "Clear_Cut_With_Trees",
+  "Corte_Raso_Com_Vegetacao"             = "Clear_Cut_With_Vegetation",
+  "Corte_Raso_Antigo_Com_Vegetacao"      = "Old_Clear_Cut_With_Vegetation")
+  
+# ATTENTION: Use the names below if you are working in Non-Forest areas
+class_translation <- c(
+  "Hidrografia_Rio"                                                      = "Hydrography_River",
+  "Hidrografia_Lago"                                                     = "Hydrography_Lake",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida"                       = "Non_Forest_Natural_Vegetation_Wet",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa"          = "Non_Forest_Natural_Vegetation_Dry_High_Biomass",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa"         = "Non_Forest_Natural_Vegetation_Dry_Low_Biomass",
+  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Pos_Fogo"               = "Non_Forest_Natural_Vegetation_Post_Fire",
+  "Vegetacao_Natural_Nao_Florestal_Transicao_Florestal"                  = "Non_Forest_Natural_Vegetation_Forest_Transition",
+  "Vegetacao_Natural_Nao_Florestal_Vereda"                               = "Non_Forest_Natural_Vegetation_Palm_Swamps",
+  "Vegetacao_Natural_Nao_Florestal_Mata"                                 = "Non_Forest_Natural_Vegetation_Woodland",
+  "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal"                      = "Fire_In_Non_Forest_Natural_Vegetation",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura"         = "Conversion_To_Agriculture",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto"        = "Conversion_To_Bare_Soil",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo"  = "Previous_Conversion_To_Agriculture",
+  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo" = "Previous_Conversion_To_Bare_Soil")
+
+samples_train$label <- ifelse(
+  samples_train$label %in% names(class_translation),
+  class_translation[samples_train$label],
+  samples_train$label
+)
+
+# Step 3.3 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
 samples <- sits_get_data(
   cube        = cube_merge_lsmm_train,
@@ -129,16 +133,16 @@ sits_get_data_end <- Sys.time()
 sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units = "secs")
 sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_get_data_time / 3600), as.integer((sits_get_data_time %% 3600) / 60))
 
-# Step 3.2.1 -- Visualize the temporal patterns of all features
+# Step 3.3.1 -- Visualize the temporal patterns of all features
 plot(sits_patterns(samples))
 
-# Step 3.2.2 -- Visualize the temporal patterns of specific features in a specific period
+# Step 3.3.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
   sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2024-08-01', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 
-# Step 3.3 -- Save the samples Time Series to a R file
+# Step 3.4 -- Save the samples Time Series to a R file
 saveRDS(samples, 
         paste0(rds_path,"time_series/", "samples_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 print("Time series extracted successfully!")

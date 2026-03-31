@@ -19,7 +19,7 @@ time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_2y-period-2023-07-28_2025-07-28_2y-all-classes_2026-02-25_17h58m.rds" #add the model name
+model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-28_2025-07-28_prodes-amz_2026-02-25_17h58m.rds"
 rds_path      <- file.path("data/rds/model/random_forest", model_name)
 seg_version   <- "lsmm-snic-spac10-comp03-pad0-rectangular-date"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
@@ -32,7 +32,7 @@ end_date     <- "2025-07-31"
 tile         <- '012014'
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
-var <- "all_samples_new"
+var <- "prodes-amz"
 
 # ============================================================
 # 2. Define and Load Data Cubes

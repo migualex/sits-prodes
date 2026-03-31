@@ -23,17 +23,12 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_21h03m.rds"
+model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-28_2025-07-28_prodes-amz_2026-02-25_17h58m.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
 samples_dir      <- "data/raw/samples/validation_samples"
 aux_dir          <- "data/raw/auxiliary"
-version          <- "rf-1y-012014-new-segments-compact03"
-
-# Step 1.4 -- Create the directory for storing class rasters, including any necessary parent directories. Suppress warnings if the directory already exists.
-class_raster_dir <- file.path(class_dir, str_split_i(version, pattern = "-", 3), "raster")
-
-dir.create(class_raster_dir, recursive = TRUE, showWarnings = FALSE)
+version          <- "rf-1y-012014-prodes-amz"
 
 # ============================================================
 # 2. Create raster file from classified vector map
@@ -139,7 +134,7 @@ style <- tibble::tibble(
 )
 
 # Step 2.3 -- Rasterize classified vectors
-to_raster <- paste0(".*_class_", version, ".*\\.gpkg$")
+to_raster <- paste0(".*_class_rf-2y-", "01[4-6]00[1-3]", "-novos-segmentos*\\.gpkg$")
 
 class_files <- list.files(
   path = class_dir,
@@ -152,11 +147,10 @@ raster_files <- purrr::map(class_files, function(file) {
   file_name <- fs::path_file(file)
   cli::cli_inform("Processing: {file_name}")
   tile_id <- stringr::str_extract(file_name, "\\d{6}")
-  period_id <- stringr::str_extract(file_name, "\\d+y")
   tile_period_dir <- file.path(
-    class_raster_dir,
+    class_dir,
     tile_id,
-    period_id
+    "raster"
   )
   
   fs::dir_create(tile_period_dir, recurse = TRUE)
