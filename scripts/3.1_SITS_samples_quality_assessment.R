@@ -138,7 +138,7 @@ plot(sits_patterns(samples))
 
 # Step 3.3.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
-  sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2024-08-01', end_date = '2025-07-28') |> 
+  sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 
