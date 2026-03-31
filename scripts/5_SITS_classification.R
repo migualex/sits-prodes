@@ -29,7 +29,7 @@ mixture_path  <- "data/raw/mixture_model"
 # Step 1.4 -- Define time range
 start_date   <- "2024-08-01"
 end_date     <- "2025-07-31"
-tile         <- '012014'
+tile         <- "012014"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
 var <- "prodes-amz"
