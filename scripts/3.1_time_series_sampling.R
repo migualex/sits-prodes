@@ -1,5 +1,5 @@
 # ============================================================
-#  Samples quality assessment, filtering and balancing
+#  Time series extraction from the training samples
 # ============================================================
 
 # ============================================================
@@ -78,7 +78,10 @@ dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
-samples_train <- sf::st_read(file.path(sample_path, "sampling-training-012014-012015-013014-013015-2026-02-24.gpkg"))
+sampling_date   <- "2026-02-24"   # date of the sampling file (YYYY-MM-DD)
+tiles_str       <- paste(sort(tiles), collapse = "-")
+samples_name    <- paste("sampling-training", tiles_str, var, sampling_date, sep = "-")
+samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
 
 # Step 3.2 -- Convert class names to English
 class_translation <- c(
