@@ -1,0 +1,66 @@
+# ============================================================
+# Configuração de classes e cores
+# Edite este arquivo para atualizar traduções e paleta de cores
+# Formato:
+#   [CLASS_TRANSLATION]  -> Nome_Portugues = English_Name
+#   [COLORS]             -> English_Name = #hexcolor
+# Linhas começando com # são ignoradas
+# ============================================================
+
+[CLASS_TRANSLATION]
+Corpo_Dagua                                                      = Water
+Area_Inundavel                                                   = Wetland
+Floresta                                                         = Forest
+Floresta_Transicional                                            = Transition_Forest
+Vegetacao_Natural_Nao_Florestal                                  = Non_Forest_Natural_Vegetation
+Degradacao                                                       = Degradation
+Degradacao_Por_Fogo                                              = Degradation_Fire
+Corte_Raso                                                       = Clear_Cut_Bare_Soil
+Corte_Raso_Antigo                                                = Old_Clear_Cut_Bare_Soil
+Corte_Raso_Com_Fogo                                              = Clear_Cut_Burned_Area
+Corte_Raso_Com_Arvores_Remanescentes                             = Clear_Cut_With_Trees
+Corte_Raso_Com_Vegetacao                                         = Clear_Cut_With_Vegetation
+Corte_Raso_Antigo_Com_Vegetacao                                  = Old_Clear_Cut_With_Vegetation
+Hidrografia_Rio                                                  = Hydrography_River
+Hidrografia_Lago                                                 = Hydrography_Lake
+Vegetacao_Natural_Nao_Florestal_Herbacea_Umida                   = Non_Forest_Natural_Vegetation_Wet
+Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa      = Non_Forest_Natural_Vegetation_Dry_High_Biomass
+Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa     = Non_Forest_Natural_Vegetation_Dry_Low_Biomass
+Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Pos_Fogo           = Non_Forest_Natural_Vegetation_Post_Fire
+Vegetacao_Natural_Nao_Florestal_Transicao_Florestal              = Non_Forest_Natural_Vegetation_Forest_Transition
+Vegetacao_Natural_Nao_Florestal_Vereda                           = Non_Forest_Natural_Vegetation_Palm_Swamps
+Vegetacao_Natural_Nao_Florestal_Mata                             = Non_Forest_Natural_Vegetation_Woodland
+Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal                  = Fire_In_Non_Forest_Natural_Vegetation
+Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura     = Conversion_To_Agriculture
+Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto    = Conversion_To_Bare_Soil
+Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo  = Previous_Conversion_To_Agriculture
+Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo = Previous_Conversion_To_Bare_Soil
+
+[COLORS]
+Water                                            = #2980B9
+Wetland                                          = #A0B9C8
+Forest                                           = #1E8449
+Transition_Forest                                = #E0DD22
+Non_Forest_Natural_Vegetation                    = #C0D665
+Degradation                                      = #9da676
+Degradation_Fire                                 = #e6b0aa
+Clear_Cut_Bare_Soil                              = #f39c12
+Old_Clear_Cut_With_Vegetation                    = #B2B46D
+Clear_Cut_Burned_Area                            = #CD6155
+Clear_Cut_With_Trees                             = #a19c0a
+Clear_Cut_With_Vegetation                        = #D8DA83
+Old_Clear_Cut_Bare_Soil                          = #D39750
+Hydrography_Lake                                 = #2980b9
+Hydrography_River                                = #1f78b4
+Conversion_To_Agriculture                        = #f0b27a
+Conversion_To_Bare_Soil                          = #f39c12
+Previous_Conversion_To_Agriculture               = #b08b57
+Previous_Conversion_To_Bare_Soil                 = #a0522d
+Fire_In_Non_Forest_Natural_Vegetation            = #cd6155
+Non_Forest_Natural_Vegetation_Dry_High_Biomass   = #f6cc41
+Non_Forest_Natural_Vegetation_Dry_Low_Biomass    = #dbebd8
+Non_Forest_Natural_Vegetation_Post_Fire          = #e6b0aa
+Non_Forest_Natural_Vegetation_Wet                = #a0b9c8
+Non_Forest_Natural_Vegetation_Forest_Transition  = #88cda2
+Non_Forest_Natural_Vegetation_Woodland           = #1e8449
+Non_Forest_Natural_Vegetation_Palm_Swamps        = #3ababa

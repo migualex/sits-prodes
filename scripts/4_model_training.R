@@ -9,6 +9,7 @@
 # Step 1.1 -- Load Required Libraries
 library(sits)
 library(ggplot2)
+source("read_class_config.R")
 
 # Step 1.2 -- Define the date and time for the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d_")
@@ -28,41 +29,6 @@ tiles        <- c("012014","012015","013014","013015")
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
 var <- "prodes-amz"
-
-# Step 1.6 -- Define a list with preference colors for each class
-my_colors <- c(
-  "Water"                         = "#2980B9",
-  "Wetland"                       = "#A0B9C8",
-  "Forest"                        = "#1E8449",
-  "Transition_Forest"             = "#E0DD22", 
-  "Non_Forest_Natural_Vegetation" = "#C0D665",
-  "Degradation"                   = "#9da676",
-  "Degradation_Fire"              = "#e6b0aa",
-  "Clear_Cut_Bare_Soil"           = "#f39c12",
-  "Old_Clear_Cut_With_Vegetation" = "#B2B46D",
-  "Clear_Cut_Burned_Area"         = "#CD6155",
-  "Clear_Cut_With_Trees"          = "#a19c0a",
-  "Clear_Cut_With_Vegetation"     = "#D8DA83",
-  "Old_Clear_Cut_Bare_Soil"       = "#D39750"
-)
-
-# ATTENTION: Use the palette below if you are working in Non-Forest areas
-my_colors <- c(
-  "Hydrography_Lake"                                      = "#2980b9",
-  "Hydrography_River"                                     = "#1f78b4",
-  "Conversion_To_Agriculture"                             = "#f0b27a",
-  "Conversion_To_Bare_Soil"                               = "#f39c12",
-  "Previous_Conversion_To_Agriculture"                    = "#b08b57",
-  "Previous_Conversion_To_Bare_Soil"                      = "#a0522d",
-  "Fire_In_Non_Forest_Natural_Vegetation"                 = "#cd6155",
-  "Non_Forest_Natural_Vegetation_Dry_High_Biomass"        = "#f6cc41",
-  "Non_Forest_Natural_Vegetation_Dry_Low_Biomass"         = "#dbebd8",
-  "Non_Forest_Natural_Vegetation_Post_Fire"               = "#e6b0aa",
-  "Non_Forest_Natural_Vegetation_Wet"                     = "#a0b9c8",
-  "Non_Forest_Natural_Vegetation_Forest_Transition"       = "#88cda2",
-  "Non_Forest_Natural_Vegetation_Woodland"                = "#1e8449",
-  "Non_Forest_Natural_Vegetation_Palm_Swamps"             = "#3ababa"
-)
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -99,7 +65,12 @@ dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 # Step 3.1 -- Reading training samples
 train_samples <- readRDS(time_series_path)
 
-# Step 3.2 -- Using k-fold validation
+# Step 3.2 -- Load color palette from external config file
+config    <- read_class_config("class_config.txt")  # same directory as the scripts
+my_colors <- config$my_colors
+my_colors <- my_colors[names(my_colors) %in% unique(train_samples$label)] # Filter only the colors of the classes present in the loaded samples
+
+# Step 3.3 -- Using k-fold validation
 sits_kfold_validate_start <- Sys.time()
 rfor_validate <- sits_kfold_validate(
   samples = train_samples,
@@ -111,10 +82,10 @@ sits_kfold_validate_end <- Sys.time()
 sits_kfold_validate_time <- as.numeric(sits_kfold_validate_end - sits_kfold_validate_start, units = "secs")
 sprintf("SITS kfold_validate process duration (HH:MM): %02d:%02d", as.integer(sits_kfold_validate_time / 3600), as.integer((sits_kfold_validate_time %% 3600) / 60))
 
-# Step 3.2.1 -- Plot the confusion matrix
+# Step 3.3.1 -- Plot the confusion matrix
 plot(rfor_validate, type = "confusion_matrix")
 
-# Step 3.2.2 -- Plot the metrics by class
+# Step 3.3.2 -- Plot the metrics by class
 plot(rfor_validate, type = "metrics")
 
 # ============================================================

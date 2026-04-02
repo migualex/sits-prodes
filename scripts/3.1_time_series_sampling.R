@@ -11,6 +11,7 @@ library(sits)
 library(tibble)
 library(dplyr)
 library(ggplot2)
+source("read_class_config.R")
 
 # Step 1.2 -- Define the date and time for the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d_")
@@ -83,44 +84,20 @@ tiles_str       <- paste(sort(tiles), collapse = "-")
 samples_name    <- paste("sampling-training", tiles_str, var, sampling_date, sep = "-")
 samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
 
-# Step 3.2 -- Convert class names to English
-class_translation <- c(
-  "Corpo_Dagua"                          = "Water",
-  "Area_Inundavel"                       = "Wetland",
-  "Floresta"                             = "Forest",
-  "Floresta_Transicional"                = "Transition_Forest",
-  "Vegetacao_Natural_Nao_Florestal"      = "Non_Forest_Natural_Vegetation",
-  "Degradacao"                           = "Degradation",
-  "Degradacao_Por_Fogo"                  = "Degradation_Fire",
-  "Corte_Raso"                           = "Clear_Cut_Bare_Soil",
-  "Corte_Raso_Antigo"                    = "Old_Clear_Cut_Bare_Soil",
-  "Corte_Raso_Com_Fogo"                  = "Clear_Cut_Burned_Area",
-  "Corte_Raso_Com_Arvores_Remanescentes" = "Clear_Cut_With_Trees",
-  "Corte_Raso_Com_Vegetacao"             = "Clear_Cut_With_Vegetation",
-  "Corte_Raso_Antigo_Com_Vegetacao"      = "Old_Clear_Cut_With_Vegetation")
-  
-# ATTENTION: Use the names below if you are working in Non-Forest areas
-class_translation <- c(
-  "Hidrografia_Rio"                                                      = "Hydrography_River",
-  "Hidrografia_Lago"                                                     = "Hydrography_Lake",
-  "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida"                       = "Non_Forest_Natural_Vegetation_Wet",
-  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa"          = "Non_Forest_Natural_Vegetation_Dry_High_Biomass",
-  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa"         = "Non_Forest_Natural_Vegetation_Dry_Low_Biomass",
-  "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Pos_Fogo"               = "Non_Forest_Natural_Vegetation_Post_Fire",
-  "Vegetacao_Natural_Nao_Florestal_Transicao_Florestal"                  = "Non_Forest_Natural_Vegetation_Forest_Transition",
-  "Vegetacao_Natural_Nao_Florestal_Vereda"                               = "Non_Forest_Natural_Vegetation_Palm_Swamps",
-  "Vegetacao_Natural_Nao_Florestal_Mata"                                 = "Non_Forest_Natural_Vegetation_Woodland",
-  "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal"                      = "Fire_In_Non_Forest_Natural_Vegetation",
-  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura"         = "Conversion_To_Agriculture",
-  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto"        = "Conversion_To_Bare_Soil",
-  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo"  = "Previous_Conversion_To_Agriculture",
-  "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo" = "Previous_Conversion_To_Bare_Soil")
+# Step 3.2 -- Load class translation from external config file
+config        <- read_class_config("class_config.txt")  # same directory as the scripts
+class_translation <- config$class_translation
 
+# Apply translation: keep the original label if no translation is found
 samples_train$label <- ifelse(
   samples_train$label %in% names(class_translation),
   class_translation[samples_train$label],
   samples_train$label
 )
+
+# Summary of classes found after translation
+message("Classes present in the samples:")
+print(table(samples_train$label))
 
 # Step 3.3 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
