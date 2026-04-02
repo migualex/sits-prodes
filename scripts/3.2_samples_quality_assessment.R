@@ -12,6 +12,55 @@ library(tibble)
 library(dplyr)
 library(ggplot2)
 
+# Step 1.2 -- Function to read class names and their colors::IMPORTANT
+read_class_config <- function(config_file = "class_config.txt") {
+  
+  if (!file.exists(config_file)) {
+    stop(paste("Configuration file not found:", config_file))
+  }
+  
+  lines <- readLines(config_file, encoding = "UTF-8", warn = FALSE)
+  
+  # Remove empty lines and comments
+  lines <- trimws(lines)
+  lines <- lines[nchar(lines) > 0 & !startsWith(lines, "#")]
+  
+  # Identify sections and populate lists
+  current_section  <- NULL
+  class_trans_list <- list()
+  colors_list      <- list()
+  
+  for (line in lines) {
+    if (startsWith(line, "[") && endsWith(line, "]")) {
+      current_section <- gsub("\\[|\\]", "", line)
+      next
+    }
+    
+    if (!is.null(current_section) && grepl("=", line)) {
+      parts <- strsplit(line, "=", fixed = TRUE)[[1]]
+      key   <- trimws(parts[1])
+      value <- trimws(paste(parts[-1], collapse = "=")) # preserves '=' in hex codes
+      
+      if (current_section == "CLASS_TRANSLATION") {
+        class_trans_list[[key]] <- value
+      } else if (current_section == "COLORS") {
+        colors_list[[key]] <- value
+      }
+    }
+  }
+  
+  class_translation <- unlist(class_trans_list)
+  my_colors         <- unlist(colors_list)
+  
+  message(sprintf("Config loaded: %d class translations | %d colors",
+                  length(class_translation), length(my_colors)))
+  
+  return(list(
+    class_translation = class_translation,
+    my_colors         = my_colors
+  ))
+}
+
 # Step 1.2 -- Define the date and time for the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d_")
 time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
@@ -25,41 +74,6 @@ rds_filename  <- "samples_4-tiles-012014-012015-013014-013015_1y-period-2024-08-
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
 var <- "prodes-amz"
 
-# Step 1.6 -- Define a list with preference colors for each class
-my_colors <- c(
-  "Water"                         = "#2980B9",
-  "Wetland"                       = "#A0B9C8",
-  "Forest"                        = "#1E8449",
-  "Transition_Forest"             = "#E0DD22", 
-  "Non_Forest_Natural_Vegetation" = "#C0D665",
-  "Degradation"                   = "#9da676",
-  "Degradation_Fire"              = "#e6b0aa",
-  "Clear_Cut_Bare_Soil"           = "#f39c12",
-  "Old_Clear_Cut_With_Vegetation" = "#B2B46D",
-  "Clear_Cut_Burned_Area"         = "#CD6155",
-  "Clear_Cut_With_Trees"          = "#a19c0a",
-  "Clear_Cut_With_Vegetation"     = "#D8DA83",
-  "Old_Clear_Cut_Bare_Soil"       = "#D39750"
-)
-
-# ATTENTION: Use the palette below if you are working in Non-Forest areas
-my_colors <- c(
-  "Hydrography_Lake"                                      = "#2980b9",
-  "Hydrography_River"                                     = "#1f78b4",
-  "Conversion_To_Agriculture"                             = "#f0b27a",
-  "Conversion_To_Bare_Soil"                               = "#f39c12",
-  "Previous_Conversion_To_Agriculture"                    = "#b08b57",
-  "Previous_Conversion_To_Bare_Soil"                      = "#a0522d",
-  "Fire_In_Non_Forest_Natural_Vegetation"                 = "#cd6155",
-  "Non_Forest_Natural_Vegetation_Dry_High_Biomass"        = "#f6cc41",
-  "Non_Forest_Natural_Vegetation_Dry_Low_Biomass"         = "#dbebd8",
-  "Non_Forest_Natural_Vegetation_Post_Fire"               = "#e6b0aa",
-  "Non_Forest_Natural_Vegetation_Wet"                     = "#a0b9c8",
-  "Non_Forest_Natural_Vegetation_Forest_Transition"       = "#88cda2",
-  "Non_Forest_Natural_Vegetation_Woodland"                = "#1e8449",
-  "Non_Forest_Natural_Vegetation_Palm_Swamps"             = "#3ababa"
-)
-
 # ============================================================
 # 3. Load and Explore Train Sample Data
 # ============================================================
@@ -67,11 +81,16 @@ my_colors <- c(
 # Step 3.3 -- Load the samples Time Series from a R file
 samples <- readRDS(file.path(rds_path, "time_series", rds_filename))
 
-# Step 3.3 -- Create output directory per tile and period
+# Step 3.4 -- Create output directory per tile and period
 tiles_train <- gsub(".*_(\\d{6}(-\\d{6})*)_.*", "\\1", rds_filename)
 
 tile_period_dir <- file.path(plots_path, var)
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Step 3.5 -- Load color palette from external config file
+config    <- read_class_config("class_config.txt")
+my_colors <- config$my_colors
+my_colors <- my_colors[names(my_colors) %in% unique(samples$label)]
 
 # ============================================================
 # 4. Analyse quality (SOM - 1)

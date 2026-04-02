@@ -190,3 +190,4 @@ writeRaster(
   gdal = c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9"), # Additional compression to reduce file size
   progress = TRUE
 )
+print("Well done!")

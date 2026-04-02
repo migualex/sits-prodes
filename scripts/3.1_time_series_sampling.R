@@ -11,26 +11,73 @@ library(sits)
 library(tibble)
 library(dplyr)
 library(ggplot2)
-# Garante que o source usa o diretório do próprio script, independente do working directory
-source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "read_class_config.R"))
 
-# Step 1.2 -- Define the date and time for the start of processing
+# Step 1.2 -- Function to read class names and their colors::IMPORTANT
+read_class_config <- function(config_file = "class_config.txt") {
+  
+  if (!file.exists(config_file)) {
+    stop(paste("Configuration file not found:", config_file))
+  }
+  
+  lines <- readLines(config_file, encoding = "UTF-8", warn = FALSE)
+  
+  # Remove empty lines and comments
+  lines <- trimws(lines)
+  lines <- lines[nchar(lines) > 0 & !startsWith(lines, "#")]
+  
+  # Identify sections and populate lists
+  current_section  <- NULL
+  class_trans_list <- list()
+  colors_list      <- list()
+  
+  for (line in lines) {
+    if (startsWith(line, "[") && endsWith(line, "]")) {
+      current_section <- gsub("\\[|\\]", "", line)
+      next
+    }
+    
+    if (!is.null(current_section) && grepl("=", line)) {
+      parts <- strsplit(line, "=", fixed = TRUE)[[1]]
+      key   <- trimws(parts[1])
+      value <- trimws(paste(parts[-1], collapse = "=")) # preserves '=' in hex codes
+      
+      if (current_section == "CLASS_TRANSLATION") {
+        class_trans_list[[key]] <- value
+      } else if (current_section == "COLORS") {
+        colors_list[[key]] <- value
+      }
+    }
+  }
+  
+  class_translation <- unlist(class_trans_list)
+  my_colors         <- unlist(colors_list)
+  
+  message(sprintf("Config loaded: %d class translations | %d colors",
+                  length(class_translation), length(my_colors)))
+  
+  return(list(
+    class_translation = class_translation,
+    my_colors         = my_colors
+  ))
+}
+
+# Step 1.3 -- Define the date and time for the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d_")
 time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
-# Step 1.3 -- Define the paths for files and folders needed in the processing
+# Step 1.4 -- Define the paths for files and folders needed in the processing
 sample_path   <- "data/raw/samples" #add the sample file to the path
 rds_path      <- "data/rds/"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 
-# Step 1.4 -- Define time range
+# Step 1.5 -- Define time range
 start_date   <- "2024-08-01"
 end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
-# Step 1.5 -- Identifier to distinguish this model run from previous versions
+# Step 1.6 -- Identifier to distinguish this model run from previous versions
 var <- "prodes-amz"
 
 # ============================================================
@@ -86,19 +133,16 @@ samples_name    <- paste("sampling-training", tiles_str, var, sampling_date, sep
 samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
 
 # Step 3.2 -- Load class translation from external config file
-config_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
 config     <- read_class_config(file.path(config_dir, "class_config.txt"))
 class_translation <- config$class_translation
 
-# Apply translation: keep the original label if no translation is found
+# Step 3.2.1 -- Apply translation: keep the original label if no translation is found
 samples_train$label <- ifelse(
   samples_train$label %in% names(class_translation),
   class_translation[samples_train$label],
   samples_train$label
 )
 
-# Summary of classes found after translation
-message("Classes present in the samples:")
 print(table(samples_train$label))
 
 # Step 3.3 -- Extract Time Series from samples_train and calculate the process duration
