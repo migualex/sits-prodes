@@ -70,7 +70,7 @@ time_series_name  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024
 time_series_path  <- file.path("data/rds/time_series/", time_series_name)
 rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
-config_dir        <- "../scripts"
+config_dir        <- "data/raw/auxiliary/"
 
 # Step 1.5 -- Define time range
 start_date   <- "2024-08-01"
