@@ -9,7 +9,7 @@
 # Step 1.1 -- Load Required Libraries
 library(sits)
 library(ggplot2)
-source("read_class_config.R")
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "read_class_config.R"))
 
 # Step 1.2 -- Define the date and time for the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d_")
@@ -66,9 +66,10 @@ dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 train_samples <- readRDS(time_series_path)
 
 # Step 3.2 -- Load color palette from external config file
-config    <- read_class_config("class_config.txt")  # same directory as the scripts
-my_colors <- config$my_colors
-my_colors <- my_colors[names(my_colors) %in% unique(train_samples$label)] # Filter only the colors of the classes present in the loaded samples
+config_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
+config     <- read_class_config(file.path(config_dir, "class_config.txt"))
+my_colors  <- config$my_colors
+my_colors  <- my_colors[names(my_colors) %in% unique(train_samples$label)]
 
 # Step 3.3 -- Using k-fold validation
 sits_kfold_validate_start <- Sys.time()

@@ -11,7 +11,8 @@ library(sits)
 library(tibble)
 library(dplyr)
 library(ggplot2)
-source("read_class_config.R")
+# Garante que o source usa o diretório do próprio script, independente do working directory
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "read_class_config.R"))
 
 # Step 1.2 -- Define the date and time for the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d_")
@@ -85,7 +86,8 @@ samples_name    <- paste("sampling-training", tiles_str, var, sampling_date, sep
 samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
 
 # Step 3.2 -- Load class translation from external config file
-config        <- read_class_config("class_config.txt")  # same directory as the scripts
+config_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
+config     <- read_class_config(file.path(config_dir, "class_config.txt"))
 class_translation <- config$class_translation
 
 # Apply translation: keep the original label if no translation is found
