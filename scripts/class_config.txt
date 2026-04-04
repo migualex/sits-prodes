@@ -1,11 +1,11 @@
-# ============================================================
+# =============================================================
 # Configuração de classes e cores
 # Edite este arquivo para atualizar traduções e paleta de cores
 # Formato:
 #   [CLASS_TRANSLATION]  -> Nome_Portugues = English_Name
 #   [COLORS]             -> English_Name = #hexcolor
 # Linhas começando com # são ignoradas
-# ============================================================
+# =============================================================
 
 [CLASS_TRANSLATION]
 Area_Inundavel                                                   = Wetland

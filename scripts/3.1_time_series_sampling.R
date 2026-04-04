@@ -71,7 +71,7 @@ sample_path   <- "data/raw/samples" #add the sample file to the path
 rds_path      <- "data/rds/"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
-config_dir    <- "data/raw/auxiliary/"
+config_dir    <- "../scripts"
 
 # Step 1.5 -- Define time range
 start_date   <- "2024-08-01"

@@ -70,7 +70,7 @@ process_version <- paste0(date_process, time_process)
 rds_path      <- "data/rds/"
 plots_path    <- "data/plots/"
 rds_filename  <- "samples_4-tiles-012014-012015-013014-013015_1y-period-2024-08-01_2025-07-28_prodes-amz_2026-02-24_10h30m.rds"
-config_dir    <- "data/raw/auxiliary/"
+config_dir    <- "../scripts"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
 var <- "prodes-amz"
