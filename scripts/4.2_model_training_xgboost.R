@@ -1,5 +1,5 @@
 # ============================================================
-#  Time series extraction from the training samples
+# Train a XGBoost machine learning model
 # ============================================================
 
 # ============================================================
@@ -8,9 +8,8 @@
 
 # Step 1.1 -- Load Required Libraries
 library(sits)
-library(tibble)
-library(dplyr)
 library(ggplot2)
+library(randomForestExplainer, lib.loc = "/opt/r/R/x86_64-pc-linux-gnu-library/4.4")
 
 # Step 1.2 -- Function to read class names and their colors::IMPORTANT
 read_class_config <- function(config_file = "class_config.txt") {
@@ -67,11 +66,11 @@ time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.4 -- Define the paths for files and folders needed in the processing
-sample_path   <- "data/raw/samples" #add the sample file to the path
-rds_path      <- "data/rds/"
-mixture_path  <- "data/raw/mixture_model"
-plots_path    <- "data/plots/"
-config_dir    <- "../scripts"
+time_series_name  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024-07-28_2025-07-28_prodes-amz_2026-02-25_16h16m.rds"
+time_series_path  <- file.path("data/rds/time_series/", time_series_name)
+rds_path          <- "data/rds/"
+plots_path        <- "data/plots/"
+config_dir        <- "../scripts"
 
 # Step 1.5 -- Define time range
 start_date   <- "2024-08-01"
@@ -102,74 +101,101 @@ no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")
 
-# Step 2.4 -- Retrieve Mixture Model Cube from a predefined repository
-mm_cube <- sits_cube(
-  source      = "BDC",
-  collection  = "SENTINEL-2-16D",
-  bands       = c("SOIL", "VEG", "WATER"),
-  tiles       = tiles,
-  data_dir    = mixture_path,
-  start_date  = start_date,
-  end_date    = end_date,
-  progress    = TRUE)
-
-# Step 2.5 -- Merge the Training Cube with Mixture Model Cube
-cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
-
-# Step 2.6 -- Create output directory per tile and period
-tiles_id <- paste(sort(unique(cube_merge_lsmm_train$tile)), collapse = "_")
+# 2.4 Create output directory per tile and period
+tiles_id <- paste(sort(unique(tiles_train)), collapse = "_")
 
 tile_period_dir <- file.path(plots_path, var)
 
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
-# 3. Load and Explore Train Sample Data
+# 3. Cross-validation of training data
 # ============================================================
 
-# Step 3.1 -- Read training samples (rewrite the name of your samples file)
-sampling_date   <- "2026-02-24"                           # Date of the sampling file (YYYY-MM-DD)
-tiles_str       <- paste(sort(tiles), collapse = "-")     # Tile IDs string
-samples_name    <- paste("sampling-training", tiles_str, var, sampling_date, sep = "-")
-samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
+# Step 3.1 -- Reading training samples
+train_samples <- readRDS(time_series_path)
 
-# Step 3.2 -- Load class translation from external config file
+# Step 3.2 -- Load color palette from external config file
 config     <- read_class_config(file.path(config_dir, "class_config.txt"))
-class_translation <- config$class_translation
+my_colors  <- config$my_colors
+my_colors  <- my_colors[names(my_colors) %in% unique(train_samples$label)]
 
-# Step 3.2.1 -- Apply translation: keep the original label if no translation is found
-samples_train$label <- ifelse(
-  samples_train$label %in% names(class_translation),
-  class_translation[samples_train$label],
-  samples_train$label
+# Step 3.3 -- Using k-fold validation
+sits_kfold_validate_start <- Sys.time()
+rfor_validate <- sits_kfold_validate(
+  samples = train_samples,
+  folds = 5, # how many times to split the data (default = 5)
+  ml_method = sits_rfor(),
+  multicores = 28,
+  progress = TRUE) # adapt to your computer CPU core availability
+sits_kfold_validate_end <- Sys.time()
+sits_kfold_validate_time <- as.numeric(sits_kfold_validate_end - sits_kfold_validate_start, units = "secs")
+sprintf("SITS kfold_validate process duration (HH:MM): %02d:%02d", as.integer(sits_kfold_validate_time / 3600), as.integer((sits_kfold_validate_time %% 3600) / 60))
+
+# Step 3.3.1 -- Plot the confusion matrix
+plot(rfor_validate, type = "confusion_matrix")
+
+# Step 3.3.2 -- Plot the metrics by class
+plot(rfor_validate, type = "metrics")
+
+# ============================================================
+# 4. Training and saving model
+# ============================================================
+
+# Step 4.1 -- Set a seed of random number generator (RNG) for reproducibility
+set.seed(88)
+
+# Step 4.2 -- Train the model
+rf_model <- sits_train(
+  samples   = train_samples,
+  ml_method = sits_rfor(num_trees = 100)
 )
 
-print(table(samples_train$label))
+# Step 4.2.1 -- Plot the most important variables of the model
+plot(rf_model)
 
-# Step 3.3 -- Extract Time Series from samples_train and calculate the process duration
-sits_get_data_start <- Sys.time()
-samples <- sits_get_data(
-  cube        = cube_merge_lsmm_train,
-  samples     = samples_train,
-  n_sam_pol   = 16,
-  pol_avg     = FALSE,
-  label       = "label",
-  multicores  = 28,       # adapt to your computer CPU core availability
-  progress    = TRUE)
-sits_get_data_end <- Sys.time()
-sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units = "secs")
-sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_get_data_time / 3600), as.integer((sits_get_data_time %% 3600) / 60))
+# Step 4.2.2 -- Save the plot
+ggsave(
+  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"),
+  path = tile_period_dir,
+  scale = 1,
+  width = 3529,
+  height = 1578,
+  units = "px",
+  dpi = 350,
+)
 
-# Step 3.3.1 -- Visualize the temporal patterns of all features
-plot(sits_patterns(samples))
+# Step 4.3 --  Exports the model as an object for further exploration
+rf_model2 <- sits_model_export(rf_model)
 
-# Step 3.3.2 -- Visualize the temporal patterns of specific features in a specific period
-samples |> 
-  sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
-  sits_patterns() |> 
-  plot()
+# Step 4.3.1 -- Save the plot
+png(
+  filename = file.path(
+    tile_period_dir,
+    paste0(process_version, "_", tiles_train, "_", no.years, var, "_oob_ntree_mde.png")
+  ),
+  width = 3529,
+  height = 1578,
+  res = 350
+)
 
-# Step 3.4 -- Save the samples Time Series to a R file
-saveRDS(samples, 
-        paste0(rds_path,"time_series/", "samples_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
-print("Time series extracted successfully!")
+# Step 4.3.2 -- Plot the Out of Box error by the number of trees
+matplot(rf_model2$err.rate, 
+        type = "l", lty = 1, lwd = 2,
+        col = my_colors,           
+        main = "Out of Box error by the number of trees",
+        xlab = "Number of Trees (ntree)", 
+        ylab = "Out of Box Error")
+
+# Step 4.3.3 -- Adding legend to plot
+legend("topright", 
+       legend = names(my_colors), 
+       col = my_colors, 
+       lty = 1,      
+       cex = 1,    
+       bty = "n")
+dev.off()
+
+# Step 4.4 -- Save the ML model to a R file
+saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+print("Model trained successfully!")

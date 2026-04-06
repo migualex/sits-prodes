@@ -1,5 +1,5 @@
 # ============================================================
-# Train Machine Learning Model
+# Train a Random Forest machine learning model
 # ============================================================
 
 # ============================================================
@@ -112,8 +112,32 @@ dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 # 3. Cross-validation of training data
 # ============================================================
 
-# Step 3.1 -- Reading training samples
-train_samples <- readRDS(time_series_path)
+# Step 3.1 -- Get current date and time
+creation_date <- format(Sys.Date(), "%Y-%m-%d")  
+creation_time <- format(Sys.time(), "%Hh%Mm")  
+
+# Prepare tile string
+tiles_str <- paste(sort(tiles), collapse = "-")  # Sorted tile IDs joined by "-"
+n_tiles <- length(tiles)  # Number of tiles
+
+# Build standardized time series file name
+ts_name <- paste0(
+  "samples_",                             # Prefix indicating this is a samples/time series
+  n_tiles, "-tiles-",                     # Number of tiles (e.g., "2-tiles-")
+  tiles_str, "_",                         # Tile IDs string
+  period, "-period-",                     # Time span label (e.g., "2y-period-")
+  start_date, "_",                        # Start date of the time series
+  end_date, "_",                          # End date of the time series
+  var, "_",                               # Dataset identifier (e.g., "prodes-amz")
+  creation_date, "_",
+  creation_time
+)
+
+# Full path to the RDS file
+time_series_path_full <- file.path(time_series_dir, paste0(ts_name, ".rds"))
+
+# Load training time series
+train_samples <- readRDS(time_series_path_full)
 
 # Step 3.2 -- Load color palette from external config file
 config     <- read_class_config(file.path(config_dir, "class_config.txt"))

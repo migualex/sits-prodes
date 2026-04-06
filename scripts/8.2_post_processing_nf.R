@@ -188,7 +188,7 @@ extract_cloud_mask <- function(
   # ---------------------------------------------------------------------------
   if (!is.null(output_dir)) {
     output_filename <- paste0(
-      "cloud_vec_",
+      "Nuvem_",
       tile_id, "_",
       end_date_scl,
       ".gpkg"
