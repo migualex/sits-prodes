@@ -79,7 +79,7 @@ end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
 # Step 1.6 -- Identifier to distinguish this model run from previous versions
-var <- "prodes-amz"
+var <- "all_samples_new_pol_avg_false"
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -130,7 +130,7 @@ dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
 sampling_date   <- "2026-02-24"                           # Date of the sampling file (YYYY-MM-DD)
 tiles_str       <- paste(sort(tiles), collapse = "-")     # Tile IDs string
-samples_name    <- paste("sampling-training", tiles_str, var, sampling_date, sep = "-")
+samples_name    <- paste("training-samples-", tiles_str, var, sampling_date, sep = "-")
 samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
 
 # Step 3.2 -- Load class translation from external config file

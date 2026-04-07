@@ -9,7 +9,6 @@
 # Step 1.1 -- Load Required Libraries
 library(sits)
 library(ggplot2)
-library(randomForestExplainer, lib.loc = "/opt/r/R/x86_64-pc-linux-gnu-library/4.4")
 
 # Step 1.2 -- Function to read class names and their colors::IMPORTANT
 read_class_config <- function(config_file = "class_config.txt") {
@@ -66,7 +65,7 @@ time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.4 -- Define the paths for files and folders needed in the processing
-time_series_name  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024-07-28_2025-07-28_prodes-amz_2026-02-25_16h16m.rds"
+time_series_name  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-24_20h01m.rds"
 time_series_path  <- file.path("data/rds/time_series/", time_series_name)
 rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
@@ -78,7 +77,7 @@ end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
 # Step 1.6 -- Identifier to distinguish this model run from previous versions
-var <- "prodes-amz"
+var <- "all_samples_new_pol_avg_false"
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -146,27 +145,33 @@ plot(rfor_validate, type = "metrics")
 set.seed(88)
 
 # Step 4.2 -- Train the model
-rf_model <- sits_train(
+tempcnn_model <- sits_train(
   samples   = train_samples,
-  ml_method = sits_rfor(num_trees = 100)
+  ml_method = sits_tempcnn(
+    cnn_layers = c(64, 64, 64),
+    cnn_kernels = c(3, 3, 3),
+    cnn_dropout_rates = c(0.2, 0.2, 0.2),
+    dense_layer_nodes = 256,
+    dense_layer_dropout_rate = 0.5,
+    epochs = 150,
+    batch_size = 1024,
+    validation_split = 0.2,
+    optimizer = torch::optim_adamw,
+    opt_hparams = list(lr = 5e-04, eps = 1e-08, weight_decay = 1e-06),
+    lr_decay_epochs = 1,
+    lr_decay_rate = 0.95,
+    patience = 20,
+    min_delta = 0.01,
+    verbose = FALSE
+  )
+  
 )
 
 # Step 4.2.1 -- Plot the most important variables of the model
-plot(rf_model)
-
-# Step 4.2.2 -- Save the plot
-ggsave(
-  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"),
-  path = tile_period_dir,
-  scale = 1,
-  width = 3529,
-  height = 1578,
-  units = "px",
-  dpi = 350,
-)
+plot(tempcnn_model)
 
 # Step 4.3 --  Exports the model as an object for further exploration
-rf_model2 <- sits_model_export(rf_model)
+tempcnn_model2 <- sits_model_export(tempcnn_model)
 
 # Step 4.3.1 -- Save the plot
 png(
@@ -180,7 +185,7 @@ png(
 )
 
 # Step 4.3.2 -- Plot the Out of Box error by the number of trees
-matplot(rf_model2$err.rate, 
+matplot(tempcnn_model2$err.rate, 
         type = "l", lty = 1, lwd = 2,
         col = my_colors,           
         main = "Out of Box error by the number of trees",
@@ -197,5 +202,5 @@ legend("topright",
 dev.off()
 
 # Step 4.4 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+saveRDS(tempcnn_model,paste0(rds_path, "model/tempcnn/", "TCNN-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 print("Model trained successfully!")

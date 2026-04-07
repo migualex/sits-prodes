@@ -65,7 +65,7 @@ time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.4 -- Define the paths for files and folders needed in the processing
-time_series_name  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024-07-28_2025-07-28_prodes-amz_2026-02-25_16h16m.rds"
+time_series_name  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-24_20h01m.rds"
 time_series_path  <- file.path("data/rds/time_series/", time_series_name)
 rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
@@ -77,7 +77,7 @@ end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
 # Step 1.6 -- Identifier to distinguish this model run from previous versions
-var <- "prodes-amz"
+var <- "all_samples_new_pol_avg_false"
 
 # ============================================================
 # 2. Define and Load Data Cubes
