@@ -9,7 +9,6 @@
 # Step 1.1 -- Load Required Libraries
 library(sits)
 library(ggplot2)
-library(randomForestExplainer, lib.loc = "/opt/r/R/x86_64-pc-linux-gnu-library/4.4")
 
 # Step 1.2 -- Function to read class names and their colors::IMPORTANT
 read_class_config <- function(config_file = "class_config.txt") {
@@ -120,24 +119,6 @@ config     <- read_class_config(file.path(config_dir, "class_config.txt"))
 my_colors  <- config$my_colors
 my_colors  <- my_colors[names(my_colors) %in% unique(train_samples$label)]
 
-# Step 3.3 -- Using k-fold validation
-sits_kfold_validate_start <- Sys.time()
-rfor_validate <- sits_kfold_validate(
-  samples = train_samples,
-  folds = 5, # how many times to split the data (default = 5)
-  ml_method = sits_rfor(),
-  multicores = 28,
-  progress = TRUE) # adapt to your computer CPU core availability
-sits_kfold_validate_end <- Sys.time()
-sits_kfold_validate_time <- as.numeric(sits_kfold_validate_end - sits_kfold_validate_start, units = "secs")
-sprintf("SITS kfold_validate process duration (HH:MM): %02d:%02d", as.integer(sits_kfold_validate_time / 3600), as.integer((sits_kfold_validate_time %% 3600) / 60))
-
-# Step 3.3.1 -- Plot the confusion matrix
-plot(rfor_validate, type = "confusion_matrix")
-
-# Step 3.3.2 -- Plot the metrics by class
-plot(rfor_validate, type = "metrics")
-
 # ============================================================
 # 4. Training and saving model
 # ============================================================
@@ -145,18 +126,80 @@ plot(rfor_validate, type = "metrics")
 # Step 4.1 -- Set a seed of random number generator (RNG) for reproducibility
 set.seed(88)
 
-# Step 4.2 -- Train the model
-rf_model <- sits_train(
+sits_xgb_model_fine_tuning_start <- Sys.time()
+tunned_model <- sits_tuning(
+  train_samples,
+  #samples_validation = NULL, # não poderíamos usar nossas amostras de validação aqui?
+  validation_split = 0.3,
+  ml_method = sits_xgboost(),
+  params = sits_tuning_hparams(
+    learning_rate = loguniform(0.01, 0.3),
+    min_split_loss = uniform(1,10),
+    max_depth = choice(6,7,8,9,10,11,12,13,14,15), #randint(6, 18), radint está com bug, aparentemente
+    min_child_weight = choice(5, 10, 15, 20, 25, 30), #randint(5, 30),
+    subsample = 1,
+    nrounds = choice(100, 200, 300, 400, 500, 600, 700),
+    nthread = 28
+  ),
+  trials = 30,
+  multicores = 28,
+  progress = TRUE
+)
+sits_xgb_model_fine_tuning_end <- Sys.time()
+sits_xgb_model_fine_tuning_time <- as.numeric(sits_xgb_model_fine_tuning_end - sits_xgb_model_fine_tuning_start,
+                                              units = "secs")
+sprintf("SITS XGBoost model fine tuning process duration (HH:MM): %02d:%02d",
+        as.integer(sits_xgb_model_fine_tuning_time / 3600),
+        as.integer((sits_xgb_model_fine_tuning_time %% 3600) / 60))
+
+tunned_model <- tunned_model |>
+  dplyr::mutate(
+    dplyr::across(learning_rate:verbose, ~ unlist(.x)))
+
+# Step 4.2 -- Create a tibble from error matrix
+matriz_conf_xbb_model <- tibble::tibble(as.data.frame(tunned_model$acc[[1]]$table))
+
+# Step 4.3 -- Plot error matrix
+ggplot(matriz_conf_xbb_model, aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 4) +
+  scale_fill_distiller(palette = "Blues",
+                       direction = 1,
+                       name = "Cases") +
+  labs( x = "Reference",
+        y = "Predicted", 
+        title = "Confusion Matrix") +
+  scale_y_discrete(limits = rev,
+                   labels = gsub("_", " ", config$class_translation)) +
+  scale_x_discrete(labels = gsub("_", " ", config$class_translation)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 25,
+                                   hjust = 1,
+                                   size = 8), 
+        axis.text.y = element_text(size = 8),
+        plot.title = element_text(hjust = 0.5))
+
+# Step 4.4 -- Train the model
+xgb_model <- sits_train(
   samples   = train_samples,
-  ml_method = sits_rfor(num_trees = 100)
+  ml_method =  sits_xgboost(
+    learning_rate = tunned_model$learning_rate[1],
+    min_split_los =  tunned_model$min_split_loss[1],
+    max_depth = tunned_model$max_depth[1],
+    min_child_weight = tunned_model$min_child_weight[1],
+    subsample = 1,
+    nrounds = tunned_model$nrounds[1],
+    nthread = 28,
+    verbose = TRUE
+  )
 )
 
-# Step 4.2.1 -- Plot the most important variables of the model
-plot(rf_model)
+# Step 4.4.1 -- Plot the most important variables of the model
+plot(xgb_model)
 
-# Step 4.2.2 -- Save the plot
+# Step 4.4.2 -- Save the plot
 ggsave(
-  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"),
+  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"), #não sei o que esse gráfico diz kkk
   path = tile_period_dir,
   scale = 1,
   width = 3529,
@@ -165,37 +208,8 @@ ggsave(
   dpi = 350,
 )
 
-# Step 4.3 --  Exports the model as an object for further exploration
-rf_model2 <- sits_model_export(rf_model)
-
-# Step 4.3.1 -- Save the plot
-png(
-  filename = file.path(
-    tile_period_dir,
-    paste0(process_version, "_", tiles_train, "_", no.years, var, "_oob_ntree_mde.png")
-  ),
-  width = 3529,
-  height = 1578,
-  res = 350
-)
-
-# Step 4.3.2 -- Plot the Out of Box error by the number of trees
-matplot(rf_model2$err.rate, 
-        type = "l", lty = 1, lwd = 2,
-        col = my_colors,           
-        main = "Out of Box error by the number of trees",
-        xlab = "Number of Trees (ntree)", 
-        ylab = "Out of Box Error")
-
-# Step 4.3.3 -- Adding legend to plot
-legend("topright", 
-       legend = names(my_colors), 
-       col = my_colors, 
-       lty = 1,      
-       cex = 1,    
-       bty = "n")
-dev.off()
-
-# Step 4.4 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+# Step 4.5 -- Save the ML model to a R file
+saveRDS(xgb_model, paste0(rds_path, "model/xgboost/", "XGB-model_",
+                          length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",
+                          cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 print("Model trained successfully!")
