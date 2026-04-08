@@ -46,7 +46,7 @@ mm_cube <- sits_cube(
 mm_cube_fraction <- sits_merge(mm_cube, cube)
 
 # ============================================================
-# 2. Initial Segmentation
+# 2. Segment the merged cube 
 # ============================================================
 
 # Step 2.2 -- Define the version of your segmentation file
@@ -73,10 +73,10 @@ mm_cube_segments <- sits_segment(
   version    = version)
 
 # ============================================================
-# 3. Helper Functions
+# 3. Calculate the area of a cube in km2
 # ============================================================
 
-# Step 3.1 -- Calculate the bounding box area of a cube in kmÂ²
+# Step 3.1 -- Calculate the bounding box area
 calculate_bbox_area <- function(cube) {
   width    <- as.numeric(cube$xmax[[1]] - cube$xmin[[1]])
   height   <- as.numeric(cube$ymax[[1]] - cube$ymin[[1]])
@@ -112,49 +112,25 @@ calculate_segments_area <- function(segments_path, tile_number) {
 }
 
 # ============================================================
-# 4. Initial Area Plot
+# 4. Loop to Expand the Period
 # ============================================================
 
-# Step 4.1 -- Compute areas and plot initial segmentation coverage
-bbox_area_init <- calculate_bbox_area(cube)
-segs_area_init <- calculate_segments_area(segments_path, tiles)
-
-barplot(
-  c(bbox_area_init, segs_area_init),
-  names.arg = c("Tile BBOX", "Segments"),
-  col       = c("#4472C4", "#ED7D31"),
-  ylab      = "Area (km2)",
-  main      = sprintf("Initial coverage: %d km2 segmented out of %d km2 total",
-                      segs_area_init, bbox_area_init),
-  ylim      = c(0, bbox_area_init * 1.1))
-
-abline(h = bbox_area_init, lty = 2, col = "red")
-
-legend("topright",
-       legend = c("Total area (BBOX)", "Segmented area"),
-       fill   = c("#4472C4", "#ED7D31"),
-       bty    = "n")
-
-# ============================================================
-# 5. Loop to Expand the Period
-# ============================================================
-
-# Step 5.1 -- Define fixed end date and initialize start date for the loop
+# Step 4.1 -- Define fixed end date and initialize start date for the loop
 end_date_fixed   <- as.Date("2025-07-28")
 start_date_month <- as.Date(start_date, "%Y-%m-%d")
 
 while (TRUE) {
   
-  # Step 5.2 -- Calculate and display BBOX area for the current period
+  # Step 4.2 -- Calculate and display BBOX area for the current period
   bbox_area <- calculate_bbox_area(cube)
   cat(sprintf("Period    : %s to %s\n", start_date_month, end_date_fixed))
   cat(sprintf("BBOX area : %d km2\n",   bbox_area))
   
-  # Step 5.3 -- Move start date back by one month
+  # Step 4.3 -- Move start date back by one month
   start_date_month <- floor_date(start_date_month - days(1), "month")
   cat(sprintf("Processing period: %s to %s\n", start_date_month, end_date_fixed))
   
-  # Step 5.4 -- Update cubes for the new period
+  # Step 4.4 -- Update cubes for the new period
   new_cube <- sits_cube(
     source     = "BDC",
     collection = "SENTINEL-2-16D",
@@ -176,7 +152,7 @@ while (TRUE) {
   
   mm_cube_fraction <- sits_merge(mm_cube, new_cube)
   
-  # Step 5.5 -- Build version tag and segment the updated cube
+  # Step 4.5 -- Build version tag and segment the updated cube
   version <- paste0("LSMM-SNIC-spac", spacing, "-comp", gsub("\.", "", as.character(compactness)), "-pad", padding, "-", grid_seeding, "-", format(start_date_month, "%Y%m"))
   
   mm_cube_segments <- sits_segment(
@@ -192,7 +168,7 @@ while (TRUE) {
     output_dir = segments_path,
     version    = version)
   
-  # Step 5.6 -- Remove outdated segmentation files for this tile
+  # Step 4.6 -- Remove outdated segmentation files for this tile
   all_files <- list.files(segments_path,
                           pattern    = paste0(tiles, ".*\\.(gpkg|shp)$"),
                           full.names = TRUE,
@@ -205,16 +181,14 @@ while (TRUE) {
     file.remove(old_files)
   }
   
-  # Step 5.7 -- Calculate total segmented area for this tile
+  # Step 4.7 -- Calculate total segmented area for this tile
   total_segment_area <- calculate_segments_area(segments_path, tiles)
   cat(sprintf("Segs area : %d km2\n", total_segment_area))
   
-  # Step 5.8 -- Stop loop when full coverage is reached
+  # Step 4.8 -- Stop loop when full coverage is reached
   if (bbox_area <= total_segment_area) {
     cat("Full coverage reached. Stopping loop.\n")
     break
   }
 }
 print("Segmentation complete.")
-
-
