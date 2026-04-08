@@ -49,16 +49,16 @@ mm_cube_fraction <- sits_merge(mm_cube, cube)
 # 2. Segment the merged cube 
 # ============================================================
 
-# Step 2.2 -- Define the version of your segmentation file
-version <- paste0("LSMM-SNIC-spac", spacing, "-comp", gsub("\.", "", as.character(compactness)), "-pad", padding, "-", grid_seeding, "-", date_process)
-
 # Define parameters for SNIC segmentation
 grid_seeding <- "rectangular"
 spacing      <- 10
 compactness  <- 0.3
 padding      <- 0
 
-# Step 2.1 -- Segment sits cube using SNIC algorithm
+# Step 2.1 -- Define the version of your segmentation file
+version <- paste0("LSMM-SNIC-spac", spacing, "-comp", gsub("[.]", "", as.character(compactness)), "-pad", padding, "-", grid_seeding, "-", date_process)
+
+# Step 2.2 -- Segment sits cube using SNIC algorithm
 mm_cube_segments <- sits_segment(
   cube      = mm_cube_fraction,
   seg_fn    = sits_snic(
@@ -153,7 +153,7 @@ while (TRUE) {
   mm_cube_fraction <- sits_merge(mm_cube, new_cube)
   
   # Step 4.5 -- Build version tag and segment the updated cube
-  version <- paste0("LSMM-SNIC-spac", spacing, "-comp", gsub("\.", "", as.character(compactness)), "-pad", padding, "-", grid_seeding, "-", format(start_date_month, "%Y%m"))
+  version <- paste0("LSMM-SNIC-spac", spacing, "-comp", gsub("[.]", "", as.character(compactness)), "-pad", padding, "-", grid_seeding, "-", format(start_date_month, "%Y%m"))
   
   mm_cube_segments <- sits_segment(
     cube      = mm_cube_fraction,
