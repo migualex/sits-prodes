@@ -153,7 +153,7 @@ while (TRUE) {
   mm_cube_fraction <- sits_merge(mm_cube, new_cube)
   
   # Step 4.5 -- Build version tag and segment the updated cube
-  version <- paste0("LSMM-SNIC-spac", spacing, "-comp", gsub("[.]", "", as.character(compactness)), "-pad", padding, "-", grid_seeding, "-", format(start_date_month, "%Y%m"))
+  version <- paste0("LSMM-SNIC-spac", spacing, "-comp", gsub("[.]", "", as.character(compactness)), "-pad", padding, "-", grid_seeding, "-", date_process)
   
   mm_cube_segments <- sits_segment(
     cube      = mm_cube_fraction,
