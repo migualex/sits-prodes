@@ -1,5 +1,5 @@
 # ============================================================
-# Train a Temporal Convolution Neural Network deep learning model
+# Train a Light Temporal Attention Encoder deep learning model
 # ============================================================
 
 # ============================================================
@@ -9,6 +9,8 @@
 # Step 1.1 -- Load Required Libraries
 library(sits)
 library(ggplot2)
+library(torch)
+library(luz)
 
 # Step 1.2 -- Function to read class names and their colors::IMPORTANT
 read_class_config <- function(config_file = "class_config.txt") {
@@ -141,65 +143,28 @@ plot(rfor_validate, type = "metrics")
 # 4. Training and saving model
 # ============================================================
 
-# Step 4.1 -- Set a seed of random number generator (RNG) for reproducibility
-set.seed(88)
+# Step 4.1 -- Train the model
 
-# Step 4.2 -- Train the model
-tempcnn_model <- sits_train(
-  samples   = train_samples,
-  ml_method = sits_tempcnn(
-    cnn_layers = c(64, 64, 64),
-    cnn_kernels = c(3, 3, 3),
-    cnn_dropout_rates = c(0.2, 0.2, 0.2),
-    dense_layer_nodes = 256,
-    dense_layer_dropout_rate = 0.5,
-    epochs = 150,
-    batch_size = 1024,
-    validation_split = 0.2,
+tuned_ltae <- sits_tuning(
+  samples = train_samples,
+  ml_method = sits_tempcnn(),
+  validation_split = 0.2,
+  params = sits_tuning_hparams(
+    cnn_layers = choice(
+      c(256,256,256), c(128,128,128), c(64,64,64)),
+    cnn_kernels = choice(
+      c(3,3,3), c(5,5,5), c(7,7,7)),
+    cnn_dropout_rates = choice(
+      c(0.2,0.2,0.2), c(0.3,0.3,0.3), c(0.4,0.4,0.4)),
     optimizer = torch::optim_adamw,
-    opt_hparams = list(lr = 5e-04, eps = 1e-08, weight_decay = 1e-06),
-    lr_decay_epochs = 1,
-    lr_decay_rate = 0.95,
-    patience = 20,
-    min_delta = 0.01,
-    verbose = FALSE
-  )
-)
-
-# Step 4.2.1 -- Plot the most important variables of the model
-plot(tempcnn_model)
-
-# Step 4.3 --  Exports the model as an object for further exploration
-tempcnn_model2 <- sits_model_export(tempcnn_model)
-
-# Step 4.3.1 -- Save the plot
-png(
-  filename = file.path(
-    tile_period_dir,
-    paste0(process_version, "_", tiles_train, "_", no.years, var, "_oob_ntree_mde.png")
+    opt_hparams = list(
+      lr = loguniform(1e-2, 1e-4), weight_decay = loguniform(1e-2, 1e-8))
   ),
-  width = 3529,
-  height = 1578,
-  res = 350
+  trials = 50,
+  multicores = 24,
+  progress = TRUE
 )
 
-# Step 4.3.2 -- Plot the Out of Box error by the number of trees
-matplot(tempcnn_model2$err.rate, 
-        type = "l", lty = 1, lwd = 2,
-        col = my_colors,           
-        main = "Out of Box error by the number of trees",
-        xlab = "Number of Trees (ntree)", 
-        ylab = "Out of Box Error")
-
-# Step 4.3.3 -- Adding legend to plot
-legend("topright", 
-       legend = names(my_colors), 
-       col = my_colors, 
-       lty = 1,      
-       cex = 1,    
-       bty = "n")
-dev.off()
-
-# Step 4.4 -- Save the ML model to a R file
-saveRDS(tempcnn_model,paste0(rds_path, "model/tempcnn/", "TCNN-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+# Step 4.2 -- Save the ML model to a R file
+saveRDS(tuned_ltae,paste0(rds_path, "model/ltae/", "LTAE-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 print("Model trained successfully!")

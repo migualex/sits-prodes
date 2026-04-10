@@ -195,12 +195,12 @@ cube <- sits_cube(
                  "band", "version"))
 
 # ============================================================
-# 4. Mask extract
+# 4. Full Map Stratified Random Sampling
 # ============================================================
 
 # 4.1 -- Define the actual mask 
-mask_label <- c("1" = "Natural Vegetation",
-                "0" = "Deforestation Mask")
+mask <- c("1" = "Natural Vegetation",
+          "0" = "Deforestation Mask")
 
 prodes_mask <- sits_cube(source = "BDC",
                          collection = "SENTINEL-2-16D",
@@ -208,32 +208,12 @@ prodes_mask <- sits_cube(source = "BDC",
                          parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
                          bands = "class",
                          version = "v2024-epsg10857",
-                         labels = mask_label)
+                         labels = mask)
 
-# ============================================================
-# 5. Full Map Stratified Random Sampling
-# ============================================================
-
-# 5.1 -- Reclassify Full Map classified cube
+# 4.2 -- Reclassify Full Map classified cube
 cube_reclass_full <- sits_reclassify(
   cube = cube,
   mask = prodes_mask,
-  rules = list(
-    "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura" = cube %in% "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura",
-    "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto" = cube %in% "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto",
-    "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo" = cube %in% "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura_Antigo", 
-    "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo" = cube %in% "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto_Antigo",
-    "Hidrografia_Lago" = cube %in% "Hidrografia_Lago",
-    "Hidrografia_Rio" = cube %in% "Hidrografia_Rio",
-    "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal" = cube %in% "Fogo_Recente_Em_Vegetacao_Natural_Nao_Florestal",
-    "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa" = cube %in% "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Mais_Biomassa", 
-    "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa" = cube %in% "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Menos_Biomassa",
-    "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Pos_Fogo" = cube %in% "Vegetacao_Natural_Nao_Florestal_Herbacea_Seca_Pos_Fogo",
-    "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida" = cube %in% "Vegetacao_Natural_Nao_Florestal_Herbacea_Umida",
-    "Vegetacao_Natural_Nao_Florestal_Transicao_Florestal" = cube %in% "Vegetacao_Natural_Nao_Florestal_Transicao_Florestal",
-    "Vegetacao_Natural_Nao_Florestal_Mata" = cube %in% "Vegetacao_Natural_Nao_Florestal_Mata",
-    "Vegetacao_Natural_Nao_Florestal_Vereda" = cube %in% "Vegetacao_Natural_Nao_Florestal_Vereda"
-  ),
   multicores = 24,
   memsize = 180,
   version = paste("full-map", version, sep = "-"),
@@ -241,9 +221,9 @@ cube_reclass_full <- sits_reclassify(
   progress = TRUE
 )
 
-# 5.2 -- Sampling design
+# 4.3 -- Sampling design
 sampling_design <- sits_sampling_design(
-  cube = cube,
+  cube = cube_reclass_full,
   expected_ua = c(
     "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura" = 0.70,
     "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto" = 0.70,
@@ -265,10 +245,10 @@ sampling_design <- sits_sampling_design(
   rare_class_prop = 0.025
 )
 
-# 5.3 -- Show sampling design
+# 4.4 -- Show sampling design
 sampling_design
 
-# 5.4 -- Generate stratified samples
+# 4.5 -- Generate stratified samples
 samples_sf <- sits_stratified_sampling(
   cube = cube,
   sampling_design = sampling_design,
@@ -277,20 +257,32 @@ samples_sf <- sits_stratified_sampling(
   progress = TRUE,
   multicores = 12)
 
-# 5.5 -- Total of each class
+# 4.6 -- Total of each class
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
-# 5.6 -- Define File Path
+# 4.7 -- Define File Path
 samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-full-map_", version, "_", process_version, ".gpkg"))
 
-# 5.7 -- Save samples_sf object as GPKG file
+# 4.8 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 
 # ============================================================
-# 6. PRODES Degradation Adjusted Map Accuracy
+# 5. PRODES Degradation Adjusted Map Accuracy
 # ============================================================
 
-# 6.1 -- Reclassify adjusted classified cube
+# 5.1 -- Define the actual mask 
+counter_mask <- c("1" = "Non-Natural Vegetation",
+                  "0" = "Deforestation Mask")
+
+prodes_mask <- sits_cube(source = "BDC",
+                         collection = "SENTINEL-2-16D",
+                         data_dir = aux_dir,
+                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         bands = "class",
+                         version = "v2024-epsg10857",
+                         labels = counter_mask)
+
+# 5.2 -- Reclassify adjusted classified cube
 cube_reclass <- sits_reclassify(
   cube = cube,
   mask = prodes_mask,
@@ -329,7 +321,7 @@ cube_reclass <- sits_reclassify(
   progress = TRUE
 )
 
-# 6.2 -- Sampling design degradation
+# 5.3 -- Sampling design degradation
 sampling_design <- sits_sampling_design(
   cube = cube_reclass,
   expected_ua = c(
@@ -343,10 +335,10 @@ sampling_design <- sits_sampling_design(
   rare_class_prop = 0.04
 )
 
-# 6.3 -- Show sampling design
+# 5.4 -- Show sampling design
 sampling_design
 
-# 6.4 -- Generate stratified samples
+# 5.5 -- Generate stratified samples
 samples_sf <- sits_stratified_sampling(
   cube = cube_reclass,
   sampling_design = sampling_design,
@@ -355,11 +347,11 @@ samples_sf <- sits_stratified_sampling(
   progress = TRUE,
   multicores = 24)
 
-# 6.5 -- Total of each class
+# 5.6 -- Total of each class
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
-# 6.6 -- Define File Path
+# 5.7 -- Define File Path
 samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-desmat-degrad_", version, "_", process_version, ".gpkg"))
 
-# 6.6 -- Save samples_sf object as GPKG file
+# 5.8 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, delete_dsn = TRUE, append = FALSE)
