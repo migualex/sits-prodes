@@ -26,6 +26,13 @@ package using the command:
 devtools::install(".")
 ```
 
+# Documentation
+Visit our website to explore the sampling protocol and learn more about the data used:
+
+``` sh
+https://migualex.github.io/sits-prodes/
+```
+
 # Repository structure
 
 - `data/`: Datasets used and generated throughout the analyses
