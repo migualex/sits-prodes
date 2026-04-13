@@ -255,5 +255,12 @@ digraph SITS_AMZ_PIPELINE {
 <div class="center-diagram">
 ```{r echo=FALSE}
 sits_pipeline
+
+# 👇 EXPORTA SÓ O FLUXOGRAMA
+htmlwidgets::saveWidget(
+  sits_pipeline,
+  "C:/Users/usuario/Documents/sits-prodes/docs/pipeline_flowchart.html",
+  selfcontained = TRUE
+)
 ```
 </div>
