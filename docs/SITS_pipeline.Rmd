@@ -55,18 +55,18 @@ digraph SITS_AMZ_PIPELINE {
   // -------------------------
   // Legend
   // -------------------------
-  subgraph cluster_legend {
-    label = <<B>Legend</B>>
-    style = rounded
-    color = gray50
-    fontname = Helvetica
-    fontsize = 14
-    
-  node_cube   [fillcolor=\"#E1F5FE\", color=\"#01579B\"]
-  node_func   [fillcolor=\"#FFF9C4\", color=\"#F9A825\"]
-  node_file   [fillcolor=\"#E8F5E9\", color=\"#2E7D32\", style=\"filled,dashed\"]
-  node_logic  [shape=diamond, fillcolor=\"#F3E5F5\", color=\"#7B1FA2\"]
-  }
+  # subgraph cluster_legend {
+  #   label = <<B>Legend</B>>
+  #   style = rounded
+  #   color = gray50
+  #   fontname = Helvetica
+  #   fontsize = 14
+  #   
+  # node_cube   [fillcolor=\"#E1F5FE\", color=\"#01579B\"]
+  # node_func   [fillcolor=\"#FFF9C4\", color=\"#F9A825\"]
+  # node_file   [fillcolor=\"#E8F5E9\", color=\"#2E7D32\", style=\"filled,dashed\"]
+  # node_logic  [shape=diamond, fillcolor=\"#F3E5F5\", color=\"#7B1FA2\"]
+  # }
   
   subgraph cluster_script1 {
     label = <<B>Step 1</B>>
@@ -256,11 +256,10 @@ digraph SITS_AMZ_PIPELINE {
 ```{r echo=FALSE}
 sits_pipeline
 
-# 👇 EXPORTA SÓ O FLUXOGRAMA
-htmlwidgets::saveWidget(
-  sits_pipeline,
-  "C:/Users/usuario/Documents/sits-prodes/docs/pipeline_flowchart.html",
-  selfcontained = TRUE
-)
+library(DiagrammeR)
+library(DiagrammeRsvg)
+
+svg <- DiagrammeRsvg::export_svg(sits_pipeline)
+writeLines(svg, "C:/Users/usuario/Documents/sits-prodes/docs/pipeline_flowchart.svg")
 ```
 </div>
