@@ -296,8 +296,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <a href="#setup"        class="sb-item">Setup</a>
   <hr class="sb-divider">
   <div class="sb-part">Pipeline</div>
-  <!--<a href="#step1" class="sb-item"><span class="sb-item-num">1</span>Linear Spectral Mixture Model</a>-->
-  <a href="chapter_1.html" class="sb-item"><span class="sb-item-num">1</span>Linear Spectral Mixture Model</a>
+  <a href="#step1" class="sb-item"><span class="sb-item-num">1</span>Linear Spectral Mixture Model</a>
   <a href="#step2" class="sb-item"><span class="sb-item-num">2</span>Segmentation</a>
   <a href="#step3" class="sb-item"><span class="sb-item-num">3</span>Time Series Extraction</a>
   <a href="#step4" class="sb-item"><span class="sb-item-num">4</span>Sample Quality Assessment</a>
@@ -320,226 +319,89 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 <main class="main">
 <div class="content">
 
-<!-- ═══ PREFACE ══════════════════════════════════════════════════════════ -->
-<section id="preface">
+<!-- ═══ STEP 1 ════════════════════════════════════════════════════════════ -->
+<section id="step1">
   <div class="page-header">
-    <div class="page-eyebrow">BiomasBR · PRODES-AMZ Project</div>
-    <h1 class="page-title">SITS-AMZ Pipeline</h1>
-    <p class="page-subtitle">End-to-end deforestation and degradation mapping for the Brazilian Legal Amazon</p>
-    <div class="page-meta">
-      <span class="meta-pill green">15 Scripts</span>
-      <span class="meta-pill green">SITS ≥ 1.6.0</span>
-    </div>
+    <div class="page-eyebrow">Step 1</div>
+    <h1 class="page-title">Linear Spectral Mixture Model</h1>
+    <p class="page-subtitle">Decompose pixels into Soil, Vegetation, and Water fraction bands</p>
   </div>
 
-  <p>This guide documents the complete processing pipeline of the <strong>PRODES-AMZ</strong> project, an application of the <a href="https://github.com/e-sensing/sits" target="_blank"><code>sits</code></a> R package for annual deforestation and forest degradation monitoring in the Brazilian Legal Amazon. The pipeline processes Sentinel-2 16-day composites from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a>, covering neighboring tiles: <code>012014</code>, <code>012015</code>, <code>013014</code>, and <code>013015</code> for the 2024-08 to 2025-07 reference period.</p>
+  <p><code>sits_mixture_model()</code> (SITS Book, Ch. 9) decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> — <strong>Soil, Vegetation, and Water</strong> — using Non-Negative Least Squares (NNLS). Band values are taken from Small &amp; Sousa (2022) for Sentinel-2 MSI. The resulting fraction bands (0–10.000 scale) enrich the feature space used for segmentation and classification, improving separability in mixed and transitional land cover zones common in the Amazon.</p>
 
-  <p>The pipeline follows a <strong>time-first, space-later</strong> paradigm: each spatial unit is associated with a multivariate time series of spectral bands, a machine learning model classifies those time series, and spatial post-processing rules produce PRODES-compatible polygon outputs. Classification is performed at <strong>segment level</strong> (Object-Based Image Analysis) using vector data cubes.</p>
-
-  <div class="callout note">
-    <div class="callout-title">📖 Note</div>
-    <p>All scripts are available at <a href="https://github.com/migualex/sits-prodes" target="_blank">github.com/migualex/sits-prodes</a>. For theoretical background, refer to the <a href="https://e-sensing.github.io/sitsbook/" target="_blank">SITS Book</a> (Simoes et al., 2021).</p>
+  <div class="io-grid">
+    <div class="io-box"><div class="io-label">Input</div><div class="io-val">BDC <code>SENTINEL-2-16D</code> cube<br>Tiles: 012014, 012015, 013014, 013015<br>Period: 2024-08-01 → 2025-07-31</div></div>
+    <div class="io-box"><div class="io-label">Output</div><div class="io-val">LSMM cube → <code>data/raw/mixture_model/</code><br>Fraction bands: <code>SOIL</code>, <code>VEG</code>, <code>WATER</code></div></div>
   </div>
 
-  <h2 id="pipeline-overview"><span class="sec-num">0.1</span>Pipeline Overview</h2>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>#</th><th>Script</th><th>Description</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">01</td><td><code>1_mixture_model.R</code></td><td>Generate Linear Spectral Mixture Model fraction bands</td></tr>
-      <tr><td class="mono">02</td><td><code>2_1_segmentation.R</code></td><td>SNIC-based segmentation</td></tr>
-      <tr><td class="mono">03</td><td><code>3_1_time_series_sampling.R</code></td><td>Extract training time series</td></tr>
-      <tr><td class="mono">04</td><td><code>3_2_samples_quality_assessment.R</code></td><td>SOM quality assessment</td></tr>
-      <tr><td class="mono">05</td><td><code>4_1_model_training_random_forest.R</code></td><td>Random Forest training</td></tr>
-      <tr><td class="mono">06</td><td><code>4_2_model_training_xgboost.R</code></td><td>XGBoost training</td></tr>
-      <tr><td class="mono">07</td><td><code>4_3_model_training_tempcnn.R</code></td><td>TempCNN training</td></tr>    
-      <tr><td class="mono">08</td><td><code>4_4_model_training_ltae.R</code></td><td>LTAE training</td></tr>
-      <tr><td class="mono">09</td><td><code>5_classification.R</code></td><td>Classify vector data cube</td></tr>
-      <tr><td class="mono">10</td><td><code>6_1_validation_samples_stratification.R</code></td><td>Stratified sample design for Forest area validation</td></tr>
-      <tr><td class="mono">11</td><td><code>6_2_validation_samples_stratification_nf.R</code></td><td>Stratified sample design for Non-Forest area validation</td></tr>
-      <tr><td class="mono">12</td><td><code>7_1_validation_accuracy_measurement.R</code></td><td>Validation accuracy measurement for Forest area</td></tr>
-      <tr><td class="mono">13</td><td><code>7_2_validation_accuracy_measurement_nf.R</code></td><td>Validation accuracy measurement for Non-Forest area</td></tr>
-      <tr><td class="mono">14</td><td><code>8_1_post_processing.R</code></td><td>Post-processing for Forest area</td></tr>
-      <tr><td class="mono">15</td><td><code>8_2_post_processing_nf.R</code></td><td>Post-processing for Non-Forest area</td></tr>
-    </tbody>
-  </table></div>
-
-  <div class="page-nav">
-    <span></span>
-    <a class="pnav-btn pnav-next" href="#introduction"><span class="pnav-dir">Next →</span><span class="pnav-title">Introduction</span></a>
-  </div>
-</section>
-
-<!-- ═══ INTRODUCTION ════════════════════════════════════════════════════ -->
-<section id="introduction" class="section">
-  <div class="page-header">
-    <div class="page-eyebrow">Chapter 1</div>
-    <h1 class="page-title">Introduction</h1>
-    <p class="page-subtitle">Context, paradigm, and key concepts</p>
-  </div>
-
-  <h2 id="prodes"><span class="sec-num">1.1</span>PRODES and BiomasBR</h2>
-  <p>The <strong>PRODES program</strong>, operated by INPE, has continuously monitored deforestation in the Brazilian Legal Amazon since 1988. PRODES tracks gross annual deforestation — defined as primary forest removed within each August-to-July reference year — using Landsat-class imagery and polygon-based shapefiles with a 1 ha minimum mapping unit. This pipeline extends PRODES-compatible mapping to include <strong>forest degradation</strong> classes (<code>Degradacao</code>, <code>Degradacao_Por_Fogo</code>) alongside the standard deforestation classes, using Sentinel-2 time series and object-based classification.</p>
-
-  <h2 id="time-first"><span class="sec-num">1.2</span>Time-First, Space-Later</h2>
-  <p>The <code>sits</code> package implements the <strong>time-first, space-later</strong> paradigm (SITS Book, Ch. 1). In the <em>time-first</em> phase, each pixel or segment is represented as a multivariate time series across all acquisition dates; a machine learning model then classifies these time series. In the <em>space-later</em> phase, spatial post-processing rules refine the map. This approach captures seasonal phenological signals — such as the NDVI cycle of pasture versus native vegetation — that single-date composites cannot discriminate.</p>
-
-  <h2 id="obia-concept"><span class="sec-num">1.3</span>Object-Based Classification with Vector Data Cubes</h2>
-  <p>Rather than classifying individual pixels, this pipeline segments the image into spatially homogeneous objects (SNIC superpixels), assembles them into a <strong>vector data cube</strong> (SITS Book, Ch. 25), and classifies the time series extracted per segment. This eliminates salt-and-pepper noise, produces polygon outputs compatible with the PRODES data model, and allows enforcing the minimum mapping unit before classification by controlling segment size.</p>
-
-  <h2 id="bdc-source"><span class="sec-num">1.4</span>Brazil Data Cube as Data Source</h2>
-  <p>All imagery is sourced from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a> collection <code>SENTINEL-2-16D</code>, which provides analysis-ready 16-day best-pixel composites at 10 m resolution. The BDC applies cloud masking and compositing, making the cubes directly suitable for time series analysis without additional preprocessing. Bands used: B02, B03, B04, B05, B06, B07, B08, B8A, B11, B12, NDVI, NBR, EVI, CLOUD.</p>
-
-  <div class="page-nav">
-    <a class="pnav-btn" href="#preface"><span class="pnav-dir">← Previous</span><span class="pnav-title">Preface</span></a>
-    <a class="pnav-btn pnav-next" href="#setup"><span class="pnav-dir">Next →</span><span class="pnav-title">Setup</span></a>
-  </div>
-</section>
-
-<!-- ═══ SETUP ════════════════════════════════════════════════════════════ -->
-<section id="setup" class="section">
-  <div class="page-header">
-    <div class="page-eyebrow">Chapter 2</div>
-    <h1 class="page-title">Setup</h1>
-    <p class="page-subtitle">Installation, dependencies, and project structure</p>
-  </div>
-
-  <h2 id="installation"><span class="sec-num">2.1</span>Installation</h2>
+  <h2 id="step1-code"><span class="sec-num">3.1</span>Code</h2>
   <div class="code-block">
     <div class="code-header">
       <div class="code-dots"><div class="cd cd-r"></div><div class="cd cd-y"></div><div class="cd cd-g"></div></div>
-      <span class="code-fname">R</span>
+      <span class="code-fname">1_mixture_model.R</span>
     </div>
-    <pre class="code-pre"><span class="c"># Install sits from CRAN (stable release)</span>
-install.packages(<span class="s">&quot;sits&quot;</span>)  <span class="c"># requires sits &gt;= 1.5.1</span>
+    <pre class="code-pre"><span class="c"># ============================================================</span>
+<span class="c">#  Creating Linear Spectral Mixture Model (LSMM) for features training and classification</span>
+<span class="c"># ============================================================</span>
 
-<span class="c"># Or install the development version from GitHub</span>
-<span class="c"># devtools::install_github(&quot;e-sensing/sits&quot;, dependencies = TRUE)</span>
+<span class="c"># Load Required Libraries</span>
+<span class="kc">library</span>(sits)
+<span class="kc">library</span>(tibble)
 
-<span class="c"># Install all supporting packages used in this pipeline</span>
-install.packages(<span class="kc">c</span>(
-  <span class="s">&quot;sf&quot;</span>, <span class="s">&quot;terra&quot;</span>, <span class="s">&quot;dplyr&quot;</span>, <span class="s">&quot;tibble&quot;</span>, <span class="s">&quot;ggplot2&quot;</span>, <span class="s">&quot;lubridate&quot;</span>,
-  <span class="s">&quot;purrr&quot;</span>, <span class="s">&quot;stringr&quot;</span>, <span class="s">&quot;fs&quot;</span>, <span class="s">&quot;RColorBrewer&quot;</span>, <span class="s">&quot;gdalUtilities&quot;</span>,
-  <span class="s">&quot;pals&quot;</span>, <span class="s">&quot;cli&quot;</span>, <span class="s">&quot;units&quot;</span>, <span class="s">&quot;smoothr&quot;</span>, <span class="s">&quot;torch&quot;</span>, <span class="s">&quot;luz&quot;</span>
-))</pre>
+<span class="c"># Define the paths for files and folders needed in the processing</span>
+mixture_path <span class="o">&lt;-</span> <span class="s">&quot;data/raw/mixture_model&quot;</span>
+
+<span class="c"># ============================================================</span>
+<span class="c">#  1. Define and Load Raster Data Cubes from a collection</span>
+<span class="c"># ============================================================</span>
+
+cube <span class="o">&lt;-</span> <span class="nf">sits_cube</span>(
+  source = <span class="s">&quot;BDC&quot;</span>,
+  collection = <span class="s">&quot;SENTINEL-2-16D&quot;</span>,
+  bands = <span class="kc">c</span>(<span class="s">&#x27;B02&#x27;</span>, <span class="s">&#x27;B03&#x27;</span>, <span class="s">&#x27;B04&#x27;</span>, <span class="s">&#x27;B05&#x27;</span>, <span class="s">&#x27;B06&#x27;</span>, <span class="s">&#x27;B07&#x27;</span>, <span class="s">&#x27;B08&#x27;</span>, <span class="s">&#x27;B8A&#x27;</span>, <span class="s">&#x27;B11&#x27;</span>, <span class="s">&#x27;B12&#x27;</span>, <span class="s">&#x27;CLOUD&#x27;</span>),
+  tiles = <span class="kc">c</span>(<span class="s">&#x27;012014&#x27;</span>, <span class="s">&#x27;012015&#x27;</span>, <span class="s">&#x27;013014&#x27;</span>, <span class="s">&#x27;013015&#x27;</span>),
+  start_date = <span class="s">&#x27;2024-08-01&#x27;</span>,
+  end_date = <span class="s">&#x27;2025-07-31&#x27;</span>,
+  progress = <span class="kc">TRUE</span>)
+
+<span class="c"># ============================================================</span>
+<span class="c">#  2. Creating Fractions Images features from mixture model cube</span>
+<span class="c"># ============================================================</span>
+
+<span class="c"># Endmembers&#x27; values from: SMALL, C.; SOUSA, D. The Sentinel 2 MSI Spectral Mixing Space. Remote Sens. 2022, 14, 5748</span>
+
+<span class="c"># Step 2.1 -- Define endmembers values</span>
+endmembers <span class="o">&lt;-</span> tibble::tribble(
+  ~class,     ~B02, ~B03, ~B04, ~B05, ~B06, ~B07, ~B08, ~B8A, ~B11, ~B12,
+  <span class="s">&quot;soil&quot;</span>,     <span class="m">1799</span>, <span class="m">2154</span>, <span class="m">3028</span>, <span class="m">3303</span>, <span class="m">3472</span>, <span class="m">3656</span>, <span class="m">3566</span>, <span class="m">3686</span>, <span class="m">5097</span>, <span class="m">4736</span>,
+  <span class="s">&quot;veg&quot;</span>,      <span class="m">827</span>,  <span class="m">892</span>,  <span class="m">410</span>,  <span class="m">1070</span>, <span class="m">4206</span>, <span class="m">5646</span>, <span class="m">5495</span>, <span class="m">6236</span>, <span class="m">2101</span>, <span class="m">775</span>,
+  <span class="s">&quot;water&quot;</span>,    <span class="m">946</span>,  <span class="m">739</span>,  <span class="m">280</span>,  <span class="m">208</span>,  <span class="m">180</span>,  <span class="m">167</span>,  <span class="m">135</span>,  <span class="m">129</span>,  <span class="m">26</span>,   <span class="m">14</span>,      
+)
+
+<span class="c"># Step 2.2 -- Generate a mixture model cube and calculate the process duration </span>
+sits_mixture_model_start <span class="o">&lt;-</span> <span class="kc">Sys.time</span>()
+mm_cube <span class="o">&lt;-</span> <span class="nf">sits_mixture_model</span>(
+  data = cube,
+  endmembers = endmembers,
+  multicores = <span class="m">28</span>, <span class="c"># adapt to your computer CPU core availability</span>
+  memsize = <span class="m">180</span>, <span class="c"># adapt to your computer memory availability</span>
+  output_dir = mixture_path
+)
+sits_mixture_model_end <span class="o">&lt;-</span> <span class="kc">Sys.time</span>()
+sits_mixture_model_time <span class="o">&lt;-</span> <span class="kc">as.numeric</span>(sits_mixture_model_end - sits_mixture_model_start, units = <span class="s">&quot;secs&quot;</span>)
+<span class="kc">sprintf</span>(<span class="s">&quot;SITS LSMM process duration (HH:MM): %02d:%02d&quot;</span>, <span class="kc">as.integer</span>(sits_mixture_model_time / <span class="m">3600</span>), <span class="kc">as.integer</span>((sits_mixture_model_time %% <span class="m">3600</span>) / <span class="m">60</span>))
+
+<span class="kc">print</span>(<span class="s">&quot;Linear Spectral Mixture Model created!&quot;</span>)</pre>
   </div>
 
-  <div class="callout important">
-    <div class="callout-title">⚠ BDC Access Token</div>
-    <p>All cubes are sourced from the <strong>Brazil Data Cube</strong> (<code>source = "BDC"</code>). A free access token is required. Register at <a href="https://data.inpe.br/bdc/" target="_blank">BDC</a> and configure with <code>sits_config(bdc_access_key = "...")</code>.</p>
-  </div>
-
-  <h2 id="libraries"><span class="sec-num">2.2</span>Libraries</h2>
-  <p>Every R package used across all scripts, with a brief description of its role in the pipeline.</p>
-
-  <table class="lib-table">
-    <thead><tr><th>Package</th><th>Description</th><th>Used in</th></tr></thead>
-    <tbody>
-      <tr><td>sits</td><td>Provides all SITS functions: data cube creation, Linear Spectral Mixture Model, segmentation, SOM quality control, ML training, classification, uncertainty estimation, and accuracy assessment.</td><td>All scripts</td></tr>
-      <tr><td>sf</td><td>Standard R interface for vector spatial data. Used for reading/writing GeoPackage files, geometric operations (union, difference, buffer, area calculation), and CRS management.</td><td>2.1, 6.1, 6.2, 7.2, 8.2</td></tr>
-      <tr><td>terra</td><td>Raster data processing. Used to rasterize classified segment vectors, compute entropy rasters from vector uncertainty outputs, and write compressed GeoTIFF files.</td><td>5, 6.1, 6.2, 7.2, 8.2</td></tr>
-      <tr><td>dplyr</td><td>Data manipulation. Provides filter, mutate, group_by, summarise, bind_rows, and pipe-based workflows for sample tables and spatial data frames.</td><td>3.1, 3.2, 6.1, 6.2, 7.2, 8.2</td></tr>
-      <tr><td>tibble</td><td>Modern data frame format required by sits for training sample objects. Also used to construct the endmember specification table in Script 1.</td><td>1, 3.1, 3.2, 6.1, 6.2</td></tr>
-      <tr><td>ggplot2</td><td>Plotting. Generates SOM evaluation charts, confusion matrices, per-class accuracy heatmaps, error-adjusted area bar charts, and OOB error curves.</td><td>3.1, 3.2, 4.1, 4.2, 4.4, 7.2</td></tr>
-      <tr><td>lubridate</td><td>Date arithmetic. Computes the number of years between start_date and end_date used to generate version strings in output filenames.</td><td>2.1, 3.1, 3.2, 4.1, 4.2, 5</td></tr>
-      <tr><td>purrr</td><td>Functional iteration over lists and vectors. Used to map rasterization and reclassification functions across multiple tiles and cube directories.</td><td>6.1, 6.2, 7.2, 8.2</td></tr>
-      <tr><td>stringr</td><td>String manipulation. Extracts tile IDs and period codes from version strings to automatically locate the correct cube directories.</td><td>6.1, 6.2, 7.2</td></tr>
-      <tr><td>fs</td><td>File system operations. Creates directories, expands paths, and manages temporary files during rasterization workflows.</td><td>6.1, 6.2</td></tr>
-      <tr><td>RColorBrewer</td><td>Color palettes for uncertainty maps and for the class style tables written as QGIS-compatible QML files alongside rasterized outputs.</td><td>5, 6.1, 6.2</td></tr>
-      <tr><td>gdalUtilities</td><td>Wraps GDAL's gdal_rasterize to convert classified segment vector maps to integer-coded GeoTIFF rasters that sits_cube() can read for accuracy assessment.</td><td>6.1, 6.2</td></tr>
-      <tr><td>pals</td><td>Extended color palettes. Provides cols25() for assigning visually distinct colors to 13+ land cover classes in the rasterized output style file.</td><td>6.1, 6.2</td></tr>
-      <tr><td>cli</td><td>Command-line interface messages. Reports per-tile progress during rasterization and reclassification loops with formatted, colored status output.</td><td>6.1, 6.2, 7.2</td></tr>
-      <tr><td>units</td><td>Physical unit handling for spatial thresholds. Used to specify area filters in square metres as typed quantities for smoothr::fill_holes().</td><td>8.2</td></tr>
-      <tr><td>smoothr</td><td>Polygon smoothing and hole filling. fill_holes() removes internal holes below a given area threshold from classified suppression polygons after cloud removal.</td><td>8.2</td></tr>
-      <tr><td>torch</td><td>Deep learning backend for R. Required by sits_lighttae() for LTAE model training. Provides GPU acceleration via CUDA when available.</td><td>4.4</td></tr>
-      <tr><td>luz</td><td>High-level training loop for torch. Manages epochs, callbacks, and learning rate schedulers used internally by the LTAE training routine.</td><td>4.4</td></tr>
-    </tbody>
-  </table>
-
-  <h2 id="project-structure"><span class="sec-num">2.3</span>Project Structure</h2>
-  <div class="code-block">
-    <div class="code-header">
-      <div class="code-dots"><div class="cd cd-r"></div><div class="cd cd-y"></div><div class="cd cd-g"></div></div>
-      <span class="code-fname">bash</span>
-    </div>
-    <pre class="code-pre">prodes.amz/
-├── scripts/                    
-├── data/
-│   ├── raw/
-│   │   ├── mixture_model/      
-│   │   ├── samples/            
-│   │   │   └── validation_samples/  
-│   │   └── auxiliary/          
-│   ├── segments/               
-│   ├── rds/
-│   │   ├── time_series/        
-│   │   ├── som/                
-│   │   └── model/
-│   │       ├── random_forest/  
-│   │       ├── xgboost/        
-│   │       └── tempcnn/           
-│   │       └── ltae/           
-│   ├── class/                  
-│   │   ├── raster/             
-│   │   └── post_process/       
-│   └── plots/                  
+  <div class="callout tip">
+    <div class="callout-title">💡 Endmember values</div>
+    <p>Band values are in BDC native scale (0–10 000). Values from Small &amp; Sousa (2022) were validated for the Sentinel-2 MSI spectral mixing space and are widely used for tropical land cover monitoring.</p>
   </div>
 
   <div class="page-nav">
-    <a class="pnav-btn" href="#introduction"><span class="pnav-dir">← Previous</span><span class="pnav-title">Introduction</span></a>
-    <a class="pnav-btn pnav-next" href="#step1"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 1: Linear Spectral Mixture Model</span></a>
-  </div>
-</section>
-
-<!-- ═══ FLOWCHART ════════════════════════════════════════════════════════
-<section id="flowchart" class="section">
-  <div class="page-header">
-    <div class="page-eyebrow">Reference</div>
-    <h1 class="page-title">Pipeline Flowchart</h1>
-    <p class="page-subtitle">Complete data flow across all 8 scripts</p>
-  </div>
-
-  <p>The diagram shows all steps, intermediate artifacts, SITS functions, and decision nodes. Click <strong>🔍 Expand Diagram</strong> to open the interactive zoom viewer.</p>
-
-  <h2 id="diagram"><span class="sec-num">R.2</span>Full Diagram</h2>
-  <div class="diagram-wrap">
-    <div class="diagram-head">
-      <div class="diagram-head-left"><div class="dh-dot"></div>SITS-AMZ Pipeline · DiagrammeR · graphviz dot</div>
-      <button class="zoom-btn" onclick="openZoom()">🔍 Expand Diagram</button>
-    </div>
-    <div class="diagram-body">
-      <div class="grViz html-widget html-fill-item" id="htmlwidget-b10e5f1091fb2e84974d" style="width:100%;height:600px;"></div>
-      <script type="application/json" data-for="htmlwidget-b10e5f1091fb2e84974d">{"x":{"diagram":"\ndigraph SITS_AMZ_PIPELINE {\n\n  graph [\n    layout = dot,\n    rankdir = TB,\n    splines = ortho,\n    fontsize = 18,\n    fontname = Helvetica,\n    labelloc = t\n  ]\n\n  node [\n    shape = box,\n    style = filled,\n    fontname = Helvetica,\n    fontsize = 11\n  ]\n\n  edge [\n    fontname = Helvetica,\n    fontsize = 10,\n    color = gray30,\n    arrowhead = vee\n  ]\n  \n  subgraph cluster_script1 {\n    label = <<B>Step 1<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S1_Cube [label=\"Load Sentinel-2 Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S1_Endm [label=\"Define Endmembers\\nSoil / Veg / Dark\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S1_LSMM [label=\"Generate LSMM Fractions\\nsits_mixture_model()\", fillcolor=\"#FFF9C4\"]\n    S1_Out  [label=\"LSMM Cube\\nSoil / Veg / Dark\", fillcolor=\"#E1F5FE\"]\n    S1_Dir  [label=\"Saved LSMM cube\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S1_Cube -> S1_LSMM\n    S1_Endm -> S1_LSMM\n    S1_LSMM -> S1_Out\n    S1_LSMM -> S1_Dir\n  }\n\n  subgraph cluster_script2 {\n    label = <<B>Step 2<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S2_LoadMM [label=\"Load LSMM cube\\nsits_cube(data_dir)\", fillcolor=\"#E1F5FE\"]\n    S2_SNIC   [label=\"Segment LSMM cube\\nsits_segment()\\nseg_fn = sits_snic()\", fillcolor=\"#FFF9C4\"]\n    S2_SegVec [label=\"Saved segments\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S2_LoadMM -> S2_SNIC -> S2_SegVec\n  }\n\n  subgraph cluster_script3 {\n    label = <<B>Step 3<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S3_CubeS2   [label=\"Load Training Cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S3_LoadMM   [label=\"Load LSMM cube\\nSoil / Veg / Dark\", fillcolor=\"#E1F5FE\"]\n    S3_Merge    [label=\"Merge features\\nsits_merge()\", fillcolor=\"#FFF9C4\"]\n\n    S3_Samples  [label=\"Load Training Samples\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S3_GetData  [label=\"Extract time series\\nsits_get_data()\", fillcolor=\"#FFF9C4\"]\n    S3_TS       [label=\"Time Series\", fillcolor=\"#E1F5FE\"]\n    S3_SaveTS   [label=\"Save original\\nsaveRDS(time_series)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S3_SOM1     [label=\"SOM clustering (1)\\nsits_som_map()\", fillcolor=\"#FFF9C4\"]\n    S3_Eval1    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster()\", fillcolor=\"#FFF9C4\"]\n    S3_Clean    [label=\"Clean samples\\nsits_som_clean_samples()\", fillcolor=\"#FFF9C4\"]\n\n    S3_SOM2     [label=\"SOM clustering (2)\\nsits_som_map(cleaned)\", fillcolor=\"#FFF9C4\"]\n    S3_Eval2    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster(cleaned)\", fillcolor=\"#FFF9C4\"]\n\n    S3_Balance  [label=\"Reduce imbalance\\nsits_reduce_imbalance()\", fillcolor=\"#FFF9C4\"]\n    S3_SaveBal  [label=\"Save cleaned & balanced\\nsaveRDS(new_time_series)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S3_SOM3     [label=\"SOM clustering (3)\\nsits_som_map(cleaned + balanced)\", fillcolor=\"#FFF9C4\"]\n    S3_Eval3    [label=\"Evaluate clusters\\nsits_som_evaluate_cluster(cleaned + balanced)\", fillcolor=\"#FFF9C4\"]\n\n    S3_CubeS2 -> S3_Merge\n    S3_LoadMM -> S3_Merge\n\n    S3_Samples -> S3_GetData\n    S3_Merge   -> S3_GetData\n\n    S3_GetData -> S3_TS -> S3_SaveTS\n\n    S3_TS -> S3_SOM1 -> S3_Eval1 -> S3_Clean\n    S3_Clean -> S3_SOM2 -> S3_Eval2\n    S3_Clean -> S3_Balance -> S3_SaveBal\n    S3_SaveBal -> S3_SOM3 -> S3_Eval3\n  }\n\n  subgraph cluster_script4 {\n    label = <<B>Step 4<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S4_LoadTS [label=\"Load training\\nreadRDS(cleaned & balanced)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S4_Kfold  [label=\"Cross-validation\\nsits_kfold_validate()\", fillcolor=\"#FFF9C4\"]\n    S4_Train  [label=\"Train Model\\nsits_train()\", fillcolor=\"#FFF9C4\"]\n    S4_Model  [label=\"Trained Model\", fillcolor=\"#E1F5FE\"]\n    S4_Save   [label=\"Save model\\nsaveRDS()\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S4_LoadTS -> S4_Kfold -> S4_Train -> S4_Model\n    S4_Model -> S4_Save\n  }\n\n  subgraph cluster_script5 {\n    label = <<B>Step 5<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S5_Cube    [label=\"Load classification cube\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S5_LoadMM  [label=\"Load LSMM fractions\\nsits_cube()\", fillcolor=\"#E1F5FE\"]\n    S5_Merge   [label=\"Merge features\\nsits_merge()\", fillcolor=\"#FFF9C4\"]\n    S5_Seg     [label=\"Load segmented vector cube\\nsits_cube(vector_dir)\", fillcolor=\"#E1F5FE\"]\n    S5_Model   [label=\"Load RF model\\nreadRDS()\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S5_Class   [label=\"Classify segments\\nsits_classify()\", fillcolor=\"#FFF9C4\"]\n    S5_Label   [label=\"Generate final class map\\nsits_label_classification()\", fillcolor=\"#FFF9C4\"]\n    S5_Map     [label=\"Classified vector map\\n(class_*.gpkg)\", fillcolor=\"#E1F5FE\"]\n    S5_Unc     [label=\"Entropy uncertainty\\nsits_uncertainty()\", fillcolor=\"#FFF9C4\"]\n    S5_UncOut  [label=\"Uncertainty raster\\n(entropy_*.tif)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S5_Cube -> S5_Merge\n    S5_LoadMM -> S5_Merge\n    S5_Merge -> S5_Seg\n\n    S5_Model -> S5_Class\n    S5_Seg -> S5_Class\n\n    S5_Class -> S5_Label -> S5_Map\n    S5_Map -> S5_Unc -> S5_UncOut\n  }\n\n  subgraph cluster_script6 {\n    label = <<B>Step 6<\/B>>\n    style = rounded\n    color = gray50\n    labeljust = \"l\"\n    fontname = Helvetica\n    fontsize = 14\n\n    S6_Rast    [label=\"Rasterize classified vectors\\nsits_rasterize_segments()\", fillcolor=\"#FFF9C4\"]\n    S6_Cube    [label=\"Load classified raster cube\\nsits_cube(bands=class)\", fillcolor=\"#E1F5FE\"]\n    S6_Desi    [label=\"Sampling Design\\nsits_sampling_design()\", fillcolor=\"#FFF9C4\"]\n    S6_Strat   [label=\"Stratified random sampling\\nsits_stratified_sampling()\", fillcolor=\"#FFF9C4\"]\n    S6_Val     [label=\"Validation samples\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S6_Acc     [label=\"Accuracy assessment\\nsits_accuracy()\", fillcolor=\"#FFF9C4\"]\n    S6_CM      [label=\"Confusion matrix\", fillcolor=\"#E1F5FE\"]\n    S6_ME      [label=\"Metrics\", fillcolor=\"#E1F5FE\"]\n\n    S6_Rast -> S6_Cube -> S6_Desi\n    S6_Desi -> S6_Strat -> S6_Val\n    S6_Val -> S6_Acc\n    S6_Cube -> S6_Acc\n    S6_Acc -> S6_CM\n    S6_Acc -> S6_ME\n  }\n\n  subgraph cluster_script7 {\n    label = <<B>Step 7<\/B>>\n    style = rounded\n    color = gray50\n    fontname = Helvetica\n    fontsize = 14\n\n    S7_Class    [label=\"Load classified vectors\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S7_Filter   [label=\"Filter deforestation classes\", fillcolor=\"#FFF9C4\"]\n    S7_Dissolve [label=\"Dissolve + explode polygons\\nst_union() + st_cast()\", fillcolor=\"#FFF9C4\"]\n    S7_Prodes   [label=\"Load PRODES mask\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n    S7_Diff     [label=\"Apply mask difference\\nst_difference()\", fillcolor=\"#FFF9C4\"]\n    S7_Area     [label=\"Area threshold\\n≥ 1 ha\", shape=diamond, fillcolor=\"#F3E5F5\"]\n    S7_Spatial  [label=\"Spatial rule\\nkeep tree remnants\\n(if not disjoint)\", shape=diamond, fillcolor=\"#F3E5F5\"]\n    S7_Final    [label=\"Final post-processed output\\n(gpkg)\", style=\"filled,dashed\", fillcolor=\"#E8F5E9\"]\n\n    S7_Class -> S7_Filter -> S7_Dissolve\n    S7_Prodes -> S7_Diff\n    S7_Dissolve -> S7_Diff -> S7_Area -> S7_Spatial -> S7_Final\n  }\n\n  ROUTE_MM [shape=point, width=0.01, label=\"\", style=invis]\n  ROUTE_ML [shape=point, width=0.01, label=\"\", style=invis]\n\n  S1_Out -> ROUTE_MM [arrowhead=none, color=gray35]\n  ROUTE_MM -> S2_LoadMM\n  ROUTE_MM -> S3_LoadMM\n\n  S3_SaveBal -> S4_LoadTS\n  S4_Save -> S5_Model\n  \n  S5_Map -> ROUTE_ML [arrowhead=none, color=gray35]\n  ROUTE_ML -> S6_Rast\n  ROUTE_ML -> S7_Class\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
-    </div>
-  </div>
-  <h3 id="legend">Legend</h3>
-  <div class="legend-grid">
-    <div class="legend-item"><div class="lsw lsw-cube"></div>Data Cube / Object</div>
-    <div class="legend-item"><div class="lsw lsw-func"></div>Function / Process</div>
-    <div class="legend-item"><div class="lsw lsw-file"></div>Saved File (.gpkg / .rds)</div>
-    <div class="legend-item"><div class="lsw lsw-logic"></div>Decision / Logic</div>
-  </div>
-
-  <div class="page-nav">
-    <a class="pnav-btn" href="#step8"><span class="pnav-dir">← Previous</span><span class="pnav-title">Step 8: Post-Processing</span></a>
-    <a class="pnav-btn pnav-next" href="#references"><span class="pnav-dir">Next →</span><span class="pnav-title">References</span></a>
-  </div>
-</section> -->
-
-<section id="references" class="section">
-  <div class="page-header">
-    <div class="page-eyebrow">Chapter 3</div>
-    <h1 class="page-title">References</h1>
-  </div>
-  <div style="font-family:var(--sans);font-size:.9rem;line-height:1.9">
-    <p><strong>Simoes, R., Camara, G., Queiroz, G., Souza, F., Andrade, P. R., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021). Satellite Image Time Series Analysis for Big Earth Observation Data. <em>Remote Sensing, 13 </em>(13), 2428. Available at: <a href="https://doi.org/10.3390/rs13132428" target="_blank">doi:10.3390/rs13132428</a></p>
-    <p><strong>Santos, L., Ferreira, K., Camara, G., Picoli, M., &amp; Simoes, R.</strong> (2021). Quality control and class noise reduction of satellite image time series. <em>ISPRS J. Photogramm. Remote Sens., 177</em>, 75–88. Available at: <a href="https://doi.org/10.1016/j.isprsjprs.2021.04.014" target="_blank">doi:10.1016/j.isprsjprs.2021.04.014</a></p>
-    <p><strong>Olofsson, P., Foody, G. M., Herold, M., Stehman, S. V., Woodcock, C. E., &amp; Wulder, M. A.</strong> (2014). Good practices for estimating area and assessing accuracy of land change. <em>Remote Sensing of Environment, 148</em>, 42–57. Available at: <a href="https://doi.org/10.1016/j.rse.2014.02.015" target="_blank">doi:10.1016/j.rse.2014.02.015</a></p>
-    <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14 </em>(22), 5748. Available at: <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p>
-    <p><strong>Kohonen, T.</strong> (2001). <em>Self-Organizing Maps</em> (3rd ed.). Springer. Available at: <a href="https://doi.org/10.1007/978-3-642-56927-2" target="_blank">doi:10.1007/978-3-642-56927-2</a></p>
-  </div>
-  <div class="page-nav">
-    <a class="pnav-btn" href="#flowchart"><span class="pnav-dir">← Previous</span><span class="pnav-title">Flowchart</span></a>
-    <span></span>
+    <a class="pnav-btn" href="#setup"><span class="pnav-dir">← Previous</span><span class="pnav-title">Setup</span></a>
+    <a class="pnav-btn pnav-next" href="#step2"><span class="pnav-dir">Next →</span><span class="pnav-title">Step 2: Segmentation</span></a>
   </div>
 </section>
 
@@ -549,24 +411,6 @@ install.packages(<span class="kc">c</span>(
 </div><!-- .content -->
 </main>
 </div><!-- .layout -->
-
-<!-- ── Zoom Overlay ── -->
-<div class="zoom-overlay" id="zoomOverlay">
-  <div class="zoom-toolbar">
-    <div class="zt-title">SITS-AMZ Pipeline: Full Diagram</div>
-    <div class="zt-controls">
-      <button class="zt-btn" onclick="zoomIn()">＋ Zoom In</button>
-      <button class="zt-btn" onclick="zoomOut()">－ Zoom Out</button>
-      <button class="zt-btn" onclick="zoomReset()">⊡ Reset</button>
-      <div class="zt-sep"></div>
-      <button class="zt-btn zt-close" onclick="closeZoom()">✕</button>
-    </div>
-  </div>
-  <div class="zoom-canvas" id="zoomCanvas">
-    <div class="zoom-inner" id="zoomInner"></div>
-    <div class="zoom-hint">Scroll to zoom · Drag to pan · Esc to close</div>
-  </div>
-</div>
 
 <footer>
   <div class="footer-inner">
