@@ -8,6 +8,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <link id="hljs-light"
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <link id="hljs-dark"
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+      disabled>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
   <script>/*! jQuery v3.6.0 | (c) OpenJS Foundation and other contributors | jquery.org/license */
@@ -399,19 +406,12 @@ sits_mixture_model_time <span class="o">&lt;-</span> <span class="kc">as.numeric
 <pre><code id="code-step1" class="language-r"></code></pre>
 <script>
 const url = "https://raw.githubusercontent.com/migualex/sits-prodes/main/scripts/1_mixture_model.R";
-
 fetch(url)
   .then(res => res.text())
-  .then(text => {
-
-    let html = text
-      .replace(/(#.*)/g, '<span class="c">$1</span>')        // comentários R
-      .replace(/\b(library|function|if|else|for|in|return)\b/g,
-               '<span class="kc">$1</span>')                 // keywords
-      .replace(/(".*?"|'.*?')/g, '<span class="s">$1</span>') // strings
-      .replace(/\b(\d+)\b/g, '<span class="m">$1</span>');    // números
-
-    document.getElementById("code-step1").innerHTML = html;
+  .then(data => {
+    const el = document.getElementById("code-step1");
+    el.textContent = data;
+    hljs.highlightElement(el);
   });
 </script>
 
