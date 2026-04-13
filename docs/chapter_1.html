@@ -334,7 +334,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     <div class="io-box"><div class="io-label">Output</div><div class="io-val">LSMM cube → <code>data/raw/mixture_model/</code><br>Fraction bands: <code>SOIL</code>, <code>VEG</code>, <code>WATER</code></div></div>
   </div>
 
-  <h2 id="step1-code"><span class="sec-num">3.1</span>Code</h2>
+<!--<h2 id="step1-code"><span class="sec-num">3.1</span>Code</h2>
   <div class="code-block">
     <div class="code-header">
       <div class="code-dots"><div class="cd cd-r"></div><div class="cd cd-y"></div><div class="cd cd-g"></div></div>
@@ -392,7 +392,28 @@ sits_mixture_model_time <span class="o">&lt;-</span> <span class="kc">as.numeric
 <span class="kc">sprintf</span>(<span class="s">&quot;SITS LSMM process duration (HH:MM): %02d:%02d&quot;</span>, <span class="kc">as.integer</span>(sits_mixture_model_time / <span class="m">3600</span>), <span class="kc">as.integer</span>((sits_mixture_model_time %% <span class="m">3600</span>) / <span class="m">60</span>))
 
 <span class="kc">print</span>(<span class="s">&quot;Linear Spectral Mixture Model created!&quot;</span>)</pre>
-  </div>
+  </div>-->
+
+<pre class="code-pre" id="code-step1"></pre>
+
+<script>
+const url = "https://raw.githubusercontent.com/migualex/sits-prodes/main/scripts/1_mixture_model.R";
+
+fetch(url + "?t=" + new Date().getTime())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Erro ao buscar o arquivo");
+    }
+    return response.text();
+  })
+  .then(data => {
+    document.getElementById("code-step1").textContent = data;
+  })
+  .catch(error => {
+    document.getElementById("code-step1").textContent = "Erro ao carregar código.";
+    console.error(error);
+  });
+</script>
 
   <div class="callout tip">
     <div class="callout-title">💡 Endmember values</div>
