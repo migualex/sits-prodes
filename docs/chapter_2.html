@@ -458,7 +458,7 @@ const url = "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/m
 fetch(url)
   .then(res => res.text())
   .then(data => {
-    const el = document.getElementById("code-step1");
+    const el = document.getElementById("code-step2");
     el.textContent = data;
     hljs.highlightElement(el);
   });
