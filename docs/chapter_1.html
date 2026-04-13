@@ -402,10 +402,16 @@ const url = "https://raw.githubusercontent.com/migualex/sits-prodes/main/scripts
 
 fetch(url)
   .then(res => res.text())
-  .then(data => {
-    const el = document.getElementById("code-step1");
-    el.textContent = data;
-    hljs.highlightElement(el);
+  .then(text => {
+
+    let html = text
+      .replace(/(#.*)/g, '<span class="c">$1</span>')        // comentários R
+      .replace(/\b(library|function|if|else|for|in|return)\b/g,
+               '<span class="kc">$1</span>')                 // keywords
+      .replace(/(".*?"|'.*?')/g, '<span class="s">$1</span>') // strings
+      .replace(/\b(\d+)\b/g, '<span class="m">$1</span>');    // números
+
+    document.getElementById("code-step1").innerHTML = html;
   });
 </script>
 
