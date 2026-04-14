@@ -25,6 +25,7 @@ This flowchart shows the pipeline used in the PRODES-AMZ project, developed with
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 library(DiagrammeR)
+library(DiagrammeRsvg)
 
 sits_pipeline <- grViz("
 digraph SITS_AMZ_PIPELINE {
@@ -251,14 +252,11 @@ digraph SITS_AMZ_PIPELINE {
   ROUTE_ML -> S7_Class
 }
 ")
+
+sits_pipeline
 ```
 <div class="center-diagram">
 ```{r echo=FALSE}
-sits_pipeline
-
-library(DiagrammeR)
-library(DiagrammeRsvg)
-
 svg <- DiagrammeRsvg::export_svg(sits_pipeline)
 writeLines(svg, "C:/Users/usuario/Documents/sits-prodes/docs/pipeline_flowchart.svg")
 ```
