@@ -25,8 +25,8 @@ model_name       <- "model-name.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
 samples_dir      <- "data/raw/samples/validation_samples/015002"
-plots_dir       <- "data/plots"
-mask_dir          <- "data/raw/auxiliary/masks"
+plots_dir        <- "data/plots"
+mask_dir         <- "data/raw/auxiliary/masks"
 version          <- "version"
 
 # Step 1.4 -- Get the list of validation sample files matching the version pattern in the samples directory
