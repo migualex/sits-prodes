@@ -299,6 +299,72 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 [data-theme="dark"] .lib-table th{background:#161b22;border-color:var(--border)}
 [data-theme="dark"] .lib-table td{border-color:var(--border)}
 
+ body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  .diagram-wrap {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .diagram-head {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+    background: #f5f5f5;
+  }
+  .zoom-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+  .zoom-btn:hover {
+    background: #0056b3;
+  }
+  .diagram-body {
+    padding: 10px;
+  }
+  iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+    border-radius: 12px;
+  }
+  /* MODAL */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+  }
+  .modal-content {
+    position: relative;
+    width: 90%;
+    height: 90%;
+    margin: 2% auto;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .modal iframe {
+    width: 100%;
+    height: 100%;
+  }
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+  }
   </style>
   
 </head>
@@ -534,22 +600,21 @@ install.packages(<span class="kc">c</span>(
 
   <p>The diagram shows all steps, intermediate artifacts, SITS functions, and decision nodes. Click <strong>🔍 Expand Diagram</strong> to open the interactive zoom viewer.</p>
 
-  <h2 id="diagram"><span class="sec-num">R.2</span>Full Diagram</h2>
-  <div class="diagram-wrap">
-    <div class="diagram-head">
-      <div class="diagram-head-left"><div class="dh-dot"></div>Pipeline</div>
-      <button class="zoom-btn" onclick="openZoom()">🔍 Expand Diagram</button>
+<div class="diagram-wrap">
+  <div class="diagram-head">
+    <button class="zoom-btn" onclick="openZoom()">🔍 Expand Diagram</button>
+  </div>
+   <div class="diagram-body">
+    <div class="diagram-embed">
+      <iframe src="pipeline_flowchart.svg"></iframe>
     </div>
-    <div class="diagram-body">
-  <div class="diagram-embed">
-    <iframe 
-      src="pipeline_flowchart.svg"
-      width="100%"
-      height="600px"
-      style="border: none; border-radius: 12px;">
-    </iframe>
   </div>
 </div>
+<div id="diagramModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeZoom()">&times;</span>
+    <iframe src="pipeline_flowchart.svg"></iframe>
+  </div>
 </div>
   <h3 id="legend">Legend</h3>
   <div class="legend-grid">
@@ -593,6 +658,25 @@ install.packages(<span class="kc">c</span>(
 </footer>
 
 <script>
+
+  function openZoom() {
+    document.getElementById("diagramModal").style.display = "block";
+  }
+
+  function closeZoom() {
+    document.getElementById("diagramModal").style.display = "none";
+  }
+
+  // fechar clicando fora
+  window.onclick = function(event) {
+    const modal = document.getElementById("diagramModal");
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
+  }
+</script>
+</body>
+</html>
 // ── Scroll spy ──────────────────────────────────────────────────────────────
 (function(){
   var secs = document.querySelectorAll('section[id]');
