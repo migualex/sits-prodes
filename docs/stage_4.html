@@ -350,7 +350,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <a href="stage_3.html" class="sb-item"><span class="sb-item-num">3</span>Time Series Sampling</a>
   <a href="stage_4.html" class="sb-item active"><span class="sb-item-num">4</span>Model Training</a>
   <a href="stage_5.html" class="sb-item"><span class="sb-item-num">5</span>Classification</a>
-  <a href="stage_6.html" class="sb-item"><span class="sb-item-num">5</span>Map Accuracy</a>
+  <a href="stage_6.html" class="sb-item"><span class="sb-item-num">6</span>Map Accuracy</a>
   <hr class="sb-divider">
   <div class="sb-part">External</div>
   <a href="https://github.com/migualex/sits-prodes"      class="sb-item" target="_blank">Repository ↗</a>
@@ -361,45 +361,44 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 <main class="main">
 <div class="content">
 
-<!-- ═══ STEP 3 ════════════════════════════════════════════════════════════ -->
+<!-- ═══ STEP 4 ════════════════════════════════════════════════════════════ -->
 <section id="step3">
   <div class="page-header">
-    <div class="page-eyebrow">Stage 3</div>
-    <h1 class="page-title">Time Series Sampling</h1>
-    <p class="page-subtitle">Sampling Land Use and Land Cover classes</p>
+    <div class="page-eyebrow">Stage 4</div>
+    <h1 class="page-title">Model Training</h1>
+    <p class="page-subtitle">K-fold cross-validation and training</p>
   </div>
 
-  <p>Training samples are loaded from <code>amostras_amazonia_24_02_2026.gpkg</code>. Time series are extracted at <code>n_sam_pol = 16</code> internal points per polygon with <code>pol_avg = FALSE</code> (individual points, not the polygon mean), maximising within-class spectral variability. Quality control uses SOM (SITS Book, Ch. 14) with DTW distance, which is more robust to temporal distortions than Euclidean distance for time series comparison.</p>
+  <p>The script uses <code>sits_rfor()</code>, the Random Forest implementation in <code>sits</code>, with <code>num_trees = 100</code> for the final model (after cross-validation with <code>folds = 5</code>). <code>set.seed(88)</code> ensures reproducibility. The script also exports the model via <code>sits_model_export()</code> to inspect OOB error curves by number of trees, verifying that 100 trees is sufficient for convergence.</p>
 
-  <p>Thresholds are stricter than defaults: <code>prior ≥ 0.80</code> and <code>posterior ≥ 0.70</code>. The rare class <code>DESMAT_DEGRAD_FOGO</code> is always retained regardless of SOM score to prevent it from being eliminated by strict filtering. Imbalance reduction targets 300–500 samples per class.</p>
+   <div class="callout warning">
+    <div class="callout-title">⚠ Cross-validation ≠ Map accuracy</div>
+    <p>K-fold cross-validation measures model performance on training samples, not map accuracy. Training samples are not a probability sample of the landscape. For map accuracy, see Scripts 6 and 7.</p>
+  </div>
 
   <div class="io-grid">
-    <div class="io-box"><div class="io-label">Input</div><div class="io-val">Merged S2 + LSMM cube (4 tiles)<br>Training polygons: <code>amostras_amazonia_24_02_2026.gpkg</code></div></div>
-    <div class="io-box"><div class="io-label">Output</div><div class="io-val">Cleaned & balanced TS → <code>data/rds/time_series/</code><br>SOM maps & QA plots → <code>data/rds/som/</code> + <code>data/plots/</code></div></div>
+    <div class="io-box"><div class="io-label">Input</div><div class="io-val">Cleaned & balanced TS from <code>data/rds/time_series/</code></div></div>
+    <div class="io-box"><div class="io-label">Output</div><div class="io-val">Trained RF model → <code>data/rds/model/random_forest/</code><br>Plots: confusion matrix, metrics, OOB curve</div></div>
   </div>
 
-  <!-- ── 3.1 Sampling Protocol ── -->
-  <section id="step3-1" class="subsection">
-    <h2>3.1 Sampling Protocol</h2>
-  </section>
-  <p>
-    This step defines the sampling strategy used to extract representative
-    observations from the dataset. The goal is to ensure that the samples
-    adequately capture the variability of land cover classes while maintaining
-    statistical consistency across space and time.
-  </p>
-  <!-- ── 3.2 Time Series Extraction ── -->
-  <section id="step3-2" class="subsection">
-    <h2>3.2 Time Series Extraction</h2>
-
-    <pre><code id="code-step3-1" class="language-r"></code></pre>
+  <section id="step4-1" class="subsection">
+    <h2>4.1 Random Forest</h2>
+    <pre><code id="code-step4-1" class="language-r"></code></pre>
   </section>
 
-  <!-- ── 3.3 Samples Quality Assessment ── -->
-  <section id="step3-3" class="subsection">
-    <h2>3.3 Samples Quality Assessment</h2>
+  <section id="step4-2" class="subsection">
+    <h2>4.2 XGBoost</h2>
+    <pre><code id="code-step4-2" class="language-r"></code></pre>
+  </section>
 
-    <pre><code id="code-step3-2" class="language-r"></code></pre>
+  <section id="step4-3" class="subsection">
+    <h2>4.3 TempCNN</h2>
+    <pre><code id="code-step4-3" class="language-r"></code></pre>
+  </section>
+
+  <section id="step4-4" class="subsection">
+    <h2>4.4 LTAE</h2>
+    <pre><code id="code-step4-4" class="language-r"></code></pre>
   </section>
 
 </section>
@@ -420,25 +419,36 @@ function loadCode(url, elementId) {
 
 document.addEventListener("DOMContentLoaded", function () {
   loadCode(
-    "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.1_time_series_sampling.R",
-    "code-step3-1"
+    "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/4.1_model_training_random_forest.R",
+    "code-step4-1"
   );
 
   loadCode(
-    "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.2_samples_quality_assessment.R",
-    "code-step3-2"
+    "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/4.2_model_training_xgboost.R",
+    "code-step4-2"
   );
+
+  loadCode(
+    "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/4.3_model_training_tempcnn.R",
+    "code-step4-3"
+  );
+
+  loadCode(
+    "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/4.4_model_training_ltae.R",
+    "code-step4-4"
+  );
+  
 });
 </script>
 
   <div class="page-nav">
-  <a class="pnav-btn" href="stage_2.html">
+  <a class="pnav-btn" href="stage_3.html">
     <span class="pnav-dir">← Previous</span>
-    <span class="pnav-title">Stage 2: Cube Segmentation</span>
+    <span class="pnav-title">Stage 3: Time Series Sampling</span>
   </a>
   <a class="pnav-btn pnav-next" href="stage_4.html">
     <span class="pnav-dir">Next →</span>
-    <span class="pnav-title">Stage 4: Model Training</span>
+    <span class="pnav-title">Stage 5: Classification</span>
   </a>
 </div>
 
