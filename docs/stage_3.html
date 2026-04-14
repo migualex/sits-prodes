@@ -88,84 +88,94 @@ p{margin-bottom:1rem}
   background: rgba(30,107,60,.08);
   color: var(--text-faint);
 }
-.sb-item.active .sb-item-num {
-  background: var(--green-light);
-  color: var(--green);
-  border: 1px solid rgba(30, 107, 60, 0.25);
-  font-weight: 600;
-}
-.sb-divider{border:none;border-top:1px solid var(--border-light);margin:.5rem 0}
-.sb-submenu {
-  display: flex;
-  flex-direction: column;
-  margin: 0 0 4px 0;
-}
-.sb-subitem {
-  display: block;
-  font-family: var(--sans);
-  font-size: .78rem;
-  color: var(--text-faint);
-  padding: .22rem 1.1rem .22rem 2.8rem;
-  text-decoration: none;
-  border-right: 2px solid transparent;
-  line-height: 1.4;
-  transition: background .1s, color .1s;
-}
-.sb-subitem:hover {
-  background: rgba(30,107,60,.06);
-  color: var(--text);
-  text-decoration: none;
-}
-.sb-subitem.active {
-  color: var(--green);
-  border-right-color: var(--green);
-  font-weight: 500;
-}
-.sb-has-sub {
-  justify-content: space-between;
-}
-.sb-chevron {
-  font-size: 1.0rem;
-  color: var(--text-faint);
-  transition: transform .2s;
-  margin-left: auto;
-  padding-left: .4rem;
-}
-.sb-submenu {
-  display: none;           /* oculto por padrão */
-  flex-direction: column;
-  margin: 0 0 4px 0;
-}
-.sb-submenu.open {
-  display: flex;
-}
-.sb-has-sub.open .sb-chevron {
-  transform: rotate(90deg);
-}
-.sb-subitem {
-  display: block;
-  font-family: var(--sans);
-  font-size: .78rem;
-  color: var(--text-faint);
-  padding: .22rem 1.1rem .22rem 2.8rem;
-  text-decoration: none;
-  border-right: 2px solid transparent;
-  line-height: 1.4;
-  transition: background .1s, color .1s;
-}
-.sb-subitem:hover {
-  background: rgba(30,107,60,.06);
-  color: var(--text);
-  text-decoration: none;
-}
-.sb-subitem.active {
-  color: var(--green);
-  border-right-color: var(--green);
-  font-weight: 500;
-}
+
 .sb-item.active {
   color: var(--green);
   border-right-color: var(--green);
+  font-weight: 500;
+}
+.sb-item.active .sb-item-num {
+  background: var(--green-light);
+  color: var(--green);
+  border: 1px solid rgba(30,107,60,.25);
+  font-weight: 600;
+}
+
+/* pai com filho active — número fica tingido mas sem ser tão forte */
+.sb-item.has-active-child .sb-item-num {
+  background: var(--green-light);
+  color: var(--green);
+  border: 1px solid rgba(30,107,60,.18);
+}
+.sb-item.has-active-child .sb-chevron {
+  color: var(--green);
+}
+
+.sb-divider { border: none; border-top: 1px solid var(--border-light); margin: .5rem 0; }
+
+/* ── chevron ── */
+.sb-has-sub { justify-content: space-between; }
+
+.sb-chevron {
+  font-size: 1.0rem;
+  color: var(--text-faint);
+  margin-left: auto;
+  padding-left: .4rem;
+  transition: transform .2s;
+}
+.sb-has-sub.open .sb-chevron { transform: rotate(90deg); }
+
+/* ── submenu ── */
+.sb-submenu {
+  display: none;
+  flex-direction: column;
+  margin: 0 0 2px 0;
+  position: relative;
+}
+.sb-submenu::before {
+  content: '';
+  position: absolute;
+  left: 1.85rem;
+  top: 2px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--border-light);
+}
+.sb-submenu.open { display: flex; }
+
+/* ── subitem ── */
+.sb-subitem {
+  display: block;
+  font-family: var(--sans);
+  font-size: .78rem;
+  color: var(--text-faint);
+  padding: .26rem 1.1rem .26rem 3rem;
+  text-decoration: none;
+  border-right: 2px solid transparent;
+  line-height: 1.4;
+  transition: background .1s, color .1s;
+  position: relative;
+}
+.sb-subitem:hover {
+  background: rgba(30,107,60,.06);
+  color: var(--text);
+  text-decoration: none;
+}
+.sb-subitem.active {
+  color: var(--green);
+  border-right-color: var(--green);
+  font-weight: 500;
+}
+.sb-subitem.active::before {
+  content: '';
+  position: absolute;
+  left: calc(1.85rem - 2px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green);
 }
 
 /* ── Main ── */
@@ -561,45 +571,42 @@ document.addEventListener("DOMContentLoaded", function () {
     item.addEventListener('click', function (e) {
       var sub = item.nextElementSibling;
       if (sub && sub.classList.contains('sb-submenu')) {
-        e.preventDefault();           // não navega ao clicar no toggle
+        e.preventDefault();
         var isOpen = sub.classList.toggle('open');
         item.classList.toggle('open', isOpen);
       }
     });
   });
-
   // ── marcar active pelo URL atual ─────────────────
   var path = window.location.pathname.split('/').pop() || 'index.html';
-  var hash = window.location.hash;   // ex: "#sampling"
-
+  var hash = window.location.hash;
   document.querySelectorAll('.sb-item, .sb-subitem').forEach(function (el) {
     var href = el.getAttribute('href') || '';
     var hPath = href.split('#')[0].split('/').pop();
     var hHash = href.includes('#') ? '#' + href.split('#')[1] : '';
-
     var pathMatch = hPath === path;
     var hashMatch = hHash === '' || hHash === hash;
 
     if (pathMatch && hashMatch) {
       el.classList.add('active');
 
-      // se for subitem, abre o submenu pai automaticamente
       var sub = el.closest('.sb-submenu');
       if (sub) {
         sub.classList.add('open');
         var parentItem = sub.previousElementSibling;
-        if (parentItem) parentItem.classList.add('open');
+        if (parentItem) {
+          parentItem.classList.add('open');
+          parentItem.classList.add('has-active-child');
+        }
       }
     }
   });
 })();
-
 (function () {
   var scale = 1, tx = 0, ty = 0;
   var dragging = false, startX, startY, startTx, startTy;
   var img = document.getElementById('fc-img');
   var box = document.getElementById('fc-container');
-
   function applyTransform() {
     img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
     document.getElementById('fc-zoom-label').textContent = Math.round(scale * 100) + '%';
@@ -630,8 +637,6 @@ document.addEventListener("DOMContentLoaded", function () {
     box.style.cursor = 'grab';
     img.style.transition = 'transform 0.15s';
   });
-
-  /* touch */
   box.addEventListener('touchstart', function (e) {
     var t = e.touches[0];
     dragging = true; startX = t.clientX; startY = t.clientY;

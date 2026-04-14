@@ -698,45 +698,42 @@ install.packages(<span class="kc">c</span>(
     item.addEventListener('click', function (e) {
       var sub = item.nextElementSibling;
       if (sub && sub.classList.contains('sb-submenu')) {
-        e.preventDefault();           // não navega ao clicar no toggle
+        e.preventDefault();
         var isOpen = sub.classList.toggle('open');
         item.classList.toggle('open', isOpen);
       }
     });
   });
-
   // ── marcar active pelo URL atual ─────────────────
   var path = window.location.pathname.split('/').pop() || 'index.html';
-  var hash = window.location.hash;   // ex: "#sampling"
-
+  var hash = window.location.hash;
   document.querySelectorAll('.sb-item, .sb-subitem').forEach(function (el) {
     var href = el.getAttribute('href') || '';
     var hPath = href.split('#')[0].split('/').pop();
     var hHash = href.includes('#') ? '#' + href.split('#')[1] : '';
-
     var pathMatch = hPath === path;
     var hashMatch = hHash === '' || hHash === hash;
 
     if (pathMatch && hashMatch) {
       el.classList.add('active');
 
-      // se for subitem, abre o submenu pai automaticamente
       var sub = el.closest('.sb-submenu');
       if (sub) {
         sub.classList.add('open');
         var parentItem = sub.previousElementSibling;
-        if (parentItem) parentItem.classList.add('open');
+        if (parentItem) {
+          parentItem.classList.add('open');
+          parentItem.classList.add('has-active-child');
+        }
       }
     }
   });
 })();
-
 (function () {
   var scale = 1, tx = 0, ty = 0;
   var dragging = false, startX, startY, startTx, startTy;
   var img = document.getElementById('fc-img');
   var box = document.getElementById('fc-container');
-
   function applyTransform() {
     img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
     document.getElementById('fc-zoom-label').textContent = Math.round(scale * 100) + '%';
@@ -767,8 +764,6 @@ install.packages(<span class="kc">c</span>(
     box.style.cursor = 'grab';
     img.style.transition = 'transform 0.15s';
   });
-
-  /* touch */
   box.addEventListener('touchstart', function (e) {
     var t = e.touches[0];
     dragging = true; startX = t.clientX; startY = t.clientY;
