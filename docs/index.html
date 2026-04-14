@@ -537,17 +537,19 @@ install.packages(<span class="kc">c</span>(
   <!--<h2 id="diagram"><span class="sec-num">R.2</span>Full Diagram</h2>-->
   <div class="diagram-wrap">
     <div class="diagram-head">
-      <!--<div class="diagram-head-left"><div class="dh-dot"></div>Diagram</div>-->
-      <button class="zoom-btn" onclick="openZoom()">🔍 Expand Diagram</button>
-    </div>
-    <div class="diagram-body">
-  <div class="diagram-embed">
-    <iframe 
-      src="pipeline_flowchart.svg"
-      width="100%"
-      height="600px"
-      style="border: none; border-radius: 12px;">
-    </iframe>
+  <div style="display:flex; gap:6px; align-items:center;">
+    <button class="zoom-btn" onclick="fcZoom(-0.2)">− Zoom out</button>
+    <span id="fc-zoom-label" style="font-size:13px; min-width:40px; text-align:center;">100%</span>
+    <button class="zoom-btn" onclick="fcZoom(+0.2)">+ Zoom in</button>
+    <button class="zoom-btn" onclick="fcReset()" style="margin-left:4px;">↺ Reset</button>
+  </div>
+</div>
+<div class="diagram-body">
+  <div id="fc-container" style="overflow:auto; width:100%; height:500px;">
+    <img id="fc-img"
+         src="pipeline_flowchart.svg"
+         style="width:100%; transform-origin:top left; display:block; transition:transform 0.2s;"
+         alt="Pipeline flowchart">
   </div>
 </div>
 </div>
@@ -593,6 +595,17 @@ install.packages(<span class="kc">c</span>(
 </footer>
 
 <script>
+(function () {
+  var scale = 1;
+  function fcZoom(delta) {
+    scale = Math.min(4, Math.max(0.2, scale + delta));
+    document.getElementById('fc-img').style.transform = 'scale(' + scale + ')';
+    document.getElementById('fc-zoom-label').textContent = Math.round(scale * 100) + '%';
+  }
+  function fcReset() { scale = 1; fcZoom(0); }
+  window.fcZoom = fcZoom;
+  window.fcReset = fcReset;
+})();
 // ── Scroll spy ──────────────────────────────────────────────────────────────
 (function(){
   var secs = document.querySelectorAll('section[id]');
