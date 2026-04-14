@@ -51,26 +51,27 @@ samples_validation_list <- dir(
 # Step 2.1 -- Get labels associated to the trained model data set (Enumerate them in the order they appear according to "sits_labels(model)")
 cube_dirs <- list.dirs(class_raster_dir, recursive = TRUE)
 
+# Step 2.2 -- # Filters the list of directories, keeping only those that contain .tif files matching the specified version.
 cube_dirs <- cube_dirs[
-  sapply(cube_dirs, function(x) {
-    files <- list.files(x, pattern = "\\.tif$")
-    any(grepl(version, files))
-  })
+    sapply(cube_dirs, function(x) {
+      files <- list.files(x, pattern = "\.tif$")
+      any(grepl(version, files))
+    })
 ]
 
-# Step 2.2 -- Store the labels from the trained model using sits_labels and assign them to a named vector
+# Step 2.3 -- Store the labels from the trained model using sits_labels and assign them to a named vector
 labels <- c(
   x = sits_labels(model)
 )
 names(labels) <- 1:length(labels)
 
-# Step 2.3 -- Load the original cube with classified raster file
+# Step 2.4 -- Load the original cube with classified raster file
 cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
   labels = labels,
-  data_dir = "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz_nf/data/class/temp/all_tiles",
+  data_dir = "data/class/temp/all_tiles",
   version = version,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version"))
