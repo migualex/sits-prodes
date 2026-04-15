@@ -506,31 +506,8 @@ fetch(url)
 </footer>
 
 <script>
-/* Dark mode — runs before paint to avoid flash */
-(function(){
-  var t = localStorage.getItem('sits-amz-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', t);
-})();
-
-function _dmUpdateBtn() {
-  var btn = document.getElementById('dm-btn');
-  if (!btn) return;
-  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  btn.innerHTML = dark
-    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light'
-    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
-}
-
-function toggleDarkMode() {
-  var cur = document.documentElement.getAttribute('data-theme') || 'light';
-  var next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('sits-amz-theme', next);
-  _dmUpdateBtn();
-}
-
 (function () {
-  // ── Toggle submenus ──────────────────────────────
+  // ── toggle submenus ──────────────────────────────
   document.querySelectorAll('.sb-has-sub').forEach(function (item) {
     item.addEventListener('click', function (e) {
       var sub = item.nextElementSibling;
@@ -541,28 +518,22 @@ function toggleDarkMode() {
       }
     });
   });
-
-  // ── Sidebar scroll spy ───────────────────────────
+  // ── scroll spy ───────────────────────────────────
   var path = window.location.pathname.split('/').pop() || 'index.html';
   var links = [];
-
   document.querySelectorAll('.sb-item, .sb-subitem').forEach(function (el) {
     var href = el.getAttribute('href') || '';
-    // Ignora links externos (target="_blank" ou sem hash e sem index.html)
-    if (el.getAttribute('target') === '_blank') return;
     var hPath = href.split('#')[0].split('/').pop() || 'index.html';
     var hHash = href.includes('#') ? href.split('#')[1] : '';
     if (hPath === path) {
       links.push({ el: el, hash: hHash });
     }
   });
-
   function clearActive() {
     document.querySelectorAll('.sb-item, .sb-subitem').forEach(function (el) {
       el.classList.remove('active', 'has-active-child');
     });
   }
-
   function setActive(link) {
     clearActive();
     link.el.classList.add('active');
@@ -576,43 +547,35 @@ function toggleDarkMode() {
       }
     }
   }
-
   function onScroll() {
     if (links.length === 0) return;
-    var current = links[0]; // Preface ativo por padrão
+    var current = links[0];
     for (var i = 0; i < links.length; i++) {
       var hash = links[i].hash;
-      if (!hash) { current = links[i]; continue; }
+      if (!hash) {
+        current = links[i];
+        continue;
+      }
       var section = document.getElementById(hash);
       if (!section) continue;
-      // Transição suave: ativa quando a seção cruza 30% da tela
-      if (section.getBoundingClientRect().top <= window.innerHeight * 0.3) {
+      if (section.getBoundingClientRect().top <= 120) {
         current = links[i];
       }
     }
     setActive(current);
   }
-
   window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll(); // Roda na carga: sem scroll = links[0] = Preface ativo
+  onScroll();
 })();
-
 (function () {
-  // ── Flowchart zoom/pan (fc-img) ──────────────────
   var scale = 1, tx = 0, ty = 0;
   var dragging = false, startX, startY, startTx, startTy;
   var img = document.getElementById('fc-img');
   var box = document.getElementById('fc-container');
-
-  if (!img || !box) return; // Aborta silenciosamente se não existir
-
   function applyTransform() {
     img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
-    // fc-zoom-label é opcional
-    var lbl = document.getElementById('fc-zoom-label');
-    if (lbl) lbl.textContent = Math.round(scale * 100) + '%';
+    document.getElementById('fc-zoom-label').textContent = Math.round(scale * 100) + '%';
   }
-
   window.fcZoom = function (delta) {
     scale = Math.min(4, Math.max(0.2, scale + delta));
     applyTransform();
@@ -621,7 +584,6 @@ function toggleDarkMode() {
     scale = 1; tx = 0; ty = 0;
     applyTransform();
   };
-
   box.addEventListener('mousedown', function (e) {
     dragging = true; startX = e.clientX; startY = e.clientY;
     startTx = tx; startTy = ty;
@@ -640,7 +602,6 @@ function toggleDarkMode() {
     box.style.cursor = 'grab';
     img.style.transition = 'transform 0.15s';
   });
-
   box.addEventListener('touchstart', function (e) {
     var t = e.touches[0];
     dragging = true; startX = t.clientX; startY = t.clientY;
@@ -661,84 +622,108 @@ function toggleDarkMode() {
   });
 })();
 
-// ── Zoom overlay ─────────────────────────────────────────────────────────────
-var zs = 1, px = 0, py = 0, drag = false, dsx, dsy, psx, psy, cloned = false;
+// ── Scroll spy ──────────────────────────────────────────────────────────────
+(function(){
+  var secs = document.querySelectorAll('section[id]');
+  var tl = document.querySelectorAll('.toc-link');
+  var sb = document.querySelectorAll('.sb-item[href^="#"]');
+  function spy(){
+    var y = window.scrollY + 70, cur = null;
+    secs.forEach(function(s){ if(s.offsetTop <= y) cur = s.id; });
+    tl.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#'+cur); });
+    sb.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#'+cur); });
+  }
+  window.addEventListener('scroll', spy, {passive:true});
+  spy();
+})();
 
-function applyT() {
-  var inner = document.getElementById('zoomInner');
-  if (inner) inner.style.transform = 'translate(' + px + 'px,' + py + 'px) scale(' + zs + ')';
-}
-function openZoom() {
-  if (!cloned) {
+// ── Zoom overlay ────────────────────────────────────────────────────────────
+var zs = 1, px = 0, py = 0, drag = false, dsx, dsy, psx, psy, cloned = false;
+function applyT(){ document.getElementById('zoomInner').style.transform = 'translate('+px+'px,'+py+'px) scale('+zs+')'; }
+function openZoom(){
+  if(!cloned){
     var orig = document.getElementById('htmlwidget-b10e5f1091fb2e84974d');
     var inner = document.getElementById('zoomInner');
-    if (!orig || !inner) return;
     inner.innerHTML = '';
     var cl = orig.cloneNode(true);
     cl.id = 'hw-zoom'; cl.style.width = '960px'; cl.style.height = 'auto'; cl.style.minHeight = '720px';
     inner.appendChild(cl);
-    if (window.HTMLWidgets) setTimeout(function () { HTMLWidgets.staticRender && HTMLWidgets.staticRender(); }, 120);
+    if(window.HTMLWidgets) setTimeout(function(){ HTMLWidgets.staticRender && HTMLWidgets.staticRender(); }, 120);
     cloned = true;
   }
   zs = 0.85; px = 40; py = 20; applyT();
   document.getElementById('zoomOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-function closeZoom() {
-  document.getElementById('zoomOverlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function zoomIn()    { zs = Math.min(zs * 1.3, 6);    applyT(); }
-function zoomOut()   { zs = Math.max(zs / 1.3, 0.15); applyT(); }
-function zoomReset() { zs = 0.85; px = 40; py = 20;   applyT(); }
+function closeZoom(){ document.getElementById('zoomOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+function zoomIn(){ zs = Math.min(zs*1.3, 6); applyT(); }
+function zoomOut(){ zs = Math.max(zs/1.3, 0.15); applyT(); }
+function zoomReset(){ zs = 0.85; px = 40; py = 20; applyT(); }
 
-document.addEventListener('DOMContentLoaded', function () {
-  _dmUpdateBtn();
-
+document.addEventListener('DOMContentLoaded', function(){
   var cv = document.getElementById('zoomCanvas');
-  if (!cv) return;
-
-  cv.addEventListener('wheel', function (e) {
-    e.preventDefault();
-    zs = Math.min(Math.max(zs * (e.deltaY > 0 ? 0.88 : 1.13), 0.12), 6);
-    applyT();
-  }, { passive: false });
-
-  cv.addEventListener('mousedown', function (e) {
-    drag = true; cv.classList.add('grabbing');
-    dsx = e.clientX; dsy = e.clientY; psx = px; psy = py;
-  });
-  document.addEventListener('mousemove', function (e) {
-    if (!drag) return;
-    px = psx + (e.clientX - dsx);
-    py = psy + (e.clientY - dsy);
-    applyT();
-  });
-  document.addEventListener('mouseup', function () {
-    drag = false;
-    var cv2 = document.getElementById('zoomCanvas');
-    if (cv2) cv2.classList.remove('grabbing');
-  });
-
-  var tsx, tsy, tpx, tpy;
-  cv.addEventListener('touchstart', function (e) {
-    if (e.touches.length === 1) {
-      tsx = e.touches[0].clientX; tsy = e.touches[0].clientY;
-      tpx = px; tpy = py;
-    }
-  }, { passive: true });
-  cv.addEventListener('touchmove', function (e) {
-    if (e.touches.length === 1) {
-      e.preventDefault();
-      px = tpx + (e.touches[0].clientX - tsx);
-      py = tpy + (e.touches[0].clientY - tsy);
-      applyT();
-    }
-  }, { passive: false });
+  cv.addEventListener('wheel', function(e){ e.preventDefault(); zs = Math.min(Math.max(zs*(e.deltaY>0?.88:1.13),.12),6); applyT(); }, {passive:false});
+  cv.addEventListener('mousedown', function(e){ drag=true; cv.classList.add('grabbing'); dsx=e.clientX; dsy=e.clientY; psx=px; psy=py; });
+  document.addEventListener('mousemove', function(e){ if(!drag)return; px=psx+(e.clientX-dsx); py=psy+(e.clientY-dsy); applyT(); });
+  document.addEventListener('mouseup', function(){ drag=false; var cv2=document.getElementById('zoomCanvas'); if(cv2)cv2.classList.remove('grabbing'); });
+  var tsx,tsy,tpx,tpy;
+  cv.addEventListener('touchstart', function(e){ if(e.touches.length===1){tsx=e.touches[0].clientX;tsy=e.touches[0].clientY;tpx=px;tpy=py;} }, {passive:true});
+  cv.addEventListener('touchmove', function(e){ if(e.touches.length===1){e.preventDefault();px=tpx+(e.touches[0].clientX-tsx);py=tpy+(e.touches[0].clientY-tsy);applyT();} }, {passive:false});
 });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeZoom(); });
+</script>
+</body>
+</html>
 
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closeZoom();
+<script>
+/* Dark mode init (before paint) */
+(function(){
+  var t = localStorage.getItem('sits-amz-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+
+function syncHighlightTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const light = document.getElementById('hljs-light');
+  const darkCss = document.getElementById('hljs-dark');
+
+  if (!light || !darkCss) return;
+
+  if (dark) {
+    light.disabled = true;
+    darkCss.disabled = false;
+  } else {
+    light.disabled = false;
+    darkCss.disabled = true;
+  }
+}
+
+function _dmUpdateBtn() {
+  var btn = document.getElementById('dm-btn');
+  if (!btn) return;
+
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  btn.innerHTML = dark
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+}
+
+function toggleDarkMode() {
+  var cur = document.documentElement.getAttribute('data-theme') || 'light';
+  var next = cur === 'dark' ? 'light' : 'dark';
+
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('sits-amz-theme', next);
+
+  _dmUpdateBtn();
+  syncHighlightTheme();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  _dmUpdateBtn();
+  syncHighlightTheme();
 });
 </script>
 </body>
