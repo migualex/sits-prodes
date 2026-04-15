@@ -653,6 +653,23 @@ install.packages(<span class="kc">c</span>(
          alt="Pipeline flowchart">
   </div>
 </div>
+<script>
+  function updateFlowchartSrc() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('fc-img').src = isDark
+      ? 'pipeline_flowchart_dark.svg'
+      : 'pipeline_flowchart.svg';
+  }
+
+  // Aplica na carga inicial
+  updateFlowchartSrc();
+
+  // Observa mudanças de tema
+  new MutationObserver(updateFlowchartSrc).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
+</script>
 </div>
   <h3 id="legend">Legend</h3>
   <div class="legend-grid">

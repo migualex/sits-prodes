@@ -37,22 +37,26 @@ digraph SITS_AMZ_PIPELINE {
   fontsize = 18,
   fontname = Helvetica,
   labelloc = t,
-  bgcolor = black
+  bgcolor = black,
+  fontcolor = white 
 ]
 
   node [
-    shape = box,
-    style = filled,
-    fontname = Helvetica,
-    fontsize = 11
-  ]
+  shape = box,
+  style = filled,
+  fontname = Helvetica,
+  fontsize = 11,
+  color = white, 
+  fontcolor = black   
+]
 
   edge [
-    fontname = Helvetica,
-    fontsize = 10,
-    color = gray30,
-    arrowhead = vee
-  ]
+  fontname = Helvetica,
+  fontsize = 10,
+  color = white,      // linha da seta
+  fontcolor = white,  // texto da seta (se tiver)
+  arrowhead = vee
+]
   
   // -------------------------
   // Legend
