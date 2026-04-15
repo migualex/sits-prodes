@@ -539,17 +539,44 @@ document.addEventListener("DOMContentLoaded", function () {
 <script>
 
 (function () {
-  // ── toggle submenus ──────────────────────────────
+  // ── Toggle submenus ──────────────────────────────
+document.querySelectorAll('.sb-has-sub').forEach(function (item) {
+  item.addEventListener('click', function (e) {
+    var sub = item.nextElementSibling;
+    if (!sub || !sub.classList.contains('sb-submenu')) return;
+
+    var href = item.getAttribute('href') || '';
+    var itemPage = href.split('#')[0].split('/').pop() || 'index.html';
+    var curPage  = window.location.pathname.split('/').pop() || 'index.html';
+
+    if (itemPage && itemPage !== curPage) {
+      var sep = href.includes('?') ? '&' : '?';
+      window.location.href = href + sep + 'openSub=1';
+      e.preventDefault();
+    } else {
+      e.preventDefault();
+      var isOpen = sub.classList.toggle('open');
+      item.classList.toggle('open', isOpen);
+    }
+  });
+});
+// Abre automaticamente o submenu se a URL tiver ?openSub=1
+if (window.location.search.includes('openSub=1')) {
+  var curPage2 = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.sb-has-sub').forEach(function (item) {
-    item.addEventListener('click', function (e) {
+    var href = item.getAttribute('href') || '';
+    var itemPage = href.split('?')[0].split('#')[0].split('/').pop() || 'index.html';
+    if (itemPage === curPage2) {
       var sub = item.nextElementSibling;
       if (sub && sub.classList.contains('sb-submenu')) {
-        e.preventDefault();
-        var isOpen = sub.classList.toggle('open');
-        item.classList.toggle('open', isOpen);
+        sub.classList.add('open');
+        item.classList.add('open');
       }
-    });
+    }
   });
+  var cleanUrl = window.location.pathname + window.location.hash;
+  history.replaceState(null, '', cleanUrl);
+}
   // ── scroll spy ───────────────────────────────────
   var path = window.location.pathname.split('/').pop() || 'index.html';
   var links = [];
