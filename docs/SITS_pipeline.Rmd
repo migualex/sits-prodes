@@ -31,13 +31,14 @@ sits_pipeline <- grViz("
 digraph SITS_AMZ_PIPELINE {
 
   graph [
-    layout = dot,
-    rankdir = TB,
-    splines = ortho,
-    fontsize = 18,
-    fontname = Helvetica,
-    labelloc = t
-  ]
+  layout = dot,
+  rankdir = TB,
+  splines = ortho,
+  fontsize = 18,
+  fontname = Helvetica,
+  labelloc = t,
+  bgcolor = black
+]
 
   node [
     shape = box,
@@ -258,6 +259,6 @@ sits_pipeline
 <div class="center-diagram">
 ```{r echo=FALSE}
 svg <- DiagrammeRsvg::export_svg(sits_pipeline)
-writeLines(svg, "C:/Users/usuario/Documents/sits-prodes/docs/pipeline_flowchart.svg")
+writeLines(svg, "C:/Users/usuario/Documents/sits-prodes/docs/pipeline_flowchart_black.svg")
 ```
 </div>
