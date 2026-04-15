@@ -170,7 +170,7 @@ p{margin-bottom:1rem}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ── TOC ── */
-.toc{width:var(--toc-w);flex-shrink:0;position:sticky;top:var(--navbar-h);height:calc(100vh - var(--navbar-h));overflow-y:auto;padding:1.5rem 0 3rem;border-left:1px solid var(--border-light);background:#fff}
+.toc{width:var(--toc-w);flex-shrink:0;position:sticky;top:var(--navbar-h);height:calc(100vh - var(--navbar-h));overflow-y:auto;padding:1.5rem 0 3rem;border-left:1px solid var(--border-light); background: inherit; color: inherit;}
 .toc::-webkit-scrollbar{width:3px}.toc::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .toc-label{font-family:var(--sans);font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);padding:0 1rem .6rem}
 .toc-link{display:block;font-family:var(--sans);font-size:.8rem;color:var(--text-muted);padding:.3rem 1rem .3rem 1.2rem;border-left:2px solid transparent;transition:color .1s,border-color .1s;line-height:1.45;text-decoration:none}
@@ -474,6 +474,32 @@ fetch(url)
     hljs.highlightElement(el);
   });
 </script>
+
+<!-- ═══ REFERENCES ════════════════════════════════════════════════════════ -->
+<section id="references" class="section">
+  <div class="page-header">
+    <h1 class="page-title">References</h1>
+  </div>
+  <div style="font-family:var(--sans);font-size:.9rem;line-height:1.9">
+    <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14 </em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p>
+</section>
+
+  <div class="page-nav">
+    <a class="pnav-btn" href="index.html#setup"><span class="pnav-dir">← Previous</span><span class="pnav-title">Setup</span></a>
+    <a class="pnav-btn pnav-next" href="stage_2.html"><span class="pnav-dir">Next →</span><span class="pnav-title">Stage 2: Image Segmentation</span></a>
+  </div>
+</section>
+
+</div><!-- .content -->
+</main>
+
+<!-- ── TOC ── -->
+<aside class="toc">
+  <div class="toc-label">On this page</div>
+  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
+  <a class="toc-link" href="#references">References</a>
+</aside>
+</div><!-- .layout -->
 
   <div class="page-nav">
   <a class="pnav-btn" href="stage_1.html">
