@@ -15,12 +15,7 @@ library(dplyr)
 library(ggplot2)
 library(stringr)
 
-# Step 1.2 -- Define the date and time for the start of processing
-date_process <- format(Sys.Date(), "%Y-%m-%d_")
-time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
-process_version <- paste0(date_process, time_process)
-
-# Step 1.3 -- Define the paths for files and folders needed in the processing
+# Step 1.2 -- Define the paths for files and folders needed in the processing
 model_name       <- "model-name.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
@@ -29,19 +24,19 @@ plots_dir        <- "data/plots"
 mask_dir         <- "data/raw/auxiliary/masks"
 version          <- "version"
 
-# Step 1.4 -- Get the list of validation sample files matching the version pattern in the samples directory
+# Step 1.3 -- Get the list of validation sample files matching the version pattern in the samples directory
 samples_validation_list <- dir(
   samples_dir,
   pattern = paste0(".*", str_split_i(version, pattern = "-", 3), ".*\\.gpkg$"),
   full.names = TRUE
 )
 
-# Step 1.5 -- Define the list of tiles and period
+# Step 1.4 -- Define the list of tiles and period
 tiles = c('015002')
 start_date = "2023-08-13"
 end_date = "2025-07-28"
 
-# Step 1.6 -- Define plotting function
+# Step 1.5 -- Define plotting function
 plot_accuracy <- function(acc, version, tile, plots_dir, prefix) {
   
   today     <- format(Sys.Date(), "%Y-%m-%d")
@@ -164,7 +159,7 @@ full_map_cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
-  labels = c("1"  = "Burn_Scar", # list the classes according to each number
+  labels = c("1"  = "Burn_Scar", # List the classes according to each number sequence in your raster
              "2"  = "Lake",
              "3"  = "River",
              "4"  = "Clearing_For_Agriculture",
@@ -181,7 +176,7 @@ full_map_cube <- sits_cube(
   tiles =  tiles,
   start_date = start_date,
   end_date = end_date,
-  version = "version",
+  version = "raster-version",
   data_dir = "data/class/015002/original_class/015002/raster",
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version"))
@@ -204,7 +199,7 @@ full_map_acc$error_matrix
 # Step 2.6 -- Plotting Full Map Accuracy
 plot_accuracy(
   acc       = full_map_acc,
-  version   = "com-nuvens-cheias",
+  version   = "model-version",
   tile      = tiles,
   plots_dir = plots_dir,
   prefix    = "full-map-acc"
@@ -219,14 +214,14 @@ prodes_adjusted_cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
-  labels = c("15" = "Deforestation",  # list the grouped classes according to each number
+  labels = c("15" = "Deforestation",  # list the grouped classes according to each number they appear in raster 
              "16" = "Water", 
              "17" = "Grassland",
              "18" = "Forest"),
   tiles =  tiles,
   start_date = start_date,
   end_date = end_date,
-  version = "prodes-degradation-rf-2y-015002-com-nuvens-cheias-recortado",
+  version = "raster-version",
   data_dir = "data/class/015002/original_class/015002/raster",
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version"))
@@ -249,7 +244,7 @@ prodes_adjusted_acc$error_matrix
 # Step 3.6 -- Plotting PRODES Adjusted Map Accuracy
 plot_accuracy(
   acc       = prodes_adjusted_acc,
-  version   = "version",
+  version   = "model-version",
   tile      = tiles,
   plots_dir = plots_dir,
   prefix    = "prodes-acc"
