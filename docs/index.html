@@ -236,6 +236,11 @@ td.mono{font-family:var(--mono);font-size:.8rem;font-weight:600;color:var(--gree
 /* ── Legend ── */
 .legend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:.55rem;margin:1rem 0 1.5rem}
 .legend-item{display:flex;align-items:center;gap:.6rem;font-family:var(--sans);font-size:.82rem;color:var(--text-muted);padding:.5rem .75rem;border:1px solid var(--border);border-radius:var(--radius);background:#fff}
+[data-theme="dark"] .legend-item {
+  color: var(--text-2);
+  background: var(--bg-alt);
+  border-color: var(--border);
+}
 .lsw{width:15px;height:15px;border-radius:3px;flex-shrink:0;border:1.5px solid}
 .lsw-cube{background:#E1F5FE;border-color:#0277BD}.lsw-func{background:#FFF9C4;border-color:#F57F17}
 .lsw-file{background:#E8F5E9;border-color:#2E7D32;border-style:dashed}.lsw-logic{background:#F3E5F5;border-color:#6A1B9A;border-radius:50%}
