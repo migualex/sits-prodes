@@ -131,10 +131,9 @@ p{margin-bottom:1rem}
   justify-content: space-between;
 }
 .sb-chevron {
-  cursor: pointer;
   font-size: 1.0rem;
   color: var(--text-faint);
-  transition: transform .2s ease;
+  transition: transform .2s;
   margin-left: auto;
   padding-left: .4rem;
 }
@@ -144,7 +143,7 @@ p{margin-bottom:1rem}
   margin: 0 0 4px 0;
 }
 .sb-submenu.open {
-  display: none;
+  display: flex;
 }
 .sb-has-sub.open .sb-chevron {
   transform: rotate(90deg);
@@ -173,9 +172,6 @@ p{margin-bottom:1rem}
 .sb-item.active {
   color: var(--green);
   border-right-color: var(--green);
-}
-.sb-item.open .sb-chevron {
-  transform: rotate(90deg);
 }
 
 /* ── Main ── */
@@ -428,18 +424,12 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <div class="sb-part">Pipeline</div>
   <a href="stage_1.html" class="sb-item"><span class="sb-item-num">1</span>Linear Spectral Mixture Model</a>
   <a href="stage_2.html" class="sb-item"><span class="sb-item-num">2</span>Image Segmentation</a>
-  <div class="sb-item sb-has-sub"><a href="stage_3.html" class="sb-main-link"><span class="sb-item-num">3</span>Time Series Sampling</a><span class="sb-chevron">›</span></div>
-  <div class="sb-submenu">
-  <a href="stage_3.html#sampling" class="sb-subitem">3.1 Sampling Protocol</a>
-  <a href="stage_3.html#time_series" class="sb-subitem">3.2 Time Series Extraction</a>
-  <a href="stage_3.html#som" class="sb-subitem">3.3 Samples Quality Assessment</a>
-  </div>
-  <!--<a href="stage_3.html" class="sb-item sb-has-sub"><span class="sb-item-num">3</span>Time Series Sampling<span class="sb-chevron">›</span></a>
+  <a href="stage_3.html" class="sb-item sb-has-sub"><span class="sb-item-num">3</span>Time Series Sampling<span class="sb-chevron">›</span></a>
   <div class="sb-submenu">
   <a href="stage_3.html#sampling"    class="sb-subitem">3.1 Sampling Protocol</a>
   <a href="stage_3.html#time_series" class="sb-subitem">3.2 Time Series Extraction</a>
   <a href="stage_3.html#som"         class="sb-subitem">3.3 Samples Quality Assessment</a>
-  </div>-->
+  </div>
   <a href="stage_4.html" class="sb-item sb-has-sub"><span class="sb-item-num">4</span>Model Training<span class="sb-chevron">›</span></a>
   <div class="sb-submenu">
   <a href="stage_4.html#random-forest" class="sb-subitem">4.1 Random Forest</a>
@@ -722,18 +712,6 @@ install.packages(<span class="kc">c</span>(
   </div>
 </footer>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  // clique na seta abre/fecha submenu
-  document.querySelectorAll(".sb-chevron").forEach(chev => {
-    chev.addEventListener("click", function (e) {
-      e.preventDefault();
-      const item = this.parentElement;
-      item.classList.toggle("open");
-    });
-  });
-});
-</script>
 <script>
 /* Dark mode — runs before paint to avoid flash */
 (function(){
