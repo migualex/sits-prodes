@@ -102,9 +102,10 @@ p{margin-bottom:1rem}
 }
 .sb-divider{border:none;border-top:1px solid var(--border-light);margin:.5rem 0}
 .sb-submenu {
-  display: flex;
+  display: none;
   flex-direction: column;
   margin: 0 0 4px 0;
+  position: relative;
 }
 .sb-subitem {
   display: block;
@@ -136,11 +137,6 @@ p{margin-bottom:1rem}
   transition: transform .2s;
   margin-left: auto;
   padding-left: .4rem;
-}
-.sb-submenu {
-  display: none;           /* oculto por padrão */
-  flex-direction: column;
-  margin: 0 0 4px 0;
 }
 .sb-submenu.open {
   display: flex;
@@ -388,7 +384,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 
 <nav class="navbar">
   <a class="nb-brand" href="#preface">
-    <div class="nb-brand-texts">
+    <a href="index.html" class="nb-brand">
       <span class="nb-brand-top">BiomasBR</span>
       <span class="nb-brand-main">SITS-AMZ Pipeline</span>
     </div>
