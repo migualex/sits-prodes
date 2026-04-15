@@ -141,7 +141,7 @@ p{margin-bottom:1rem}
   width: 1px;
   background: var(--border-light);
 }
-.sb-submenu.open { display: flex; }
+.sb-submenu.open { display: block; }
 
 /* ── subitem ── */
 .sb-subitem {
@@ -561,6 +561,22 @@ document.addEventListener("DOMContentLoaded", function () {
     </p>
   </div>
 </footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const currentPage = window.location.pathname.split("/").pop();
+  document.querySelectorAll(".sb-submenu").forEach(menu => {
+    const links = menu.querySelectorAll("a");
+    links.forEach(link => {
+      if (link.getAttribute("href").includes(currentPage)) {
+        menu.classList.add("open");
+        const parent = menu.previousElementSibling;
+        if (parent) parent.classList.add("active");
+      }
+    });
+  });
+});
+</script>
 
 <script>
 (function () {
