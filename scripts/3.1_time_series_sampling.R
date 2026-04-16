@@ -124,7 +124,7 @@ tile_period_dir <- file.path(plots_path, var)
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
-# 3. Load and Explore Train Sample Data
+# 3. Load and Explore Training Sample Data
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
@@ -146,7 +146,11 @@ samples_train$label <- ifelse(
 
 print(table(samples_train$label))
 
-# Step 3.3 -- Extract Time Series from samples_train and calculate the process duration
+# ============================================================
+# 4. Time Series Extraction
+# ============================================================
+
+# Step 4.1 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
 samples <- sits_get_data(
   cube        = cube_merge_lsmm_train,
@@ -159,17 +163,20 @@ samples <- sits_get_data(
 sits_get_data_end <- Sys.time()
 sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units = "secs")
 sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_get_data_time / 3600), as.integer((sits_get_data_time %% 3600) / 60))
+print("Time series extracted successfully!")
 
-# Step 3.3.1 -- Visualize the temporal patterns of all features
+# Step 4.2.1 -- Visualize the temporal patterns of all features
 plot(sits_patterns(samples))
 
-# Step 3.3.2 -- Visualize the temporal patterns of specific features in a specific period
+# Step 4.2.2 -- Visualize the temporal patterns of specific features in a specific period
 samples |> 
   sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
   sits_patterns() |> 
   plot()
 
-# Step 3.4 -- Save the samples Time Series to a R file
+# Step 4.3 -- Save the samples Time Series to a R file
 saveRDS(samples, 
-        paste0(rds_path,"time_series/", "samples_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
-print("Time series extracted successfully!")
+        paste0(rds_path,"time_series/samples_", 
+               length(cube$tile),"-tiles-", tiles_train, "_", 
+               no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", 
+               var, "_", process_version, ".rds"))
