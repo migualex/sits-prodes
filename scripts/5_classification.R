@@ -13,25 +13,28 @@ library(ggplot2)
 library(terra)
 library(RColorBrewer)
 
-# Step 1.2 -- Define the date and time for the start of processing
-date_process <- format(Sys.Date(), "/%Y_%m_%d_")
-time_process <- format(Sys.time(), "%Hh%Mm_", tz = "America/Sao_Paulo")
-process_version <- paste0(date_process, time_process)
+# Step 1.2 -- Define the paths for files and folders needed in the processing
+models <- c("RF" = "random_forest",
+            "XGB" = "xgboost",
+            "LTAE = "ltae",
+            "TCNN" = "temp_cnn",
+            "RNET" = "res_net",
+            "LSTM" = "ltsm")
 
-# Step 1.3 -- Define the paths for files and folders needed in the processing
 model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_21h03m.rds"
-rds_path      <- file.path("data/rds/model/random_forest", model_name)
+model_type    <- stringr::str_split_i(model_name, "-", 1)
+model_path    <- file.path("data/rds/model", models[model_type], model_name)
 seg_version   <- "lsmm-snic-spac10-comp03-pad0-rectangular-date"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 vector_path   <- "data/segments"
 class_path    <- "data/class"
 mixture_path  <- "data/raw/mixture_model"
 
-# Step 1.4 -- Define time range
+# Step 1.3 -- Define time range
 start_date   <- "2024-08-01"
 end_date     <- "2025-07-31"
 tile         <- "012014"
 
-# Step 1.5 -- Identifier to distinguish this model run from previous versions
+# Step 1.4 -- Identifier to distinguish this model run from previous versions
 var <- "all_samples_new_pol_avg_false"
 
 # ============================================================
@@ -48,9 +51,7 @@ cube <- sits_cube(
   end_date    = end_date,
   progress    = TRUE)
 
-# Step 2.2 -- Extract tiles, timeline and duration from the cube (in years)
-tiles_class <- paste(cube$tile, collapse = "-")
-dates <- sits_timeline(cube)
+# Step 2.2 -- Extract tiles and duration from the cube (in years)
 no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Retrieve Mixture Model Cube from a predefined repository
@@ -77,12 +78,8 @@ local_segs_cube <- sits_cube(
   version     = seg_version, 
   parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version"))
 
-# 2.6 Create output directory per tile and period
-tile_id <- unique(cube$tile)
-period_id <- no.years
-
-tile_period_dir <- file.path(class_path, tile_id, "original_class")
-
+# 2.6 Create output directory per tile
+tile_period_dir <- file.path(class_path, tile, "original_class")
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
@@ -90,16 +87,16 @@ dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 # ============================================================
 
 # Step 3.1 -- Retrieve the trained model
-rf_model <- readRDS(rds_path)
+model <- readRDS(model_path)
 
 # Step 3.2 -- Define the version name of probability file
-version <- paste("rf", no.years, tiles_class, var, sep = "-")
+version <- paste(model_type, no.years, var, sep = "-")
 
 # Step 3.3 -- Classify segments according to the probabilities and calculate the process duration
 sits_classify_start <- Sys.time()
 class_prob <- sits_classify(
   data        = local_segs_cube,
-  ml_model    = rf_model,
+  ml_model    = model,
   multicores  = 28,  # adapt to your computer CPU core availability
   memsize     = 180, # adapt to your computer memory availability
   output_dir  =  tile_period_dir,
@@ -110,7 +107,9 @@ class_prob <- sits_classify(
 )
 sits_classify_end <- Sys.time()
 sits_classify_time <- as.numeric(sits_classify_end - sits_classify_start, units = "secs")
-sprintf("SITS classify process duration (HH:MM): %02d:%02d", as.integer(sits_classify_time / 3600), as.integer((sits_classify_time %% 3600) / 60))
+sprintf("SITS classify process duration (HH:MM): %02d:%02d",
+        as.integer(sits_classify_time / 3600),
+        as.integer((sits_classify_time %% 3600) / 60))
 
 # Step 3.4 -- Reconstruct vector cube with classification probabilities 
 vector_cube <- sits_cube(
