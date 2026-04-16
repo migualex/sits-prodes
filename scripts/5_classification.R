@@ -14,9 +14,9 @@ library(terra)
 library(RColorBrewer)
 
 # Step 1.2 -- Define the paths for files and folders needed in the processing
-models <- c("RF" = "random_forest",
-            "XGB" = "xgboost",
-            "LTAE = "ltae",
+models <- c("RF"   = "random_forest",
+            "XGB"  = "xgboost",
+            "LTAE" = "ltae",
             "TCNN" = "temp_cnn",
             "RNET" = "res_net",
             "LSTM" = "ltsm")
