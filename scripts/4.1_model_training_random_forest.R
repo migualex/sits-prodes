@@ -101,12 +101,9 @@ no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(cube$tile, collapse = "-")
 
-# 2.4 Create output directory per tile and period
-tiles_id <- paste(sort(unique(tiles_train)), collapse = "_")
+# 2.4 Create output directory per var
+var_dir <- file.path(plots_path, var)
 
-tile_period_dir <- file.path(plots_path, var)
-
-dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
 # 3. Cross-validation of training data
@@ -151,13 +148,21 @@ rf_model <- sits_train(
   ml_method = sits_rfor(num_trees = 100)
 )
 
-# Step 4.2.1 -- Plot the most important variables of the model
+# Step 4.3 -- Save the ML model to a R file
+saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+print("Model trained successfully!")
+
+# ============================================================
+# 5. Plotting Section
+# ============================================================
+
+# Step 5.1.1 -- Plot the most important variables of the model
 plot(rf_model)
 
-# Step 4.2.2 -- Save the plot
+# Step 5.1.2 -- Save the plot
 ggsave(
   filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"),
-  path = tile_period_dir,
+  path = var_dir,
   scale = 1,
   width = 3529,
   height = 1578,
@@ -165,13 +170,13 @@ ggsave(
   dpi = 350,
 )
 
-# Step 4.3 --  Exports the model as an object for further exploration
+# Step 5.2.1 --  Exports the model as an object for further exploration
 rf_model2 <- sits_model_export(rf_model)
 
-# Step 4.3.1 -- Save the plot
+# Step 5.2.2 -- Save the plot
 png(
   filename = file.path(
-    tile_period_dir,
+    var_dir,
     paste0(process_version, "_", tiles_train, "_", no.years, var, "_oob_ntree_mde.png")
   ),
   width = 3529,
@@ -179,7 +184,7 @@ png(
   res = 350
 )
 
-# Step 4.3.2 -- Plot the Out of Box error by the number of trees
+# Step 5.2.3 -- Plot the Out of Box error by the number of trees
 matplot(rf_model2$err.rate, 
         type = "l", lty = 1, lwd = 2,
         col = my_colors,           
@@ -187,7 +192,7 @@ matplot(rf_model2$err.rate,
         xlab = "Number of Trees (ntree)", 
         ylab = "Out of Box Error")
 
-# Step 4.3.3 -- Adding legend to plot
+# Step 5.2.4 -- Adding legend to plot
 legend("topright", 
        legend = names(my_colors), 
        col = my_colors, 
@@ -195,7 +200,3 @@ legend("topright",
        cex = 1,    
        bty = "n")
 dev.off()
-
-# Step 4.4 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
-print("Model trained successfully!")
