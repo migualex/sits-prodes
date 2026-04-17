@@ -185,27 +185,27 @@ save_sits_patterns_plot <- function(samples,
                                     var,
                                     labels          = NULL,
                                     bands           = NULL,
-                                    vline_dates     = NULL,   # ex: c("08-01") → dia/mês de cada ano
-                                    legend_text_size = NULL,  # tamanho fonte legenda de bandas
-                                    class_text_size  = NULL,  # tamanho fonte nome da classe
-                                    line_width       = NULL,  # grossura das linhas das bandas
-                                    vline_width      = 0.6,   # grossura da linha vertical
+                                    vline_dates     = NULL,   # ex: c("08-01") → mouth/day in each year
+                                    legend_text_size = NULL,  # font size band legend
+                                    class_text_size  = NULL,  # font size class name
+                                    line_width       = NULL,  # width of the band lines
+                                    vline_width      = 0.6,   # width of the vertical line
                                     width            = 1200,
                                     height           = 800,
                                     res              = 150) {
   
-  # Aplica filtro apenas se informado
+  # Filter only if specified
   s <- samples
   if (!is.null(labels)) s <- sits_select(s, labels = labels)
   if (!is.null(bands))  s <- sits_select(s, bands  = bands)
   
-  # Calcula o padrão uma vez só
+  # It calculates the pattern only once
   p <- sits_patterns(s)
   
-  # Captura o objeto ggplot sem renderizar na tela ainda
+  # Captures the ggplot object without rendering it to the screen yet
   g <- plot(p)
   
-  # --- Linha vertical pontilhada por ano ---
+  # --- Vertical dotted line indicating the year ---
   if (!is.null(vline_dates)) {
     years <- seq(
       as.integer(format(as.Date(start_date), "%Y")),
@@ -222,7 +222,7 @@ save_sits_patterns_plot <- function(samples,
     )
   }
   
-  # --- Customizações de tema opcionais ---
+  # --- Optional theme customizations ---
   theme_args <- list()
   
   if (!is.null(legend_text_size))
@@ -243,10 +243,10 @@ save_sits_patterns_plot <- function(samples,
     ) + ggplot2::geom_line(linewidth = line_width) +
     ggplot2::labs(color = "Bands")              # <-- força o título correto
   
-  # Renderiza na tela
+  # Renders on screen
   print(g)
   
-  # --- Monta nome do arquivo ---
+  # --- Set file name ---
   suffix <- ""
   
   if (!is.null(labels) && length(labels) == 1) {
@@ -275,7 +275,7 @@ save_sits_patterns_plot <- function(samples,
   ggplot2::ggsave(full_path, plot = g, width = width, height = height,
                   units = "px", dpi = res)
   
-  message("Plot salvo em: ", full_path)
+  message("Plot saved in: ", full_path)
   invisible(full_path)
 }
 
@@ -287,11 +287,11 @@ save_sits_patterns_plot(
   plots_path       = plots_path,
   tiles            = tiles,
   var              = var,
-  bands            = c('B12','B11','B04'), # NULL to plot and and save all classes
-  labels            = c('DESMAT_ARVORE_REMANESCE'), # NULL to plot and and save all classes
-  vline_dates      = "08-01",   # line on August 1st of each year
+  bands            = c('B12','B11','B04'), # NULL to plot and save all bands patterns
+  labels            = c('DESMAT_ARVORE_REMANESCE'), # NULL to plot and save all classes patterns
+  vline_dates      = "08-01",   # vertical doted line on August 1st of each year
   legend_text_size = 10, 
   class_text_size  = 12,
-  line_width       = 1.5, # Width of the line of each spectral band
-  vline_width      = 0.6  # Width of the vertical line
+  line_width       = 1.5, # line width of each spectral band
+  vline_width      = 0.6  # vertical line width
 )
