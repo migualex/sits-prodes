@@ -61,24 +61,19 @@ read_class_config <- function(config_file = "class_config.txt") {
   ))
 }
 
-# Step 1.3 -- Define the date and time for the start of processing
-date_process    <- format(Sys.Date(), "%Y-%m-%d_")
-time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
-process_version <- paste0(date_process, time_process)
-
-# Step 1.4 -- Define the paths for files and folders needed in the processing
+# Step 1.3 -- Define the paths for files and folders
 sample_path   <- "data/raw/samples" #add the sample file to the path
 rds_path      <- "data/rds/"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 config_dir    <- "../scripts"
 
-# Step 1.5 -- Define time range
+# Step 1.4 -- Define time range and tiles
 start_date   <- "2024-08-01"
 end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
-# Step 1.6 -- Identifier to distinguish this model run from previous versions
+# Step 1.5 -- Identifier to distinguish this model run from previous versions
 var <- "all_samples_new_pol_avg_false"
 
 
@@ -162,10 +157,13 @@ print("Time series extracted successfully!")
 
 # Step 4.2 -- Save the samples Time Series to a R file
 saveRDS(samples, 
-        paste0(rds_path,"time_series/samples_", 
-               length(cube$tile),"-tiles-", tiles_train, "_", 
-               no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", 
-               var, "_", process_version, ".rds"))
+        paste0(rds_path, "time_series/samples_", 
+               length(cube$tile), "_tiles-", tiles_train, "_", 
+               no.years, "_period-", cube_dates[1], "_", cube_dates[length(cube_dates)], "_", 
+               var, "_",
+               (function() paste0(format(Sys.Date(), "%Y-%m-%d_"),
+                                  format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")))(),
+               ".rds"))
 
 
 # ============================================================
