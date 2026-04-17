@@ -26,8 +26,6 @@ cube <- sits_cube(
 # 2. Create Fraction Image Features from the Mixture Model Cube
 # ============================================================
 
-# Endmembers' values from: SMALL, C.; SOUSA, D. The Sentinel 2 MSI Spectral Mixing Space. Remote Sens. 2022, 14, 5748
-
 # Step 2.1 -- Define endmember values
 endmembers <- tibble::tribble(
   ~class,    ~B02, ~B03, ~B04, ~B05, ~B06, ~B07, ~B08, ~B8A, ~B11, ~B12,
