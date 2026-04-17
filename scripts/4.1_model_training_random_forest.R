@@ -98,7 +98,6 @@ cube <- sits_cube(
 cube_dates <- sits_timeline(cube)
 no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
-
 # ============================================================
 # 3. Cross-validation of training data
 # ============================================================
@@ -209,7 +208,6 @@ save_rf_model_plot(
   res        = 200,    # DPI
   scale = 0.5          # increases all elements proportionally  
 )
-
 
 # Step 5.2.1 --  Define the function to plot and save Out of Box error by the number of trees
 save_rf_oob_plot <- function(

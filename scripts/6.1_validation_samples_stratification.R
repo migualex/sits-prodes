@@ -23,12 +23,12 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-28_2025-07-28_prodes-amz_2026-02-25_17h58m.rds"
+model_name       <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-28_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_17h58m.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
 samples_dir      <- "data/raw/samples/validation_samples"
 aux_dir          <- "data/raw/auxiliary"
-version          <- "rf-1y-012014-prodes-amz"
+version          <- "rf-1y-012014-all_samples_new_pol_avg_false"
 
 # ============================================================
 # 2. Create raster file from classified vector map
@@ -59,7 +59,6 @@ sits_rasterize_segments <- function(file, res, class_raster_dir, style = NULL) {
   file_sf <- sf::st_read(file, quiet = TRUE)
   
   if (is.null(style)) {
-    
     file_sf <- file_sf |>
       dplyr::mutate(
         class_num = .data[["class"]] |>

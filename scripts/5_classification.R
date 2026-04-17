@@ -37,7 +37,6 @@ tile         <- "012014"
 # Step 1.4 -- Identifier to distinguish this model run from previous versions
 var <- "all_samples_new_pol_avg_false"
 
-
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
@@ -82,7 +81,6 @@ local_segs_cube <- sits_cube(
 # 2.6 Create output directory per tile
 tile_period_dir <- file.path(class_path, tile, "original_class")
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
-
 
 # ============================================================
 # 3. Probability and Classification Mapping
@@ -134,7 +132,6 @@ class_map <- sits_label_classification(
   progress    = TRUE
 )
 print("Classification finished!")
-
 
 # ============================================================
 # 4. Uncertainty
@@ -196,6 +193,7 @@ compute_uncertainty_raster <- function(
     tile_period_dir,
     paste0(tools::file_path_sans_ext(basename(uncertainty_file)), ".tif")
   )
+  
   terra::writeRaster(
     uncertainty_raster_uint16,
     filename  = tif_path,

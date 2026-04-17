@@ -23,7 +23,7 @@ time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name       <- "RF-model_2-tiles-014002-015002_2y-period-2023-07-28_2025-07-28_nf-samples-crude_2026-03-05_08h56m.rds"
+model_name       <- "RF-model_2-tiles-014002-015002_2y-period-2023-07-28_2025-07-28_nf-novos-segmentos_2026-03-05_08h56m.rds"
 model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
 class_dir        <- "data/class"
 samples_dir      <- "data/raw/samples/validation_samples"

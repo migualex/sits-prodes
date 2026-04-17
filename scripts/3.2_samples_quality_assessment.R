@@ -69,11 +69,11 @@ process_version <- paste0(date_process, time_process)
 # Step 1.3 -- Define the paths for files and folders needed in the processing
 rds_path      <- "data/rds/"
 plots_path    <- "data/plots/"
-rds_filename  <- "samples_4-tiles-012014-012015-013014-013015_1y-period-2024-08-01_2025-07-28_prodes-amz_2026-02-24_10h30m.rds"
+rds_filename  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-24_20h01m.rds"
 config_dir    <- "../scripts"
 
 # Step 1.5 -- Identifier to distinguish this model run from previous versions
-var <- "prodes-amz"
+var <- "all_samples_new_pol_avg_false"
 
 # ============================================================
 # 3. Load and Explore Train Sample Data
