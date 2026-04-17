@@ -183,44 +183,83 @@ save_sits_patterns_plot <- function(samples,
                                     plots_path,
                                     tiles,
                                     var,
-                                    labels = NULL,
-                                    bands  = NULL,
-                                    width  = 1200,
-                                    height = 800,
-                                    res    = 150) {
-
+                                    labels          = NULL,
+                                    bands           = NULL,
+                                    vline_dates     = NULL,   # ex: c("08-01") → dia/mês de cada ano
+                                    legend_text_size = NULL,  # tamanho fonte legenda de bandas
+                                    class_text_size  = NULL,  # tamanho fonte nome da classe
+                                    line_width       = NULL,  # grossura das linhas das bandas
+                                    vline_width      = 0.6,   # grossura da linha vertical
+                                    width            = 1200,
+                                    height           = 800,
+                                    res              = 150) {
+  
   # Aplica filtro apenas se informado
   s <- samples
   if (!is.null(labels)) s <- sits_select(s, labels = labels)
   if (!is.null(bands))  s <- sits_select(s, bands  = bands)
-
+  
   # Calcula o padrão uma vez só
   p <- sits_patterns(s)
-
-  # Plota na tela
-  plot(p)
-
-  # Monta sufixo com base nos filtros
-  suffix <- ""
-
-  if (!is.null(labels) && length(labels) == 1) {
-    # 1 label: usa o nome do label + bandas (se houver)
-    suffix <- paste0("_", labels[1])
-    if (!is.null(bands)) {
-      suffix <- paste0(suffix, "-", paste(tolower(bands), collapse = "-"))
-    }
-
-  } else if (!is.null(labels) || !is.null(bands)) {
-    # Mais de 1 label ou só bandas: conta labels + lista bandas
-    if (!is.null(labels)) {
-      suffix <- paste0("_", length(labels), "classes")
-    }
-    if (!is.null(bands)) {
-      suffix <- paste0(suffix, "-", paste(tolower(bands), collapse = "-"))
-    }
+  
+  # Captura o objeto ggplot sem renderizar na tela ainda
+  g <- plot(p)
+  
+  # --- Linha vertical pontilhada por ano ---
+  if (!is.null(vline_dates)) {
+    years <- seq(
+      as.integer(format(as.Date(start_date), "%Y")),
+      as.integer(format(as.Date(end_date),   "%Y"))
+    )
+    vlines <- as.Date(paste0(years, "-", vline_dates))
+    vlines <- vlines[vlines >= as.Date(start_date) & vlines <= as.Date(end_date)]
+    
+    g <- g + ggplot2::geom_vline(
+      xintercept = as.numeric(vlines),
+      linetype   = "dashed",
+      color      = "gray40",
+      linewidth  = vline_width
+    )
   }
-
-  # Monta o nome do arquivo
+  
+  # --- Customizações de tema opcionais ---
+  theme_args <- list()
+  
+  if (!is.null(legend_text_size))
+    theme_args$legend.text <- ggplot2::element_text(size = legend_text_size)
+  
+  if (!is.null(class_text_size))
+    theme_args$strip.text <- ggplot2::element_text(size = class_text_size)
+  
+  if (length(theme_args) > 0)
+    g <- g + do.call(ggplot2::theme, theme_args)
+  
+  # --- Grossura das linhas das bandas ---
+  if (!is.null(line_width))
+    g <- g + ggplot2::guides(
+      color = ggplot2::guide_legend(
+        override.aes = list(linewidth = line_width)
+      )
+    ) + ggplot2::geom_line(linewidth = line_width) +
+    ggplot2::labs(color = "Bands")              # <-- força o título correto
+  
+  # Renderiza na tela
+  print(g)
+  
+  # --- Monta nome do arquivo ---
+  suffix <- ""
+  
+  if (!is.null(labels) && length(labels) == 1) {
+    suffix <- paste0("_", labels[1])
+    if (!is.null(bands))
+      suffix <- paste0(suffix, "-", paste(tolower(bands), collapse = "-"))
+  } else if (!is.null(labels) || !is.null(bands)) {
+    if (!is.null(labels))
+      suffix <- paste0("_", length(labels), "classes")
+    if (!is.null(bands))
+      suffix <- paste0(suffix, "-", paste(tolower(bands), collapse = "-"))
+  }
+  
   tiles_str <- paste(tiles, collapse = "-")
   file_name <- paste0("sits-patterns",
                       "_tiles-", tiles_str,
@@ -229,28 +268,30 @@ save_sits_patterns_plot <- function(samples,
                       "_", var,
                       suffix,
                       ".png")
-
-  # Garante que a pasta existe
+  
   dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
-
-  # Salva no arquivo
+  
   full_path <- file.path(plots_path, file_name)
-  png(filename = full_path, width = width, height = height, res = res)
-    plot(p)
-  dev.off()
-
+  ggplot2::ggsave(full_path, plot = g, width = width, height = height,
+                  units = "px", dpi = res)
+  
   message("Plot salvo em: ", full_path)
   invisible(full_path)
 }
 
 # Step 5.2 -- Run function to visualize and save the plot of the time-spectral patterns of all features
 save_sits_patterns_plot(
-  samples    = samples,
-  start_date = unique(samples$start_date),
-  end_date   = unique(samples$end_date),
-  plots_path = plots_path,
-  tiles      = tiles,
-  var        = var,
-  labels     = c("DESMAT_ARVORE_REMANESCE"), # NULL to plot and and save all classes
-  bands      = c("NDVI") # NULL to plot and and save all bands
+  samples          = samples,
+  start_date       = unique(samples$start_date),
+  end_date         = unique(samples$end_date),
+  plots_path       = plots_path,
+  tiles            = tiles,
+  var              = var,
+  bands            = c('B12','B11','B04'), # NULL to plot and and save all classes
+  labels            = c('DESMAT_ARVORE_REMANESCE'), # NULL to plot and and save all classes
+  vline_dates      = "08-01",   # line on August 1st of each year
+  legend_text_size = 10, 
+  class_text_size  = 12,
+  line_width       = 1.5, # Width of the line of each spectral band
+  vline_width      = 0.6  # Width of the vertical line
 )
