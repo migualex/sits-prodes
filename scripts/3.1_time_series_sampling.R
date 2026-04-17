@@ -81,6 +81,7 @@ tiles        <- c("012014","012015","013014","013015")
 # Step 1.6 -- Identifier to distinguish this model run from previous versions
 var <- "all_samples_new_pol_avg_false"
 
+
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
@@ -116,12 +117,6 @@ mm_cube <- sits_cube(
 # Step 2.5 -- Merge the Training Cube with Mixture Model Cube
 cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 
-# Step 2.6 -- Create output directory per tile and period
-tiles_id <- paste(sort(unique(cube_merge_lsmm_train$tile)), collapse = "_")
-
-tile_period_dir <- file.path(plots_path, var)
-
-dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
 # 3. Load and Explore Training Sample Data
@@ -171,6 +166,7 @@ saveRDS(samples,
                length(cube$tile),"-tiles-", tiles_train, "_", 
                no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", 
                var, "_", process_version, ".rds"))
+
 
 # ============================================================
 # 5. Plotting Time Series Patterns
