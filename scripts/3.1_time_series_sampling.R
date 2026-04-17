@@ -63,7 +63,7 @@ read_class_config <- function(config_file = "class_config.txt") {
 
 # Step 1.3 -- Define the paths for files and folders
 sample_path   <- "data/raw/samples" #add the sample file to the path
-rds_path      <- "data/rds/"
+ts_path      <- "data/rds/time_series"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 config_dir    <- "../scripts"
@@ -157,12 +157,11 @@ print("Time series extracted successfully!")
 
 # Step 4.2 -- Save the samples Time Series to a R file
 saveRDS(samples, 
-        paste0(rds_path, "time_series/samples_", 
-               length(cube$tile), "_tiles-", tiles_train, "_", 
+        paste0(ts_path,
+               "TS_tiles-", tiles_train, "_", 
                no.years, "_period-", cube_dates[1], "_", cube_dates[length(cube_dates)], "_", 
                var, "_",
-               (function() paste0(format(Sys.Date(), "%Y-%m-%d_"),
-                                  format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")))(),
+               format(Sys.Date(), "%Y-%m-%d_"), format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo"),
                ".rds"))
 
 
