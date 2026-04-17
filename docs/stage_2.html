@@ -470,8 +470,10 @@ const url = "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/m
 fetch(url)
   .then(res => res.text())
   .then(data => {
+    const lines = data.split("\n");
+    const snippet = lines.slice(13, 186).join("\n");
     const el = document.getElementById("code-step2");
-    el.textContent = data;
+    el.textContent = snippet; // ← era "data", corrigido para "snippet"
     hljs.highlightElement(el);
   });
 </script>
@@ -482,27 +484,10 @@ fetch(url)
     <h1 class="page-title">References</h1>
   </div>
   <div style="font-family:var(--sans);font-size:.9rem;line-height:1.9">
-    <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14 </em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p>
+    <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14 </em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p></div>
 </section>
 
-  <div class="page-nav">
-    <a class="pnav-btn" href="index.html#setup"><span class="pnav-dir">← Previous</span><span class="pnav-title">Setup</span></a>
-    <a class="pnav-btn pnav-next" href="stage_2.html"><span class="pnav-dir">Next →</span><span class="pnav-title">Stage 2: Image Segmentation</span></a>
-  </div>
-</section>
-
-</div><!-- .content -->
-</main>
-
-<!-- ── TOC ── -->
-<aside class="toc">
-  <div class="toc-label">On this page</div>
-  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
-  <a class="toc-link" href="#references">References</a>
-</aside>
-</div><!-- .layout -->
-
-  <div class="page-nav">
+<div class="page-nav">
   <a class="pnav-btn" href="stage_1.html">
     <span class="pnav-dir">← Previous</span>
     <span class="pnav-title">Stage 1: Linear Spectral Mixture Model</span>
@@ -515,6 +500,13 @@ fetch(url)
 
 </div><!-- .content -->
 </main>
+
+<!-- ── TOC ── -->
+<aside class="toc">
+  <div class="toc-label">On this page</div>
+  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
+  <a class="toc-link" href="#references">References</a>
+</aside>
 </div><!-- .layout -->
 
 <footer>

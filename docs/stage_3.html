@@ -502,15 +502,25 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 
 </section>
 
-<!-- ═══ SCRIPT ÚNICO (melhor prática) ═════════════════════════════ -->
+<!-- ═══ SCRIPT ÚNICO ═════════════════════════════ -->
 <script>
-function loadCode(url, elementId) {
+function loadCode(url, elementId, startLine = null, endLine = null) {
   fetch(url)
     .then(res => res.text())
     .then(data => {
       const el = document.getElementById(elementId);
       if (!el) return;
-      el.textContent = data;
+
+      let snippet = data;
+      if (startLine !== null || endLine !== null) {
+        const lines = data.split("\n");
+        snippet = lines.slice(
+          startLine ?? 0,
+          endLine ?? lines.length
+        ).join("\n");
+      }
+
+      el.textContent = snippet;
       hljs.highlightElement(el);
     })
     .catch(err => console.error("Erro ao carregar código:", err));
@@ -519,12 +529,15 @@ function loadCode(url, elementId) {
 document.addEventListener("DOMContentLoaded", function () {
   loadCode(
     "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.1_time_series_sampling.R",
-    "code-step3-1"
+    "code-step3-1",
+    149,  // ← linha de início (0-based)
+    173   // ← linha de fim
   );
-
   loadCode(
     "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.2_samples_quality_assessment.R",
-    "code-step3-2"
+    "code-step3-2",
+    96,   // ← linha de início
+    322  // ← linha de fim
   );
 });
 </script>
@@ -538,24 +551,7 @@ document.addEventListener("DOMContentLoaded", function () {
     <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14 </em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p>
 </section>
 
-  <div class="page-nav">
-    <a class="pnav-btn" href="index.html#setup"><span class="pnav-dir">← Previous</span><span class="pnav-title">Setup</span></a>
-    <a class="pnav-btn pnav-next" href="stage_2.html"><span class="pnav-dir">Next →</span><span class="pnav-title">Stage 2: Image Segmentation</span></a>
-  </div>
-</section>
-
-</div><!-- .content -->
-</main>
-
-<!-- ── TOC ── -->
-<aside class="toc">
-  <div class="toc-label">On this page</div>
-  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
-  <a class="toc-link" href="#references">References</a>
-</aside>
-</div><!-- .layout -->
-
-  <div class="page-nav">
+<div class="page-nav">
   <a class="pnav-btn" href="stage_2.html">
     <span class="pnav-dir">← Previous</span>
     <span class="pnav-title">Stage 2: Cube Segmentation</span>
@@ -568,6 +564,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </div><!-- .content -->
 </main>
+
+<!-- ── TOC ── -->
+<aside class="toc">
+  <div class="toc-label">On this page</div>
+  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
+  <a class="toc-link" href="#references">References</a>
+</aside>
 </div><!-- .layout -->
 
 <footer>
