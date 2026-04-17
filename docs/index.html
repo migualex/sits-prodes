@@ -56,17 +56,6 @@ p{margin-bottom:1rem}
 
 /* ── Layout ── */
 .layout{display:flex;flex:1;position:relative}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text-primary);         /* use sua variável de dark mode */
-  background: var(--bg-secondary);    /* idem */
-  border: 0.5px solid var(--border-color);
-  border-radius: 8px;
-  padding: 10px 14px;
-}
 
 /* ── Sidebar ── */
 .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);position:sticky;top:var(--navbar-h);height:calc(100vh - var(--navbar-h));overflow-y:auto;padding:1.1rem 0 3rem}
@@ -377,6 +366,18 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 [data-theme="dark"] .lib-table th{background:#161b22;border-color:var(--border)}
 [data-theme="dark"] .lib-table td{border-color:var(--border)}
 
+/* ── Zoom to references ── */
+.reference {
+  transition: all 0.3s ease;
+  padding: 5px;
+  border-radius: 6px;
+}
+.reference:target {
+  transform: scale(1.03);
+  background-color: #fff8c4;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
   </style>
   
 </head>
@@ -463,9 +464,12 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     </div>
   </div>
 
-  <p>This guide documents the complete processing pipeline of the <strong>PRODES-AMZ</strong> project, an application of the <a href="https://github.com/e-sensing/sits" target="_blank"><code>sits</code></a> R package for annual deforestation and forest degradation monitoring in the Brazilian Legal Amazon. The pipeline processes Sentinel-2 16-day composites from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a>, covering neighboring tiles: <code>012014</code>, <code>012015</code>, <code>013014</code>, and <code>013015</code> for the 2024-08 to 2025-07 reference period.</p>
+  <p>This guide documents the complete processing pipeline of the <strong>PRODES-AMZ</strong> project, an application of the <a href="https://github.com/e-sensing/sits" target="_blank"><code>sits</code></a> R package for annual deforestation and forest degradation monitoring in the Brazilian Legal Amazon. 
+      The pipeline processes Sentinel-2 16-day composites from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a>, covering neighboring tiles: <code>012014</code>, <code>012015</code>, <code>013014</code>, and <code>013015</code> for the 2024-08 to 2025-07 reference period.</p>
 
-  <p>The pipeline follows a <strong>time-first, space-later</strong> paradigm: each spatial unit is associated with a multivariate time series of spectral bands, a machine learning model classifies those time series, and spatial post-processing rules produce PRODES-compatible polygon outputs. Classification is performed at <strong>segment level</strong> (Object-Based Image Analysis) using vector data cubes.</p>
+  <p>The pipeline follows a <strong>time-first, space-later</strong> paradigm: each spatial unit is associated with a multivariate time series of spectral bands, 
+      a machine learning model classifies those time series, and spatial post-processing rules produce Prodes-compatible polygon outputs. 
+        Classification is performed at <strong>segment level</strong> (Object-Based Image Analysis) using vector data cubes.</p>
 
   <div class="callout note">
     <div class="callout-title">📖 Note</div>
@@ -485,12 +489,12 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
       <tr><td class="mono">07</td><td><code>4_3_model_training_tempcnn.R</code></td><td>TempCNN training</td></tr>    
       <tr><td class="mono">08</td><td><code>4_4_model_training_ltae.R</code></td><td>LTAE training</td></tr>
       <tr><td class="mono">09</td><td><code>5_classification.R</code></td><td>Classify vector data cube</td></tr>
-      <tr><td class="mono">10</td><td><code>6_1_validation_samples_stratification.R</code></td><td>Stratified sample design for Forest area validation</td></tr>
-      <tr><td class="mono">11</td><td><code>6_2_validation_samples_stratification_nf.R</code></td><td>Stratified sample design for Non-Forest area validation</td></tr>
-      <tr><td class="mono">12</td><td><code>7_1_validation_accuracy_measurement.R</code></td><td>Validation accuracy measurement for Forest area</td></tr>
-      <tr><td class="mono">13</td><td><code>7_2_validation_accuracy_measurement_nf.R</code></td><td>Validation accuracy measurement for Non-Forest area</td></tr>
-      <tr><td class="mono">14</td><td><code>8_1_post_processing.R</code></td><td>Post-processing for Forest area</td></tr>
-      <tr><td class="mono">15</td><td><code>8_2_post_processing_nf.R</code></td><td>Post-processing for Non-Forest area</td></tr>
+      <tr><td class="mono">10</td><td><code>6_1_validation_samples_stratification.R</code></td><td>Stratified sample design for Forest</td></tr>
+      <tr><td class="mono">11</td><td><code>6_2_validation_samples_stratification_nf.R</code></td><td>Stratified sample design for Non-Forest</td></tr>
+      <tr><td class="mono">12</td><td><code>7_1_validation_accuracy_measurement.R</code></td><td>Validation accuracy measurement for Forest</td></tr>
+      <tr><td class="mono">13</td><td><code>7_2_validation_accuracy_measurement_nf.R</code></td><td>Validation accuracy measurement for Non-Forest</td></tr>
+      <tr><td class="mono">14</td><td><code>8_1_post_processing.R</code></td><td>Post-processing for Forest</td></tr>
+      <tr><td class="mono">15</td><td><code>8_2_post_processing_nf.R</code></td><td>Post-processing for Non-Forest</td></tr>
     </tbody>
   </table></div>
 
@@ -508,14 +512,30 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     <p class="page-subtitle">Context, paradigm, and key concepts</p>
   </div>
 
-  <h2 id="prodes"><span class="sec-num">1.1</span>PRODES and BiomasBR</h2>
-  <p>The <strong>PRODES program</strong>, operated by INPE, has continuously monitored deforestation in the Brazilian Legal Amazon since 1988. PRODES tracks gross annual deforestation — defined as primary forest removed within each August-to-July reference year — using Landsat-class imagery and polygon-based shapefiles with a 1 ha minimum mapping unit. This pipeline extends PRODES-compatible mapping to include <strong>forest degradation</strong> classes (<code>Degradacao</code>, <code>Degradacao_Por_Fogo</code>) alongside the standard deforestation classes, using Sentinel-2 time series and object-based classification.</p>
+  <h2 id="prodes"><span class="sec-num">1.1</span>Prodes and BiomasBR</h2>
+  <!--<p>The <strong>Prodes program</strong>, operated by BiomasBR project at INPE, has continuously monitored deforestation in the Brazilian Legal Amazon since 1988. Prodes tracks gross annual deforestation, 
+    defined as primary forest removed within each August-to-July reference year, firstly using Landsat-8 imagery and then substituido por Sentinel-2 and polygon-based shapefiles with a 1 ha minimum mapping unit. 
+    This pipeline extends Prodes-compatible mapping to include <strong>forest degradation</strong> classes (<code>Degradation</code>, <code>Fire Degradation</code>) alongside the standard deforestation classes, 
+    using Sentinel-2 time series and object-based classification.</p>-->
+    <p>The <strong>Prodes Project</strong>, operated by the BiomasBR project at INPE, has continuously monitored deforestation in the Brazilian Legal Amazon since 1988. 
+      Prodes tracks gross annual deforestation, defined as the removal of primary forest within each reference year (from August to July). 
+        Previously, the methodology was based on Landsat-8 imagery, with a spatial resolution of 30 meters <a href="#ref2" id="cite2">[2]</a>. 
+        It has now transitioned to Sentinel-2 data, with a 10-meter spatial resolution, enabling more detailed and accurate mapping.
+          In addition, Prodes uses polygon-based shapefiles with a minimum mapping unit of 1 hectare. 
+          This processing pipeline has been expanded to include <strong>forest degradation</strong> classes (<code>Degradation</code> and <code>Fire Degradation</code>), 
+            alongside the standard deforestation classes, using Sentinel-2 time series and object-based classification.</p>
 
   <h2 id="time-first"><span class="sec-num">1.2</span>Time-First, Space-Later</h2>
-  <p>The <code>sits</code> package implements the <strong>time-first, space-later</strong> paradigm (SITS Book, Ch. 1). In the <em>time-first</em> phase, each pixel or segment is represented as a multivariate time series across all acquisition dates; a machine learning model then classifies these time series. In the <em>space-later</em> phase, spatial post-processing rules refine the map. This approach captures seasonal phenological signals — such as the NDVI cycle of pasture versus native vegetation — that single-date composites cannot discriminate.</p>
+  <p>The <code>sits</code> package implements the <strong>time-first, space-later</strong> paradigm <a href="#ref1" id="cite1">[1]</a>. 
+    In the <em>time-first</em> phase, each pixel or segment is represented as a multivariate time series across all acquisition dates.
+      A machine or deep learning model then classifies these time series. In the <em>space-later</em> phase, spatial post-processing rules refine the map. 
+        This approach captures seasonal phenological signals, such as the NDVI cycle of pasture versus native vegetation, that single-date composites cannot discriminate.</p>
 
   <h2 id="obia-concept"><span class="sec-num">1.3</span>Object-Based Classification with Vector Data Cubes</h2>
-  <p>Rather than classifying individual pixels, this pipeline segments the image into spatially homogeneous objects (SNIC superpixels), assembles them into a <strong>vector data cube</strong> (SITS Book, Ch. 25), and classifies the time series extracted per segment. This eliminates salt-and-pepper noise, produces polygon outputs compatible with the PRODES data model, and allows enforcing the minimum mapping unit before classification by controlling segment size.</p>
+  <p>Rather than classifying individual pixels, this pipeline segments the image into spatially homogeneous objects (SNIC superpixels), 
+      assembles them into a <strong>vector data cube</strong> (SITS Book, Ch. 25), and classifies the time series extracted per segment. 
+        This eliminates salt-and-pepper noise, produces polygon outputs compatible with the PRODES data model, 
+          and allows enforcing the minimum mapping unit before classification by controlling segment size.</p>
 
   <h2 id="bdc-source"><span class="sec-num">1.4</span>Brazil Data Cube as Data Source</h2>
   <p>All imagery is sourced from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a> collection <code>SENTINEL-2-16D</code>, which provides analysis-ready 16-day best-pixel composites at 10 m resolution. The BDC applies cloud masking and compositing, making the cubes directly suitable for time series analysis without additional preprocessing. Bands used: B02, B03, B04, B05, B06, B07, B08, B8A, B11, B12, NDVI, NBR, EVI, CLOUD.</p>
@@ -555,8 +575,10 @@ install.packages(<span class="kc">c</span>(
   </div>
 
   <div class="callout important">
-    <div class="callout-title">⚠ BDC Access Token</div>
-    <p>All cubes are sourced from the <strong>Brazil Data Cube</strong> (<code>source = "BDC"</code>). A free access token is required. Register at <a href="https://data.inpe.br/bdc/" target="_blank">BDC</a> and configure with <code>sits_config(bdc_access_key = "...")</code>.</p>
+    <div class="callout-title">⚠ Pre-settings</div>
+    <p>ALWAYS set a seed in script. We decided to use ‘SETSEED = 88’, in reference to the year 1988, the first year of PRODES mapping.</p>
+      <!--All cubes are sourced from the <strong>Brazil Data Cube</strong> (<code>source = "BDC"</code>). A free access token is required. 
+      Register at <a href="https://data.inpe.br/bdc/" target="_blank">BDC</a> and configure with <code>sits_config(bdc_access_key = "...")</code>.</p>-->
   </div>
 
   <h2 id="libraries"><span class="sec-num">2.2</span>Libraries</h2>
@@ -628,7 +650,7 @@ install.packages(<span class="kc">c</span>(
     <p class="page-subtitle">Workflow across all scripts</p>
   </div>
 
-  <p>The diagram shows all steps, intermediate artifacts, SITS functions, and decision nodes. Click the interactive zoom viewer.</p>
+  <p>The diagram shows all steps, SITS functions, and decision nodes. Click in the interactive zoom viewer.</p>
   <!--<h2 id="diagram"><span class="sec-num">R.2</span>Full Diagram</h2>-->
   <div class="diagram-wrap">
     <div class="diagram-head">
@@ -647,7 +669,35 @@ install.packages(<span class="kc">c</span>(
          alt="Pipeline flowchart">
   </div>
 </div>
---<script>
+</div>
+  <h3 id="legend">Legend</h3>
+  <div class="legend-grid">
+    <div class="legend-item"><div class="lsw lsw-cube"></div>Data Cube / Object</div>
+    <div class="legend-item"><div class="lsw lsw-func"></div>Function / Process</div>
+    <div class="legend-item"><div class="lsw lsw-file"></div>Saved File (.gpkg / .rds)</div>
+    <div class="legend-item"><div class="lsw lsw-logic"></div>Decision / Logic</div>
+  </div>
+</section>
+
+<!-- ═══ REFERENCES ════════════════════════════════════════════════════════ -->
+<section id="references" class="section">
+  <div class="page-header">
+    <h1 class="page-title">References</h1>
+  </div>
+  <div style="font-family:var(--sans);font-size:.9rem;line-height:1.9">
+  <div id="ref2"><a href="#cite2">[2] </a><strong>Simões, R., Câmara, G., Queiroz, G., Souza, F., Andrade, P., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021).
+    Satellite Image Time Series Analysis for Big Earth Observation Data.<em>Remote Sensing, 13</em>(13), 2428.</div>
+<!--<p><a href="#ref1">[1] </a><strong>Almeida, C. A., Maurano, L. E. P., Valeriano, D. M., Câmara, G., Vinhas, L., Motta, M., Gomes, A. R., Monteiro, A. M. V., Souza, A. A. A., Messias, C. G., Rennó, C. D., Adami, M., Escada, M. I. S., Soler, L. S., &amp; Amaral, S.</strong> (2022). Metodologia utilizada nos sistemas Prodes e Deter – 2ª edição (atualizada). <em>2. ed. São José dos Campos: INPE</em>, 47 p. <a href="http://urlib.net/ibi/8JMKD3MGP3W34T/47GAF6S" target="_blank">Disponível em: urlib.net/ibi/8JMKD3MGP3W34T/47GAF6S</a></p>
+<p><a href="#ref2">[2] </a><strong>Simões, R., Câmara, G., Queiroz, G., Souza, F., Andrade, P., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021). Satellite Image Time Series Analysis for Big Earth Observation Data. <em>Remote Sensing, 13</em>(13), 2428. <a href="https://doi.org/10.3390/rs13132428" target="_blank">doi:10.3390/rs13132428</a></p>
+</section>-->
+
+  <div class="page-nav">
+    <a class="pnav-btn" href="index.html#setup"><span class="pnav-dir">← Previous</span><span class="pnav-title">Setup</span></a>
+    <a class="pnav-btn pnav-next" href="stage_2.html"><span class="pnav-dir">Next →</span><span class="pnav-title">Stage 2: Image Segmentation</span></a>
+  </div>
+</section>
+
+<!--<script>
   function updateFlowchartSrc() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     document.getElementById('fc-img').src = isDark
@@ -663,15 +713,7 @@ install.packages(<span class="kc">c</span>(
     attributes: true,
     attributeFilter: ['data-theme']
   });
-</script>
-</div>
-  <h3 id="legend">Legend</h3>
-  <div class="legend-grid">
-    <div class="legend-item"><div class="lsw lsw-cube"></div>Data Cube / Object</div>
-    <div class="legend-item"><div class="lsw lsw-func"></div>Function / Process</div>
-    <div class="legend-item"><div class="lsw lsw-file"></div>Saved File (.gpkg / .rds)</div>
-    <div class="legend-item"><div class="lsw lsw-logic"></div>Decision / Logic</div>
-  </div>
+</script>-->
 
 </div><!-- .content -->
 </main>
