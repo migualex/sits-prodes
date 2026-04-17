@@ -37,6 +37,7 @@ tile         <- "012014"
 # Step 1.4 -- Identifier to distinguish this model run from previous versions
 var <- "all_samples_new_pol_avg_false"
 
+
 # ============================================================
 # 2. Define and Load Data Cubes
 # ============================================================
@@ -81,6 +82,7 @@ local_segs_cube <- sits_cube(
 # 2.6 Create output directory per tile
 tile_period_dir <- file.path(class_path, tile, "original_class")
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
+
 
 # ============================================================
 # 3. Probability and Classification Mapping
@@ -133,60 +135,92 @@ class_map <- sits_label_classification(
 )
 print("Classification finished!")
 
+
 # ============================================================
 # 4. Uncertainty
 # ============================================================
 
-# Step 4.1 -- Calculate uncertainty vector cube
-uncertainty <- sits_uncertainty(
+# Step 4.1 -- Define function to calculate entropy, rasterize and exclude .gpkg
+compute_uncertainty_raster <- function(
   vector_cube,
-  type = "entropy",
-  multicores = 28, # adapt to your computer CPU core availability
-  memsize = 180, # adapt to your computer memory availability
-  output_dir = tile_period_dir,
-  version = version,
-  progress = TRUE
+  tile_period_dir,
+  version,
+  multicores = 28,
+  memsize    = 180,
+  delete_gpkg = TRUE
+) {
+  
+  # Step 1 -- Calculate uncertainty vector cube
+  uncertainty <- sits_uncertainty(
+    vector_cube,
+    type       = "entropy",
+    multicores = multicores,
+    memsize    = memsize,
+    output_dir = tile_period_dir,
+    version    = version,
+    progress   = TRUE
+  )
+  
+  # Step 2 -- List entropy .gpkg files and get the most recent one
+  uncertainty_files <- list.files(
+    path      = tile_period_dir,
+    pattern   = "entropy.*\\.gpkg$",
+    full.names = TRUE
+  )
+  uncertainty_file <- uncertainty_files[which.max(file.info(uncertainty_file)$mtime)]
+  
+  # Step 3 -- Read the segment polygons file with entropy
+  uncertainty_polygons <- terra::vect(uncertainty_file)
+  
+  # Step 4 -- Create a raster template based on uncertainty_polygons
+  raster_template <- terra::rast(
+    terra::ext(uncertainty_polygons),
+    res = terra::res(terra::rast(vector_cube$file_info[[1]]$path[1])),
+    crs = terra::crs(uncertainty_polygons)
+  )
+  
+  # Step 5 -- Rasterize entropy values and scale to UINT16
+  uncertainty_raster       <- terra::rasterize(uncertainty_polygons, raster_template, field = "entropy")
+  uncertainty_raster_uint16 <- round(uncertainty_raster * 10000)
+  
+  # Step 6 -- Plot
+  plot(
+    uncertainty_raster_uint16,
+    col     = grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(11, "Spectral")))(100),
+    maxcell = terra::ncell(uncertainty_raster_uint16),
+    main    = "Uncertainty Map - Full Resolution"
+  )
+  
+  # Step 7 -- Save as .tif (UINT16, DEFLATE compressed)
+  tif_path <- file.path(
+    tile_period_dir,
+    paste0(tools::file_path_sans_ext(basename(uncertainty_file)), ".tif")
+  )
+  terra::writeRaster(
+    uncertainty_raster_uint16,
+    filename  = tif_path,
+    datatype  = "INT2U",
+    overwrite = TRUE,
+    gdal      = c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9"),
+    progress  = TRUE
+  )
+  
+  # Step 8 -- Delete the source .gpkg files (optional)
+  if (delete_gpkg) {
+    removed <- file.remove(uncertainty_files)
+    message("Deleted .gpkg files: ", paste(uncertainty_files[removed], collapse = ", "))
+  }
+  
+  message("Uncertainty raster saved: ", tif_path)
+  invisible(tif_path)
+}
+
+# Step 4.1 -- Run function to calculate entropy, rasterize and exclude .gpkg
+compute_uncertainty_raster(
+  vector_cube     = vector_cube,
+  tile_period_dir = tile_period_dir,
+  version         = version,
+  multicores      = 28, # adapt to your computer CPU core availability
+  memsize         = 180, # adapt to your computer CPU core availability
+  delete_gpkg     = FALSE  # Keep the .gpkg file if you want to inspect it beforehand
 )
-
-# Step 4.2 -- List the paths of the '.gpkg' files in 'tile_period_dir' containing 'entropy'
-uncertainty_files <- list.files(
-  path = tile_period_dir, 
-  pattern = "entropy.*\\.gpkg$", 
-  full.names = TRUE
-)
-
-# Step 4.3 -- Sort by modification date and get the last one (most recent)
-uncertainty_file <- uncertainty_files[which.max(file.info(uncertainty_files)$mtime)]
-
-# Step 4.4 -- Read the segment polygons file with entropy
-uncertainty_polygons <- vect(uncertainty_file)
-
-# Step 4.5 -- Create a raster template based on uncertainty_polygons
-raster_template <- rast(
-  ext(uncertainty_polygons), 
-  res = res(rast(vector_cube$file_info[[1]]$path[1])), # Get the actual resolution of the cube
-  crs = crs(uncertainty_polygons)
-)
-
-# Step 4.6 -- Rasterize the values of the 'entropy' variable in the uncertainty vector file
-uncertainty_raster <- rasterize(uncertainty_polygons, raster_template, field = "entropy")
-
-# Step 4.6.1 -- Multiply by 10,000 to maintain accuracy
-uncertainty_raster_uint16 <- round(uncertainty_raster * 10000)
-
-# Step 4.6.2 -- Plot the resulting uncertainty cube
-plot(uncertainty_raster_uint16, 
-     col = colorRampPalette(rev(brewer.pal(11, "Spectral")))(100),
-     maxcell = ncell(uncertainty_raster_uint16), # Usa TODOS os pixels
-     main = "Uncertainty Map - Full Resolution")
-
-# Step 4.7 -- Save the final file with the desired data type
-writeRaster(
-  uncertainty_raster_uint16, 
-  filename = file.path(tile_period_dir, paste0(tools::file_path_sans_ext(basename(uncertainty_file)), "_raster.tif")),
-  datatype = "INT2U",  # This is the code for Uint16
-  overwrite = TRUE,
-  gdal = c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9"), # Additional compression to reduce file size
-  progress = TRUE
-)
-print("Well done!")
