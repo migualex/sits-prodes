@@ -236,35 +236,88 @@ save_rf_model_plot(
 )
 
 
+# Step 5.2.1 --  Define the function to plot and save Out of Box error by the number of trees
+save_rf_oob_plot <- function(
+  rf_model,
+  plots_path,
+  tiles,
+  no.years,
+  start_date,
+  end_date,
+  var,
+  width  = 1200,
+  height = 800,
+  res    = 150,
+  scale  = 1
+) {
+  
+  # Step 1 -- Export the model object
+  rf_model2 <- sits_model_export(rf_model)
+  
+  # Step 2 -- Convert err.rate matrix to tidy data frame for ggplot
+  err_df <- as.data.frame(rf_model2$err.rate)
+  err_df$ntree <- seq_len(nrow(err_df))
+  
+  err_long <- tidyr::pivot_longer(
+    err_df,
+    cols      = -ntree,
+    names_to  = "Class",
+    values_to = "OOB_Error"
+  )
+  
+  # Step 3 -- Build ggplot
+  g <- ggplot2::ggplot(err_long, ggplot2::aes(x = ntree, y = OOB_Error, color = Class)) +
+    ggplot2::geom_line(linewidth = 0.9) +
+    ggplot2::labs(
+      title    = "Out-of-Bag Error by Number of Trees",
+      subtitle = paste0(paste(tiles, collapse = ", "), " | ", start_date, " to ", end_date),
+      x        = "Number of Trees (ntree)",
+      y        = "OOB Error",
+      color    = "Class"
+    ) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(
+      plot.title         = ggplot2::element_text(face = "bold", size = 13),
+      plot.subtitle      = ggplot2::element_text(color = "gray40", size = 9),
+      panel.grid.minor   = ggplot2::element_blank(),
+      legend.position    = "right"
+    )
+  
+  # Step 4 -- Build file name
+  tiles_str <- paste(tiles, collapse = "-")
+  file_name <- paste0(
+    "RF-oob-ntree-mde",
+    "_", tiles_str,
+    "_", no.years,
+    "_", start_date,
+    "_", end_date,
+    "_", var,
+    "_", format(Sys.Date(), "%Y-%m-%d"),
+    ".png"
+  )
+  
+  # Step 5 -- Save
+  dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
+  full_path <- file.path(plots_path, file_name)
+  
+  ggplot2::ggsave(full_path, plot = g, width = width, height = height,
+                  units = "px", dpi = res, scale = scale)
+  
+  message("Plot saved: ", full_path)
+  invisible(full_path)
+}
 
-
-# Step 5.2.1 --  Exports the model as an object for further exploration
-rf_model2 <- sits_model_export(rf_model)
-
-# Step 5.2.2 -- Save the plot
-png(
-  filename = file.path(
-    var_dir,
-    paste0(process_version, "_", tiles, "_", no.years, var, "_oob_ntree_mde.png")
-  ),
-  width = 3529,
-  height = 1578,
-  res = 350
+# Step 5.2.2 --  Define the function to plot and save Out of Box error by the number of trees
+save_rf_oob_plot(
+  rf_model   = rf_model,
+  plots_path = plots_path,
+  tiles      = tiles,
+  no.years   = no.years,
+  start_date = start_date,
+  end_date   = end_date,
+  var        = var,
+  width      = 1600,   # width in pixels
+  height     = 1000,   # height in pixels
+  res        = 200,    # DPI
+  scale = 1.5          # increases all elements proportionally  
 )
-
-# Step 5.2.3 -- Plot the Out of Box error by the number of trees
-matplot(rf_model2$err.rate, 
-        type = "l", lty = 1, lwd = 2,
-        col = my_colors,           
-        main = "Out of Box error by the number of trees",
-        xlab = "Number of Trees (ntree)", 
-        ylab = "Out of Box Error")
-
-# Step 5.2.4 -- Adding legend to plot
-legend("topright", 
-       legend = names(my_colors), 
-       col = my_colors, 
-       lty = 1,      
-       cex = 1,    
-       bty = "n")
-dev.off()
