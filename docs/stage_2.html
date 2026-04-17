@@ -471,7 +471,7 @@ fetch(url)
   .then(res => res.text())
   .then(data => {
     const lines = data.split("\n");
-    const snippet = lines.slice(13, 186).join("\n");
+    const snippet = lines.slice(12, 186).join("\n");
     const el = document.getElementById("code-step2");
     el.textContent = snippet; // ← era "data", corrigido para "snippet"
     hljs.highlightElement(el);

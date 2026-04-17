@@ -372,7 +372,19 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 [data-theme="dark"] .lib-table th{background:#161b22;border-color:var(--border)}
 [data-theme="dark"] .lib-table td{border-color:var(--border)}
 
-  </style>
+/* ── Zoom to references ── */
+.reference {
+  transition: all 0.3s ease;
+  padding: 5px;
+  border-radius: 6px;
+}
+.reference:target {
+  transform: scale(1.03);
+  background-color: #fff8c4;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+</style>
   
 </head>
 <body>
@@ -451,17 +463,36 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <div class="page-header">
     <div class="page-eyebrow">Stage 1</div>
     <h1 class="page-title">Linear Spectral Mixture Model</h1>
-    <p class="page-subtitle">Decompose pixels into Soil, Vegetation, and Water fraction bands</p>
+    <p class="page-subtitle">Decompose pixels into Soil, Vegetation, and Dark fraction bands</p>
   </div>
 
-  <p><code>sits_mixture_model()</code> (SITS Book, Ch. 9) decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> 
-      — <strong>Soil, Vegetation, and Water</strong> — using Non-Negative Least Squares (NNLS). 
-        Band values are taken from Small &amp; Sousa (2022) for Sentinel-2 MSI. The resulting fraction bands enrich the feature space used for segmentation and classification, 
+  <p><code>sits_mixture_model()</code> decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> 
+      — <strong>Soil, Vegetation, and Dark (SVD)</strong> — using Non-Negative Least Squares (NNLS) <a href="#ref2" id="cite2">[2]</a> . 
+        Band values are taken from Small &amp; Sousa <a href="#ref3" id="cite3">[3]</a> for Sentinel-2 MSI. The resulting fraction bands enrich the feature space used for segmentation and classification, 
           improving separability in mixed and transitional land cover zones common in the Amazon.</p>
 
-  <div class="io-grid">
+  <p>In Fig. <a href="#fig-svd">1.1</a> the graph is composed, in X, by digital numbers (DNs) referring to an orbital image generated in the red spectral 
+    range and, in Y, the DNs generated in the near-infrared spectral range. For these two
+      spectral bands and considering the spectral properties of the main natural resources 
+        (SVD), the expected responses of these resources in this scatter
+          plot would be the pixels occupied by water and/or shadow positioned closer to the
+            origin of the graph, the pixels occupied by exposed soil positioned more distant to the origin as X as well Y, and, finally, the pixels occupied by green vegetation positioned next to Y, 
+              but far from X</p>
+
+<figure id="fig-svd" style="text-align: center;">
+  <figcaption style="margin-bottom: 6px;">
+    <strong>Figure 1.1:</strong>
+    Scatter plot between red and near-infrared spectral bands showing SVD responses.
+  </figcaption>
+  <img src="figures/svd.png" style="max-width:250px;">
+  <figcaption style="margin-top: 6px; font-size: 0.9em;">
+    Source: Small &amp; Sousa (2022).
+  </figcaption>
+</figure>
+
+<div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val"><code>SENTINEL-2-16D</code> cube<br>Tiles: 012014, 012015, 013014, 013015<br>Period: 2024-08-01 → 2025-07-31</div></div>
-    <div class="io-box"><div class="io-label">Output</div><div class="io-val">LSMM cube → <code>data/raw/mixture_model/</code><br>Fraction bands: <code>SOIL</code>, <code>VEG</code>, <code>WATER</code></div></div>
+    <div class="io-box"><div class="io-label">Output</div><div class="io-val">LSMM cube → <code>data/raw/mixture_model/</code><br>Fraction bands: <code>SOIL</code>, <code>VEG</code>, <code>DARK</code></div></div>
   </div>
 
 <pre><code id="code-step1" class="language-r"></code></pre>
@@ -471,7 +502,7 @@ fetch(url)
   .then(res => res.text())
   .then(data => {
     const lines = data.split("\n");
-    const snippet = lines.slice(12, 51).join("\n"); 
+    const snippet = lines.slice(11, 51).join("\n"); 
     const el = document.getElementById("code-step1");
     el.textContent = snippet;
     hljs.highlightElement(el);
@@ -484,13 +515,17 @@ fetch(url)
   </div>
 
 <!-- ═══ REFERENCES ════════════════════════════════════════════════════════ -->
-<section id="references" class="section">
+<section id="references_s1" class="section">
   <div class="page-header">
     <h1 class="page-title">References</h1>
   </div>
   <div style="font-family:var(--sans);font-size:.9rem;line-height:1.9">
-    <p><strong>Shimabukuro, Y. E., Dutra, A. C., &amp; Arai, E.</strong> (2020). Modelo Linear de Mistura Espectral: Conceitos Teóricos, Algoritmos e Aplicações em Estudos na Amazônia Legal. <em>Revista Brasileira de Cartografia, 72</em>, 1140–1169. <a href="https://doi.org/10.14393/rbcv72nespecial50anos-56559" target="_blank">doi:10.14393/rbcv72nespecial50anos-56559</a></p>
-    <p><strong>Small, C., &amp; Sousa, D.</strong> (2022). The Sentinel-2 MSI Spectral Mixing Space. <em>Remote Sensing, 14 </em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></p>
+    <div id="ref1"><a href="#cite1">[1] </a>Shimabukuro, Y. E., Dutra, A. C., &amp; Arai, E.</strong> (2020). Modelo Linear de Mistura Espectral: Conceitos Teóricos, Algoritmos e Aplicações em Estudos na Amazônia Legal. 
+      <em>Revista Brasileira de Cartografia, 72</em>, 1140–1169. <a href="https://doi.org/10.14393/rbcv72nespecial50anos-56559" target="_blank">doi:10.14393/rbcv72nespecial50anos-56559</a></div>
+    <div id="ref2"><a href="#cite2">[2] </a>Simões, R., Câmara, G., Queiroz, G., Souza, F., Andrade, P., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021).
+      Satellite Image Time Series Analysis for Big Earth Observation Data.<em> Remote Sensing, 13</em> (13), 2428.</div>
+    <div id="ref3"><a href="#cite3">[3] </a>Small, C., &amp; Sousa, D. (2022). The Sentinel-2 MSI Spectral Mixing Space. 
+      <em>Remote Sensing, 14 </em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></div>
 </section>
 
   <div class="page-nav">
@@ -505,8 +540,8 @@ fetch(url)
 <!-- ── TOC ── -->
 <aside class="toc">
   <div class="toc-label">On this page</div>
-  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
-  <a class="toc-link" href="#references">References</a>
+  <a class="toc-link" href="#step1"></a>
+  <a class="toc-link" href="#references_s1">References</a>
 </aside>
 </div><!-- .layout -->
 

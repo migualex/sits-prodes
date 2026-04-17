@@ -386,8 +386,17 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 [data-theme="dark"] .lib-table th{background:#161b22;border-color:var(--border)}
 [data-theme="dark"] .lib-table td{border-color:var(--border)}
 
-  </style>
-  
+.lib-table td:first-child,
+.lib-table th:first-child {
+  text-align: center;
+}
+.lib-table td,
+.lib-table th {
+  vertical-align: middle;
+}
+
+</style>
+
 </head>
 <body>
 
@@ -491,19 +500,33 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <table class="lib-table">
     <thead><tr><th>Classes</th><th>Image features</th><th>Temporal behavior</th></tr></thead>
     <tbody>
-      <tr><td>Wetland</td><td>.</td><td>.</td></tr>
-      <tr><td>Water</td><td>.</td><td>.</td></tr>
-      <tr><td>Forest</td><td>.</td><td>.</td></tr>
-      <tr><td>Transition_Forest</td><td>.</td><td>.</td></tr>
-      <tr><td>Non_Forest_Natural_Vegetation</td><td>.</td><td>.</td></tr>
-      <tr><td>Degradation</td><td>.</td><td>.</td></tr>
-      <tr><td>Degradation_Fire</td><td>.</td><td>.</td></tr>
-      <tr><td>Clear_Cut_Bare_Soil</td><td>.</td><td>.</td></tr>
-      <tr><td>Clear_Cut_Vegetation</td><td>.</td><td>.</td></tr>
-      <tr><td>Clear_Cut_Burned_Area</td><td>.</td><td>.</td></tr>
-      <tr><td>Clear_Cut_Trees</td><td>.</td><td>.</td></tr>
-      <tr><td>Previous_Clear_Cut_Bare_Soil</td><td>.</td><td>.</td></tr>
-      <tr><td>Previous_Clear_Cut_Vegetation</td><td>.</td><td>.</td></tr>
+      <tr><td>Wetland</td><td><img src="figures/wetland.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Water</td><td><img src="figures/water.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Forest</td><td><img src="figures/forest.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Transition_Forest</td><td><img src="figures/transitional.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Non_Forest_Natural_Vegetation</td><td><img src="figures/non-forest.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Degradation</td><td><img src="figures/degradation.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Degradation_Fire</td><td><img src="figures/fire_degradation.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Clear_Cut_Bare_Soil</td><td><img src="figures/bare_soil.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Clear_Cut_Vegetation</td><td><img src="figures/cut_veg.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Clear_Cut_Burned_Area</td><td><img src="figures/burned_area.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Clear_Cut_Trees</td><td><img src="figures/cut_trees.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Previous_Clear_Cut_Bare_Soil</td><td><img src="figures/bare_soil.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Previous_Clear_Cut_Vegetation</td><td><img src="figures/cut_veg.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Lake</td><td><img src="figures/lake.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>River</td><td><img src="figures/river.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Ecotone</td><td><img src="figures/transitional_forest.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Herbaceous_Dry_High_Biomass</td><td><img src="figures/herbaceous_high_biomass.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Herbaceous_Dry_Low_Biomass</td><td><img src="figures/herbaceous_low_biomass.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Herbaceous_Dry_Post_Fire</td><td><img src="figures/herbaceous_post_fire.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Herbaceous_Wet</td><td><img src="figures/herbaceous_wet.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Woodland</td><td><img src="figures/woodland.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Palm_Swamps</td><td><img src="figures/palm_swamps.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Burn_Scar</td><td><img src="figures/burn_scar.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Previous_Burn_Scar</td><td><img src="figures/previous_burn_scar.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Clearing_For_Agriculture</td><td><img src="figures/clearing_for_agriculture.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Clearing_For_Reservoir</td><td><img src="figures/clearing_for_reservoir.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td>Clearing_For_Bare_Soil</td><td><img src="figures/clearing_for_bare_soil.png" style="max-width:150px;"></td><td>.</td></tr>
     </tbody>
   </table>
   
@@ -551,13 +574,13 @@ document.addEventListener("DOMContentLoaded", function () {
   loadCode(
     "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.1_time_series_sampling.R",
     "code-step3-1",
-    149,  // ← linha de início (0-based)
-    173   // ← linha de fim
+    115,  // ← linha de início (0-based)
+    166   // ← linha de fim
   );
   loadCode(
     "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.2_samples_quality_assessment.R",
     "code-step3-2",
-    96,   // ← linha de início
+    95,   // ← linha de início
     322  // ← linha de fim
   );
 });
