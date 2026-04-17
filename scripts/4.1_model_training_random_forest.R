@@ -98,12 +98,6 @@ cube <- sits_cube(
 cube_dates <- sits_timeline(cube)
 no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
-# Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
-tiles_train <- paste(cube$tile, collapse = "-")
-
-# 2.4 Create output directory per var
-var_dir <- file.path(plots_path, var)
-
 
 # ============================================================
 # 3. Cross-validation of training data
@@ -149,26 +143,100 @@ rf_model <- sits_train(
 )
 
 # Step 4.3 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles_train, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
 print("Model trained successfully!")
 
 # ============================================================
 # 5. Plotting Section
 # ============================================================
 
-# Step 5.1.1 -- Plot the most important variables of the model
-plot(rf_model)
+# Step 5.1.1 -- Define the function to plot and save the most important variables of the model
+save_rf_model_plot <- function(
+  rf_model,
+  plots_path,
+  tiles,
+  no.years,
+  start_date,
+  end_date,
+  var,
+  width  = 1200,
+  height = 800,
+  res    = 150
+  scale  = 1
+) {
+  
+  # Step 1 -- Extract variable importance from the model
+  importance_df <- as.data.frame(
+    randomForest::importance(rf_model$model)
+  )
+  importance_df$feature <- rownames(importance_df)
+  rownames(importance_df) <- NULL
+  
+  # Rename the importance column to a fixed name for easy reference
+  colnames(importance_df)[1] <- "importance"
+  
+  importance_df <- importance_df[order(importance_df$importance, decreasing = TRUE), ]
+  importance_df$feature <- factor(importance_df$feature, levels = rev(importance_df$feature))
+  
+  # Step 2 -- Build ggplot
+  g <- ggplot2::ggplot(importance_df, ggplot2::aes(x = importance, y = feature)) +
+    ggplot2::geom_col(fill = "#2E86AB", width = 0.7) +
+    ggplot2::labs(
+      title    = "Random Forest – Variable Importance",
+      subtitle = paste0(paste(tiles, collapse = ", "), " | ", start_date, " to ", end_date),
+      x        = "Mean Decrease in Accuracy",
+      y        = NULL
+    ) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(
+      plot.title    = ggplot2::element_text(face = "bold", size = 13),
+      plot.subtitle = ggplot2::element_text(color = "gray40", size = 9),
+      panel.grid.major.y = ggplot2::element_blank(),
+      panel.grid.minor   = ggplot2::element_blank(),
+      axis.text.y        = ggplot2::element_text(size = 8)
+    )
+  
+  # Step 3 -- Build file name
+  tiles_str <- paste(tiles, collapse = "-")
+  file_name <- paste0(
+    "RF-minimal-tree-depth",
+    "_", tiles_str,
+    "_", no.years,
+    "_", start_date,
+    "_", end_date,
+    "_", var,
+    "_", format(Sys.Date(), "%Y-%m-%d"),
+    ".png"
+  )
+  
+  # Step 4 -- Save
+  dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
+  full_path <- file.path(plots_path, file_name)
+  
+  ggplot2::ggsave(full_path, plot = g, width = width, height = height,
+                  units = "px", dpi = res, scale = scale)
+  
+  message("Plot saved: ", full_path)
+  invisible(full_path)
+}
 
-# Step 5.1.2 -- Save the plot
-ggsave(
-  filename = paste0(process_version, "_", tiles_train,"_", no.years, var, "_minimal_tree_depth.png"),
-  path = var_dir,
-  scale = 1,
-  width = 3529,
-  height = 1578,
-  units = "px",
-  dpi = 350,
+# Step 5.1.2 -- Run the function to plot and save the most important variables of the model
+save_rf_model_plot(
+  rf_model   = rf_model,
+  plots_path = plots_path,
+  tiles      = tiles,
+  no.years   = no.years,
+  start_date = start_date,
+  end_date   = end_date,
+  var        = var,
+  width      = 1600,   # width in pixels
+  height     = 1000,   # height in pixels
+  res        = 200,    # DPI
+  scale = 1.5          # increases all elements proportionally  
 )
+
+
+
 
 # Step 5.2.1 --  Exports the model as an object for further exploration
 rf_model2 <- sits_model_export(rf_model)
@@ -177,7 +245,7 @@ rf_model2 <- sits_model_export(rf_model)
 png(
   filename = file.path(
     var_dir,
-    paste0(process_version, "_", tiles_train, "_", no.years, var, "_oob_ntree_mde.png")
+    paste0(process_version, "_", tiles, "_", no.years, var, "_oob_ntree_mde.png")
   ),
   width = 3529,
   height = 1578,
