@@ -165,18 +165,92 @@ sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units 
 sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_get_data_time / 3600), as.integer((sits_get_data_time %% 3600) / 60))
 print("Time series extracted successfully!")
 
-# Step 4.2.1 -- Visualize the temporal patterns of all features
-plot(sits_patterns(samples))
-
-# Step 4.2.2 -- Visualize the temporal patterns of specific features in a specific period
-samples |> 
-  sits_select(bands = c("NDVI","B04","B08","B11"), start_date = '2024-08-12', end_date = '2025-07-28') |> 
-  sits_patterns() |> 
-  plot()
-
-# Step 4.3 -- Save the samples Time Series to a R file
+# Step 4.2 -- Save the samples Time Series to a R file
 saveRDS(samples, 
         paste0(rds_path,"time_series/samples_", 
                length(cube$tile),"-tiles-", tiles_train, "_", 
                no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", 
                var, "_", process_version, ".rds"))
+
+# ============================================================
+# 5. Plotting Time Series Patterns
+# ============================================================
+
+# Step 5.1 -- Define function to visualize and save the plot of the time-spectral patterns of all features
+save_sits_patterns_plot <- function(samples,
+                                    start_date,
+                                    end_date,
+                                    plots_path,
+                                    tiles,
+                                    var,
+                                    labels = NULL,
+                                    bands  = NULL,
+                                    width  = 1200,
+                                    height = 800,
+                                    res    = 150) {
+
+  # Aplica filtro apenas se informado
+  s <- samples
+  if (!is.null(labels)) s <- sits_select(s, labels = labels)
+  if (!is.null(bands))  s <- sits_select(s, bands  = bands)
+
+  # Calcula o padrão uma vez só
+  p <- sits_patterns(s)
+
+  # Plota na tela
+  plot(p)
+
+  # Monta sufixo com base nos filtros
+  suffix <- ""
+
+  if (!is.null(labels) && length(labels) == 1) {
+    # 1 label: usa o nome do label + bandas (se houver)
+    suffix <- paste0("_", labels[1])
+    if (!is.null(bands)) {
+      suffix <- paste0(suffix, "-", paste(tolower(bands), collapse = "-"))
+    }
+
+  } else if (!is.null(labels) || !is.null(bands)) {
+    # Mais de 1 label ou só bandas: conta labels + lista bandas
+    if (!is.null(labels)) {
+      suffix <- paste0("_", length(labels), "classes")
+    }
+    if (!is.null(bands)) {
+      suffix <- paste0(suffix, "-", paste(tolower(bands), collapse = "-"))
+    }
+  }
+
+  # Monta o nome do arquivo
+  tiles_str <- paste(tiles, collapse = "-")
+  file_name <- paste0("sits-patterns",
+                      "_tiles-", tiles_str,
+                      "_", start_date,
+                      "_", end_date,
+                      "_", var,
+                      suffix,
+                      ".png")
+
+  # Garante que a pasta existe
+  dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
+
+  # Salva no arquivo
+  full_path <- file.path(plots_path, file_name)
+  png(filename = full_path, width = width, height = height, res = res)
+    plot(p)
+  dev.off()
+
+  message("Plot salvo em: ", full_path)
+  invisible(full_path)
+}
+
+# Step 5.2 -- Run function to visualize and save the plot of the time-spectral patterns of all features
+save_sits_patterns_plot(
+  samples    = samples,
+  start_date = unique(samples$start_date),
+  end_date   = unique(samples$end_date),
+  plots_path = plots_path,
+  tiles      = tiles,
+  var        = var,
+  labels     = c("DESMAT_ARVORE_REMANESCE"), # NULL to plot and and save all classes
+  bands      = c("NDVI") # NULL to plot and and save all bands
+)
