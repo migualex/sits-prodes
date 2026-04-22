@@ -18,12 +18,10 @@ date_process  <- format(Sys.Date(), "%Y-%m-%d")
 # 1. Load Data Cubes (Spectral Bands + Mixture Model Fractions)
 # ============================================================
 
-# Step 1.1 -- Define temporal range and tile ID
 start_date <- '2025-07-01'
 end_date   <- '2025-07-31'
-tiles      <- '016003'
+tiles      <- '014002'
 
-# Load Sentinel-2 spectral bands cube
 cube <- sits_cube(
   source     = "BDC",
   collection = "SENTINEL-2-16D",
@@ -35,7 +33,6 @@ cube <- sits_cube(
   progress   = TRUE
 )
 
-# Step 1.2 -- Load mixture model fraction cube (SOIL, VEG, WATER)
 mm_cube <- sits_cube(
   source     = "BDC",
   collection = "SENTINEL-2-16D",
@@ -47,20 +44,17 @@ mm_cube <- sits_cube(
   progress   = TRUE
 )
 
-# Merge spectral bands with fraction data into a single cube
 mm_cube_fraction <- sits_merge(mm_cube, cube)
 
 # ============================================================
-# 2. Image Segmentation (SNIC Algorithm)
+# 2. Image Segmentation
 # ============================================================
 
-# Define SNIC segmentation parameters
 grid_seeding <- "rectangular"
 spacing      <- 10
 compactness  <- 0.3
 padding      <- 0
 
-# Step 2.1 -- Build a version string for output files
 version <- paste0(
   "LSMM-SNIC-spac", spacing,
   "-comp", gsub("[.]", "", as.character(compactness)),
@@ -69,7 +63,6 @@ version <- paste0(
   "-", date_process
 )
 
-# Step 2.2 -- Run segmentation on the merged cube
 mm_cube_segments <- sits_segment(
   cube      = mm_cube_fraction,
   seg_fn    = sits_snic(
@@ -88,7 +81,6 @@ mm_cube_segments <- sits_segment(
 # 3. Helper Functions
 # ============================================================
 
-# Step 3.1 -- Compute bounding box area (km²)
 calculate_bbox_area <- function(cube) {
   width    <- as.numeric(cube$xmax[[1]] - cube$xmin[[1]])
   height   <- as.numeric(cube$ymax[[1]] - cube$ymin[[1]])
@@ -96,8 +88,6 @@ calculate_bbox_area <- function(cube) {
   return(round(area_km2))
 }
 
-# Step 3.2 -- Retrieve the most recent .gpkg file for a given tile
-# Only matches exact tile ID (ignores subdirectories)
 get_latest_segment_file <- function(segments_path, tile_number) {
   seg_files <- list.files(
     segments_path,
@@ -111,7 +101,6 @@ get_latest_segment_file <- function(segments_path, tile_number) {
   seg_files[order(file.mtime(seg_files), decreasing = TRUE)][1]
 }
 
-# Step 3.3 -- Compute total segmented area (km²) from a .gpkg file
 calculate_segments_area <- function(seg_file) {
   if (is.null(seg_file) || !file.exists(seg_file)) return(0)
   
@@ -134,26 +123,55 @@ calculate_segments_area <- function(seg_file) {
 # 4. Iterative Loop to Expand Temporal Coverage
 # ============================================================
 
-# Step 4.1 -- Define fixed end date and initialize loop start date
 end_date_fixed   <- as.Date("2025-07-28")
 start_date_month <- as.Date(start_date, "%Y-%m-%d")
 
-# Keeps track of the previous segmentation file
+# ============================================================
+# CLEAN BEFORE LOOP START
+# ============================================================
+
+seg_files_init <- list.files(
+  segments_path,
+  pattern = paste0("_", tiles, "_.*\\.gpkg$"),
+  full.names = TRUE,
+  recursive = FALSE
+)
+
+if (length(seg_files_init) > 0) {
+  file.remove(seg_files_init)
+  cat("Initial segmentation files removed before loop.\n")
+}
+
+# ============================================================
+# FIXED BBOX AREA (computed once)
+# ============================================================
+
+bbox_area <- calculate_bbox_area(cube)
+cat(sprintf("BBOX area (fixed): %d km2\n", bbox_area))
+
 prev_seg_file <- NULL
 
-while (TRUE) {
+# ============================================================
+# LOOP SAFETY LIMIT
+# ============================================================
+
+max_iter <- 5
+iter <- 0
+
+while (iter < max_iter) {
   
-  # Step 4.2 -- Compute and display bounding box area
-  bbox_area <- calculate_bbox_area(cube)
+  iter <- iter + 1
+  
+  cat(sprintf("\nIteration %d / %d\n", iter, max_iter))
+  
   cat(sprintf("Period    : %s to %s\n", start_date_month, end_date_fixed))
   cat(sprintf("BBOX area : %d km2\n", bbox_area))
   
-  # Step 4.3 -- Move start date one month backward
   start_date_month <- floor_date(start_date_month - days(1), "month")
+  
   cat(sprintf("Processing period: %s to %s\n",
               start_date_month, end_date_fixed))
   
-  # Step 4.4 -- Reload cubes for the updated time range
   new_cube <- sits_cube(
     source     = "BDC",
     collection = "SENTINEL-2-16D",
@@ -178,7 +196,6 @@ while (TRUE) {
   
   mm_cube_fraction <- sits_merge(mm_cube, new_cube)
   
-  # Step 4.5 -- Rebuild version tag and run segmentation
   version <- paste0(
     "LSMM-SNIC-spac", spacing,
     "-comp", gsub("[.]", "", as.character(compactness)),
@@ -187,7 +204,7 @@ while (TRUE) {
     "-", date_process
   )
   
-  mm_cube_segments <- sits_segment(
+  sits_segment(
     cube      = mm_cube_fraction,
     seg_fn    = sits_snic(
       grid_seeding = grid_seeding,
@@ -201,18 +218,15 @@ while (TRUE) {
     version    = version
   )
   
-  # Step 4.6 -- Get the latest segmentation file for the tile
   new_seg_file <- get_latest_segment_file(segments_path, tiles)
   
   if (is.null(new_seg_file)) {
-    cat("Warning: no segment file found for tile", tiles,
-        "after segmentation. Skipping iteration.\n")
-    next
+    cat("Warning: no segment file found. Stopping.\n")
+    break
   }
   
   cat(sprintf("Generated file: %s\n", basename(new_seg_file)))
   
-  # Step 4.7 -- Remove previous file once a new one is confirmed
   if (!is.null(prev_seg_file) &&
       file.exists(prev_seg_file) &&
       normalizePath(prev_seg_file) != normalizePath(new_seg_file)) {
@@ -220,11 +234,9 @@ while (TRUE) {
     cat(sprintf("Removed previous file: %s\n", basename(prev_seg_file)))
   }
   
-  # Step 4.8 -- Compute segmented area
   total_segment_area <- calculate_segments_area(new_seg_file)
   cat(sprintf("Segments area: %d km2\n", total_segment_area))
   
-  # Step 4.9 -- Stop when full coverage is achieved
   if (bbox_area <= total_segment_area) {
     if (!is.null(prev_seg_file) && file.exists(prev_seg_file)) {
       file.remove(prev_seg_file)
@@ -235,7 +247,10 @@ while (TRUE) {
     break
   }
   
-  # Step 4.10 -- Store current file for next iteration cleanup
   prev_seg_file <- new_seg_file
+}
+
+if (iter >= max_iter && bbox_area > total_segment_area) {
+  cat("Max iterations reached (5) without full coverage. Processing stopped.\n")
 }
 print("Segmentation complete.")
