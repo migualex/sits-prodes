@@ -372,7 +372,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 [data-theme="dark"] .lib-table th{background:#161b22;border-color:var(--border)}
 [data-theme="dark"] .lib-table td{border-color:var(--border)}
 
-  </style>
+</style>
   
 </head>
 <body>
@@ -471,7 +471,7 @@ fetch(url)
   .then(res => res.text())
   .then(data => {
     const lines = data.split("\n");
-    const snippet = lines.slice(12, 186).join("\n");
+    const snippet = lines.slice(16, 78).join("\n");
     const el = document.getElementById("code-step2");
     el.textContent = snippet; // ← era "data", corrigido para "snippet"
     hljs.highlightElement(el);
@@ -504,7 +504,6 @@ fetch(url)
 <!-- ── TOC ── -->
 <aside class="toc">
   <div class="toc-label">On this page</div>
-  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
   <a class="toc-link" href="#references">References</a>
 </aside>
 </div><!-- .layout -->

@@ -477,12 +477,14 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     <p class="page-subtitle">Sampling Land Use and Land Cover classes</p>
   </div>
 
-  <p>Training samples are loaded from <code>amostras_amazonia_24_02_2026.gpkg</code>. Time series are extracted at <code>n_sam_pol = 16</code> internal points per polygon with <code>pol_avg = FALSE</code> (individual points, not the polygon mean), maximising within-class spectral variability. Quality control uses SOM with DTW distance, which is more robust to temporal distortions than Euclidean distance for time series comparison.</p>
-
-  <p>Thresholds are stricter than defaults: <code>prior ≥ 0.80</code> and <code>posterior ≥ 0.70</code>. The rare class <code>DESMAT_DEGRAD_FOGO</code> is always retained regardless of SOM score to prevent it from being eliminated by strict filtering. Imbalance reduction targets 300–500 samples per class.</p>
+  <p>Training samples are loaded from <code>amostras_amazonia_24_02_2026.gpkg</code>. Time series are extracted at <code>n_sam_pol = 16</code> internal points per polygon with <code>pol_avg = FALSE</code> (individual points, not the polygon mean), maximising within-class spectral variability. 
+      Quality control uses SOM with DTW distance, which is more robust to temporal distortions than Euclidean distance for time series comparison.</p>
+  <p>Thresholds are stricter than defaults: <code>prior ≥ 0.80</code> and <code>posterior ≥ 0.70</code>. 
+      The rare class <code>DESMAT_DEGRAD_FOGO</code> is always retained regardless of SOM score to prevent it from being eliminated by strict filtering. 
+        Imbalance reduction targets 300–500 samples per class.</p>
 
   <div class="io-grid">
-    <div class="io-box"><div class="io-label">Input</div><div class="io-val">Merged S2 + LSMM cube (4 tiles)<br>Training polygons: <code>amostras_amazonia_24_02_2026.gpkg</code></div></div>
+    <div class="io-box"><div class="io-label">Input</div><div class="io-val">Merged S2 + LSMM cube<br>Training polygons: <code>amostras_amazonia_24_02_2026.gpkg</code></div></div>
     <div class="io-box"><div class="io-label">Output</div><div class="io-val">Cleaned & balanced TS → <code>data/rds/time_series/</code><br>SOM maps & QA plots → <code>data/rds/som/</code> + <code>data/plots/</code></div></div>
   </div>
 
@@ -514,7 +516,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
       <tr><td><b>Wetland</b></td><td style="text-align:center;"><img src="figures/wetland.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Water</b></td><td style="text-align:center;"><img src="figures/water.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Forest</b></td><td style="text-align:center;"><img src="figures/forest.png" style="max-width:150px;"></td><td>.</td></tr>
-      <tr><td><b>Forest Transition</b></td><td style="text-align:center;"><img src="figures/transitional.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td><b>Forest<br>Transition</b></td><td style="text-align:center;"><img src="figures/transitional.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Natural Non-Forest<br>Vegetation</b></td><td style="text-align:center;"><img src="figures/non-forest.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Degradation</b></td><td style="text-align:center;"><img src="figures/degradation.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Fire Degradation</b></td><td style="text-align:center;"><img src="figures/fire_degradation.png" style="max-width:150px;"></td><td>.</td></tr>
@@ -548,11 +550,11 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
       <tr><td><b>High-Biomass Dry<br>Herbaceous Vegetation</b></td><td style="text-align:center;"><img src="figures/herbaceous_high_biomass.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Low-Biomass Dry<br>Herbaceous Vegetation</b></td><td style="text-align:center;"><img src="figures/herbaceous_low_biomass.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Post-Fire<br>Herbaceous Vegetation</b></td><td style="text-align:center;"><img src="figures/herbaceous_post_fire.png" style="max-width:150px;"></td><td>.</td></tr>
-      <tr><td><b>Wet Herbaceous Vegetation</b></td><td style="text-align:center;"><img src="figures/herbaceous_wet.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td><b>Wet Herbaceous<br>Vegetation</b></td><td style="text-align:center;"><img src="figures/herbaceous_wet.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Woodland</b></td><td style="text-align:center;"><img src="figures/woodland.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Palm Swamps</b></td><td style="text-align:center;"><img src="figures/palm_swamps.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Burn Scar</b></td><td style="text-align:center;"><img src="figures/burn_scar.png" style="max-width:150px;"></td><td>.</td></tr>
-      <tr><td><b>Previously Burned Area</b></td><td style="text-align:center;"><img src="figures/previous_burn_scar.png" style="max-width:150px;"></td><td>.</td></tr>
+      <tr><td><b>Previously<br>Burned Area</b></td><td style="text-align:center;"><img src="figures/previous_burn_scar.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Agricultural Clearing</b></td><td style="text-align:center;"><img src="figures/clearing_for_agriculture.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Reservoir Clearing</b></td><td style="text-align:center;"><img src="figures/clearing_for_reservoir.png" style="max-width:150px;"></td><td>.</td></tr>
       <tr><td><b>Bare Soil Clearing</b></td><td style="text-align:center;"><img src="figures/clearing_for_bare_soil.png" style="max-width:150px;"></td><td>.</td></tr>
@@ -603,7 +605,7 @@ document.addEventListener("DOMContentLoaded", function () {
     "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.1_time_series_sampling.R",
     "code-step3-1",
     113,  // ← linha de início (0-based)
-    166   // ← linha de fim
+    164   // ← linha de fim
   );
   loadCode(
     "https://raw.githubusercontent.com/migualex/sits-prodes/refs/heads/main/scripts/3.2_samples_quality_assessment.R",
@@ -640,7 +642,6 @@ document.addEventListener("DOMContentLoaded", function () {
 <!-- ── TOC ── -->
 <aside class="toc">
   <div class="toc-label">On this page</div>
-  <a class="toc-link" href="#step1">Simple non-iterative clustering (SNIC)</a>
   <a class="toc-link" href="#references">References</a>
 </aside>
 </div><!-- .layout -->
