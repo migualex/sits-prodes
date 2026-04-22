@@ -63,7 +63,7 @@ read_class_config <- function(config_file = "class_config.txt") {
 
 # Step 1.3 -- Define the paths for files and folders
 sample_path   <- "data/raw/samples" #add the sample file to the path
-ts_path      <- "data/rds/time_series"
+ts_path      <- "data/rds/time_series/"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 config_dir    <- "../scripts"
@@ -73,8 +73,9 @@ start_date   <- "2024-08-01"
 end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
-# Step 1.5 -- Identifier to distinguish this model run from previous versions
-var <- "all_samples_new_pol_avg_false"
+# Step 1.5 -- Identifier to distinguish this model run
+var <- "all-samples-new-pol-avg-false" #ALWAYS SPACE THE WORDS WITH "-"
+sampling_date   <- "2026-02-24"       # Date of the sampling file (YYYY-MM-DD)
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -91,11 +92,10 @@ cube <- sits_cube(
   progress    = TRUE)
 
 # Step 2.2 -- Calculate the number of years in the training cube
-cube_dates <- sits_timeline(cube)
 no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
 # Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
-tiles_train <- paste(cube$tile, collapse = "-")
+tiles_train <- paste(sort(tiles), collapse = "-")
 
 # Step 2.4 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
@@ -116,9 +116,7 @@ cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 # ============================================================
 
 # Step 3.1 -- Read training samples (rewrite the name of your samples file)
-sampling_date   <- "2026-02-24"                           # Date of the sampling file (YYYY-MM-DD)
-tiles_str       <- paste(sort(tiles), collapse = "-")     # Tile IDs string
-samples_name    <- paste("training-samples-", tiles_str, var, sampling_date, sep = "-")
+samples_name    <- paste("training-samples", tiles_train, var, sampling_date, sep = "-")
 samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
 
 # Step 3.2 -- Load class translation from external config file
@@ -150,17 +148,21 @@ samples <- sits_get_data(
   progress    = TRUE)
 sits_get_data_end <- Sys.time()
 sits_get_data_time <- as.numeric(sits_get_data_end - sits_get_data_start, units = "secs")
-sprintf("SITS get data process duration (HH:MM): %02d:%02d", as.integer(sits_get_data_time / 3600), as.integer((sits_get_data_time %% 3600) / 60))
+sprintf("SITS get data process duration (HH:MM): %02d:%02d",
+        as.integer(sits_get_data_time / 3600),
+        as.integer((sits_get_data_time %% 3600) / 60))
 print("Time series extracted successfully!")
 
 # Step 4.2 -- Save the samples Time Series to a R file
 saveRDS(samples, 
         paste0(ts_path,
-               "TS_tiles-", tiles_train, "_", 
-               no.years, "_period-", cube_dates[1], "_", cube_dates[length(cube_dates)], "_", 
-               var, "_",
-               format(Sys.Date(), "%Y-%m-%d_"), format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo"),
-               ".rds"))
+               paste("TS-tiles", tiles_train,
+                     no.years, start_date,
+                     end_date, var, format(Sys.Date(), "%Y-%m-%d"), 
+                     format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo"),
+                     sep = "_"),
+               ".rds")
+        )
 
 # ============================================================
 # 5. Plotting Time Series Patterns

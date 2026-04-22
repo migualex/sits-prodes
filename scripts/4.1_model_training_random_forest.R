@@ -66,7 +66,7 @@ time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # Step 1.4 -- Define the paths for files and folders needed in the processing
-time_series_name  <- "samples_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-24_20h01m.rds"
+time_series_name  <- "TS-tiles_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-22_10h46m.rds"
 time_series_path  <- file.path("data/rds/time_series/", time_series_name)
 rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
@@ -78,7 +78,7 @@ end_date     <- "2025-07-31"
 tiles        <- c("012014","012015","013014","013015")
 
 # Step 1.6 -- Identifier to distinguish this model run from previous versions
-var <- "all_samples_new_pol_avg_false"
+var <- stringr::str_split_i(time_series_name, "_", 6)
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -95,8 +95,9 @@ cube <- sits_cube(
   progress    = TRUE)
 
 # Step 2.2 -- Calculate the number of years in the training cube
-cube_dates <- sits_timeline(cube)
 no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
+tiles_train <- paste(sort(tiles), collapse = "-")
+no.cubes <- paste0(length(cube$tile), "t")
 
 # ============================================================
 # 3. Cross-validation of training data
@@ -120,7 +121,9 @@ rfor_validate <- sits_kfold_validate(
   progress = TRUE) # adapt to your computer CPU core availability
 sits_kfold_validate_end <- Sys.time()
 sits_kfold_validate_time <- as.numeric(sits_kfold_validate_end - sits_kfold_validate_start, units = "secs")
-sprintf("SITS kfold_validate process duration (HH:MM): %02d:%02d", as.integer(sits_kfold_validate_time / 3600), as.integer((sits_kfold_validate_time %% 3600) / 60))
+sprintf("SITS kfold_validate process duration (HH:MM): %02d:%02d", 
+        s.integer(sits_kfold_validate_time / 3600),
+        as.integer((sits_kfold_validate_time %% 3600) / 60))
 
 # Step 3.3.1 -- Plot the confusion matrix
 plot(rfor_validate, type = "confusion_matrix")
@@ -142,7 +145,15 @@ rf_model <- sits_train(
 )
 
 # Step 4.3 -- Save the ML model to a R file
-saveRDS(rf_model,paste0(rds_path, "model/random_forest/", "RF-model_", length(cube$tile),"-tiles-", tiles, "_", no.years,"-period-",cube_dates[1],"_",cube_dates[length(cube_dates)], "_", var, "_", process_version, ".rds"))
+saveRDS(rf_model,
+        paste0(rds_path, "model/random_forest/",
+               paste("rf-model", no.cubes,
+                     tiles_train, no.years,
+                     start_date, end_date,
+                     var, process_version, sep = "_"),
+               ".rds")
+        )
+
 print("Model trained successfully!")
 
 # ============================================================
