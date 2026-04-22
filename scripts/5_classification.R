@@ -14,14 +14,14 @@ library(terra)
 library(RColorBrewer)
 
 # Step 1.2 -- Define the paths for files and folders needed in the processing
-models <- c("RF"   = "random_forest",
-            "XGB"  = "xgboost",
-            "LTAE" = "ltae",
-            "TCNN" = "temp_cnn",
-            "RNET" = "res_net",
-            "LSTM" = "ltsm")
+models <- c("rf"   = "random_forest",
+            "xgb"  = "xgboost",
+            "ltae" = "ltae",
+            "tcnn" = "temp_cnn",
+            "rnet" = "res_net",
+            "lstm" = "ltsm")
 
-model_name    <- "RF-model_4-tiles-012015-012014-013015-013014_1y-period-2024-07-27_2025-07-28_all_samples_new_pol_avg_false_2026-02-25_21h03m.rds"
+model_name    <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-15_12h01m.rds"
 model_type    <- stringr::str_split_i(model_name, "-", 1)
 model_path    <- file.path("data/rds/model", models[model_type], model_name)
 seg_version   <- "lsmm-snic-spac10-comp03-pad0-rectangular-date"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
@@ -35,7 +35,7 @@ end_date     <- "2025-07-31"
 tile         <- "012014"
 
 # Step 1.4 -- Identifier to distinguish this model run from previous versions
-var <- "all_samples_new_pol_avg_false"
+var <- stringr::str_split_i(model_name, "_", 7)
 
 # ============================================================
 # 2. Define and Load Data Cubes
@@ -164,7 +164,7 @@ compute_uncertainty_raster <- function(
     pattern   = "entropy.*\\.gpkg$",
     full.names = TRUE
   )
-  uncertainty_file <- uncertainty_files[which.max(file.info(uncertainty_file)$mtime)]
+  uncertainty_file <- uncertainty_files[which.max(file.info(uncertainty_files)$mtime)]
   
   # Step 3 -- Read the segment polygons file with entropy
   uncertainty_polygons <- terra::vect(uncertainty_file)
@@ -189,6 +189,9 @@ compute_uncertainty_raster <- function(
   )
   
   # Step 7 -- Save as .tif (UINT16, DEFLATE compressed)
+  tile_period_dir <- file.path(class_path, tile, "entropy")
+  dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
+  
   tif_path <- file.path(
     tile_period_dir,
     paste0(tools::file_path_sans_ext(basename(uncertainty_file)), ".tif")
@@ -216,7 +219,7 @@ compute_uncertainty_raster <- function(
 # Step 4.1 -- Run function to calculate entropy, rasterize and exclude .gpkg
 compute_uncertainty_raster(
   vector_cube     = vector_cube,
-  tile_period_dir = tile_period_dir,
+  tile_period_dir = class_path,
   version         = version,
   multicores      = 28, # adapt to your computer CPU core availability
   memsize         = 180, # adapt to your computer CPU core availability
