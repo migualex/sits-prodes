@@ -466,23 +466,47 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     <p class="page-subtitle">Decompose pixels into Soil, Vegetation, and Dark fraction bands</p>
   </div>
 
-  <p><code>sits_mixture_model()</code> decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> 
-      — <strong>Soil, Vegetation, and Dark (SVD)</strong> — using Non-Negative Least Squares (NNLS) <a href="#ref2" id="cite2">[2]</a>. 
-          The resulting fraction bands enrich the feature space used for segmentation and classification, improving separability in mixed and transitional land cover areas common in the Amazon.</p>
+  <p>
+  <code>sits_mixture_model()</code> decomposes each pixel's reflectance spectrum
+  into proportions of three pure spectral <em>endmembers</em> —
+  <strong>Soil, Vegetation, and Dark (SVD)</strong> — using Non-Negative Least
+  Squares (NNLS) <a href="#ref2" id="cite2">[2]</a>. The resulting fraction
+  bands enrich the feature space used for segmentation and classification,
+  improving separability in mixed and transitional land cover areas common in
+  the Amazon.
+</p>
 
-<p>The spectral <em>endmembers</em> used in this analysis were not collected directly from the imagery. Instead, we adopted the globally standardized endmembers proposed by Small &amp; Sousa <a href="#ref3" id="cite3">[3]</a>,
-    which provides a physically grounded and sensor-specific framework for spectral unmixing of Sentinel-2 MSI data. 
-    In that study, the authors assembled a composite spectral feature space from 110 image tiles collected from spectral diversity hotspots distributed worldwide, 
-    encompassing more than 13 billion individual spectra across a wide range of terrestrial biomes, land cover types, and climatic regions.
-    Their analysis demonstrated that the spectral mixing space of Sentinel-2 is effectively three-dimensional, with 99% of total spectral variance captured within three low-order principal component dimensions.<p>
+<p>
+  The spectral <em>endmembers</em> used in this analysis were not collected
+  directly from the imagery. Instead, we adopted the globally standardized
+  endmembers proposed by Small &amp; Sousa
+  <a href="#ref3" id="cite3">[3]</a>, which provides a physically grounded and
+  sensor-specific framework for spectral unmixing of Sentinel-2/MSI data. In
+  that study, the authors assembled a composite spectral feature space from 110
+  image tiles collected from spectral diversity hotspots distributed worldwide,
+  encompassing more than 13 billion individual spectra across a wide range of
+  terrestrial biomes, land cover types, and climatic regions. Their analysis
+  demonstrated that the spectral mixing space of Sentinel-2 is effectively
+  three-dimensional, with 99% of total spectral variance captured within three
+  low-order principal component dimensions.
+</p>
 
-<p>The geometry of this mixing space can be intuitively visualized through a two-dimensional scatterplot of pixel reflectances. Figure <a href="#fig-svd">1.1</a> illustrates the distribution of image pixels in a feature space defined by the Red (x-axis) and Near-Infrared (y-axis) spectral bands, expressed as digital numbers (DNs).
-   For these two
-      spectral bands and considering the spectral properties of the main natural resources 
-        (SVD), the expected responses of these resources in this scatter
-          plot would be the pixels occupied by water and/or shadow positioned closer to the
-            origin of the graph, the pixels occupied by exposed soil positioned more distant to the origin as X as well Y, and, finally, the pixels occupied by green vegetation positioned next to Y, 
-              but far from X.</p>
+<p>
+  The geometry of this mixing space can be intuitively understood through a
+  two-dimensional scatterplot of pixel reflectances. Figure
+  <a href="#fig-svd">1.1</a> illustrates the distribution of image pixels in a
+  feature space defined by the Red (x-axis) and Near-Infrared (y-axis) spectral
+  bands, expressed as digital numbers (DNs). Considering the spectral
+  properties of the three SVD endmembers, each surface type occupies a
+  characteristic region of this space: pixels dominated by
+  <strong>water or shadow</strong> cluster near the origin, reflecting low
+  energy in both bands; pixels dominated by <strong>exposed soil</strong>
+  scatter toward higher values along both axes; and pixels dominated by
+  <strong>green vegetation</strong> shift strongly toward the y-axis, owing to
+  the characteristically high NIR reflectance and low red reflectance produced
+  by chlorophyll absorption. Each of these regions corresponds directly to one
+  of the three fraction images described below.
+</p>
 
 <figure id="fig-svd" style="text-align: center;">
   <figcaption style="margin-bottom: 6px;">
@@ -522,8 +546,13 @@ fetch(url)
     <p>Band values are in BDC native scale (0–10.000). Values from Small &amp; Sousa (2022) were validated for the Sentinel-2 MSI spectral mixing space and are widely used for tropical land cover monitoring.</p>
   </div>
 
-<p>Then, the Soil fraction represents the proportion of each pixel occupied by exposed soil, sand, rock outcrops, or impervious surfaces such as roads and urban infrastructure (Figure <a href="#fig-soil">1.2</a>).
-    High values are typically associated with recently deforested areas, prepared agricultural land, bare soil between crop rows, or densely built environments.<p>
+<p>
+  The <strong>Soil fraction</strong> represents the proportion of each pixel
+  occupied by exposed soil, sand, rock outcrops, or impervious surfaces such as
+  roads and urban infrastructure (Figure <a href="#fig-soil">1.2</a>). High
+  values are typically associated with recently deforested areas, prepared
+  agricultural land, bare soil between crop rows, or densely built environments.
+</p>
 
 <figure id="fig-soil" style="text-align: center;">
   <figcaption style="margin-bottom: 6px;">
@@ -535,8 +564,14 @@ fetch(url)
   </figcaption>
 </figure>
   
-<p>The Vegetation fraction captures the proportion of each pixel covered by green, photosynthetically active vegetation. Elevated values indicate dense forest canopy, vigorous pastureland, or crops at peak growth stages (Figure <a href="#fig-veg">1.3</a>).
-    This fraction is particularly sensitive to vegetation health and canopy density, making it a valuable proxy for biomass and land cover monitoring.<p>
+<p>
+  The <strong>Vegetation fraction</strong> captures the proportion of each pixel
+  covered by green, photosynthetically active vegetation (Figure
+  <a href="#fig-veg">1.3</a>). Elevated values indicate dense forest canopy,
+  vigorous pastureland, or crops at peak growth stages. This fraction is
+  particularly sensitive to vegetation health and canopy density, making it a
+  valuable proxy for biomass and land cover monitoring.
+</p>
 
 <figure id="fig-veg" style="text-align: center;">
   <figcaption style="margin-bottom: 6px;">
@@ -548,8 +583,17 @@ fetch(url)
   </figcaption>
 </figure>
 
-<p>The Dark fraction encompasses surface elements that absorb most incoming solar radiation and reflect very little back to the sensor (Figure <a href="#fig-dark">1.4</a>).
-    It captures a diverse set of targets, including water bodies (rivers, lakes, and reservoirs), recently burned areas (charcoal and ash deposits), and shadows — whether cast by terrain relief (topographic shadows), cloud cover, or the tree canopies themselves within dense forest stands.<p>
+<p>
+  The <strong>Dark fraction</strong> encompasses surface elements that absorb
+  most incoming solar radiation and reflect very little back to the sensor
+  (Figure <a href="#fig-dark">1.4</a>). It captures a diverse set of targets,
+  including water bodies (rivers, lakes, and reservoirs), recently burned areas
+  (charcoal and ash deposits), and shadows — whether cast by terrain relief,
+  cloud cover, or tree canopies within dense forest stands. In the imagery used
+  here, where shadowing is minimal due to the predominantly flat terrain of the
+  study area, this fraction responds primarily to open water surfaces such as
+  rivers and lakes.
+</p>
 
 <figure id="fig-dark" style="text-align: center;">
   <figcaption style="margin-bottom: 6px;">
@@ -561,8 +605,17 @@ fetch(url)
   </figcaption>
 </figure>
 
-<p>By assigning the Soil, Vegetation, and Dark fractions to the Red, Green, and Blue channels, respectively, a false-color composite known as the SVD composition is produced (Figure <a href="#fig-svd">1.5</a>). This representation offers an intuitive and powerful visualization of landscape dynamics: forested areas appear in vivid green, exposed or degraded land in reddish tones, and water bodies or burned areas in dark blue to black. 
-    The SVD composite is widely used in deforestation monitoring, land use mapping, and change detection over Brazilian biomes.<p>
+<p>
+  Together, these three fractions can be combined into a single, expressive
+  visualization. By assigning the Soil, Vegetation, and Dark fractions to the
+  Red, Green, and Blue channels, respectively, a false-color composite known as
+  the <strong>SVD composition</strong> is produced (Figure
+  <a href="#fig-svd">1.5</a>). This representation offers an intuitive and
+  powerful summary of landscape dynamics: forested areas appear in vivid green,
+  exposed or degraded land in reddish tones, and water bodies or burned areas in
+  dark blue to black. The SVD composite is widely used in deforestation
+  monitoring, land use mapping, and change detection over Brazilian biomes.
+</p>
 
 <figure id="fig-svd" style="text-align: center;">
   <figcaption style="margin-bottom: 6px;">
