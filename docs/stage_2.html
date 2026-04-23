@@ -454,10 +454,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     <p class="page-subtitle">Partition the cube into spatially homogeneous objects</p>
   </div>
 
-  <p><code>sits_segment()</code> applies <strong>SNIC (Simple Non-Iterative Clustering)</strong> to the merged cube (LSMM fractions plus Sentinel-2 bands).
-      Three parameters control output: <code>spacing</code> (target segment radius in pixels), <code>compactness</code> (trade-off between spectral and spatial homogeneity), 
-        and <code>padding</code> (border pixel handling). The version string encodes all parameters automatically, ensuring reproducibility. 
-          Only one tile (<code>012014</code>) is processed per run; repeat for each tile.</p>
+  <p><code>sits_segment()</code> applies <strong>SNIC (Simple Non-Iterative Clustering)</strong> to the merged cube (LSMM fractions plus Sentinel-2 bands). Three parameters control the output: <code>spacing</code> (target segment radius in pixels), <code>compactness</code> (trade-off between spectral and spatial homogeneity), and <code>padding</code> (border pixel handling). The version string automatically encodes all parameters, ensuring reproducibility. Only one tile (<code>012014</code>) is processed per run; repeat the process for each tile.</p>
 
   <div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val">Merged cube<br>All bands and indices, plus SOIL, VEG, and WATER</div></div>
