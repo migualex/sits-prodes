@@ -2,11 +2,7 @@
 #  Stratification of Non-Forest validation samples
 # ============================================================
 
-# ============================================================
-# 1. Libraries, paths and some initial parameters
-# ============================================================
-
-# Step 1.1 -- Load Required Libraries
+# Load required libraries
 library(tibble)
 library(sits)
 library(terra)
@@ -17,24 +13,37 @@ library(fs)
 library(stringr)
 library(purrr)
 
-# Step 1.2 -- Define the date and time for the start of processing
-date_process <- format(Sys.Date(), "%Y-%m-%d_")
-time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
+# Define the parameters: These are user-defined variables
+model_name      <- "rf-model_2t_014002-015002_2y_2023-07-28_2025-07-28_com-nuvens-cheias_2026-04-07_14h45m.rds"
+
+# Date and time of the start of processing
+date_process    <- format(Sys.Date(), "%Y-%m-%d_")
+time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
-# Step 1.3 -- Define the paths for files and folders needed in the processing
-model_name       <- "RF-model_2-tiles-014002-015002_2y-period-2023-07-28_2025-07-28_nf-novos-segmentos_2026-03-05_08h56m.rds"
-model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
+# File and folder paths
+models <- c("rf"   = "random_forest",
+            "xgb"  = "xgboost",
+            "ltae" = "ltae",
+            "tcnn" = "temp_cnn",
+            "rnet" = "res_net",
+            "lstm" = "ltsm")
+model_type       <- stringr::str_split_i(model_name, "-", 1)
+model_path       <- file.path("data/rds/model", models[model_type], model_name)
+model            <- readRDS(model_path)
 class_dir        <- "data/class"
 samples_dir      <- "data/raw/samples/validation_samples"
-aux_dir          <- "data/raw/auxiliary"
-version          <- "rf-2y-novos-segmentos"
+aux_dir          <- "data/raw/auxiliary/masks"
+version          <- paste(stringr::str_split_i(model_name, "-", 1),
+                          stringr::str_split_i(model_name, "_", 4),
+                          stringr::str_split_i(model_name, "_", 7),
+                          sep = "-")
 
 # ============================================================
-# 2. Create raster file from classified vector map
+# 1. Create raster file from classified vector map
 # ============================================================
 
-# Step 2.1 -- Function to rasterize
+# Step 1.1 -- Function to rasterize
 sits_rasterize_segments <- function(file, res, class_raster_dir, style = NULL) {
   
   stopifnot(!is.null(res))
@@ -59,7 +68,6 @@ sits_rasterize_segments <- function(file, res, class_raster_dir, style = NULL) {
   file_sf <- sf::st_read(file, quiet = TRUE)
   
   if (is.null(style)) {
-    
     file_sf <- file_sf |>
       dplyr::mutate(
         class_num = .data[["class"]] |>
@@ -126,14 +134,14 @@ sits_rasterize_segments <- function(file, res, class_raster_dir, style = NULL) {
   return(output_file)
 }
 
-# Step 2.2 -- Style from ML model
+# Step 1.2 -- Style from ML model
 style <- tibble::tibble(
   name = sits_labels(model),
   index = 1:length(sits_labels(model)),
   color = pals::cols25(length(sits_labels(model)))
 )
 
-# Step 2.3 -- Rasterize classified vectors
+# Step 1.3 -- Rasterize classified vectors
 to_raster <- paste0(".*_class_", version, ".*\\.gpkg$")
 
 class_files <- list.files(
@@ -150,7 +158,7 @@ raster_files <- purrr::map(class_files, function(file) {
   tile_period_dir <- file.path(
     class_dir,
     tile_id,
-    "raster"
+    "accuracy"
   )
   
   fs::dir_create(tile_period_dir, recurse = TRUE)
@@ -163,10 +171,10 @@ raster_files <- purrr::map(class_files, function(file) {
 })
 
 # ============================================================
-# 3. SITS Cube
+# 2. SITS Cube
 # ============================================================
 
-# Step 3.1 -- Get labels associated to the trained model data set (Enumerate them in the order they appear according to "sits_labels(model)")
+# Step 2.1 -- Get labels associated to the trained model data set (Enumerate them in the order they appear according to "sits_labels(model)")
 cube_dirs <- list.dirs(class_dir, recursive = TRUE)
 
 cube_dirs <- cube_dirs[
@@ -176,54 +184,45 @@ cube_dirs <- cube_dirs[
   })
 ]
 
-cube_dirs <- grep("*raster", cube_dirs, value = TRUE)
-
 labels <- c(
   x = sits_labels(model)
 )
 names(labels) <- 1:length(labels)
 
-# Step 3.2 -- Load the original cube with classified raster file
-cube <- sits_cube(
-  source     = "BDC",
-  collection = "SENTINEL-2-16D",
-  bands      = "class",
-  labels     = labels,
-  data_dir   = cube_dirs, # classified raster file cannot be in the same folder as the classified gpkg file
-  version    = version,
-  parse_info = c("satellite", "sensor", "tile", "start_date", "end_date",
-                 "band", "version"))
+# Step 2.2 -- Load the original cube with classified raster file
+cube_list <- purrr::map(cube_dirs, function(dir) {
+  cube <- sits_cube(
+    source = "BDC",
+    collection = "SENTINEL-2-16D",
+    bands = "class",
+    labels = labels,
+    data_dir = cube_dirs, # classified raster file cannot be in the same folder as the classified gpkg file
+    version = version,
+    parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
+                   "band", "version"))
+})
+
+# Bind all the individual cubes into one master cube
+cube <- bind_rows(cube_list)
+
+#if you want to mosaic different tiles
+if(nrow(cube) > 1){
+  cube <-sits_mosaic(
+    cube,
+    multicores = 28,
+    output_dir = paste0(class_dir, "mosaic"),
+    version = paste0(version,
+                     "mosaic")
+  )
+}
 
 # ============================================================
-# 4. Full Map Stratified Random Sampling
+# 3. Full Map Stratified Random Sampling
 # ============================================================
 
-# 4.1 -- Define the actual mask 
-mask <- c("1" = "Natural Vegetation",
-          "0" = "Deforestation Mask")
-
-prodes_mask <- sits_cube(source = "BDC",
-                         collection = "SENTINEL-2-16D",
-                         data_dir = aux_dir,
-                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
-                         bands = "class",
-                         version = "v2024-epsg10857",
-                         labels = mask)
-
-# 4.2 -- Reclassify Full Map classified cube
-cube_reclass_full <- sits_reclassify(
-  cube = cube,
-  mask = prodes_mask,
-  multicores = 24,
-  memsize = 180,
-  version = paste("full-map", version, sep = "-"),
-  output_dir = cube_dirs,
-  progress = TRUE
-)
-
-# 4.3 -- Sampling design
+# 3.1 -- Sampling design
 sampling_design <- sits_sampling_design(
-  cube = cube_reclass_full,
+  cube = cube,
   expected_ua = c(
     "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Agricultura" = 0.70,
     "Supressao_de_Vegetacao_Natural_Nao_Florestal_Com_Solo_Exposto" = 0.70,
@@ -245,10 +244,10 @@ sampling_design <- sits_sampling_design(
   rare_class_prop = 0.025
 )
 
-# 4.4 -- Show sampling design
+# 3.2 -- Show sampling design
 sampling_design
 
-# 4.5 -- Generate stratified samples
+# 3.3 -- Generate stratified samples
 samples_sf <- sits_stratified_sampling(
   cube = cube,
   sampling_design = sampling_design,
@@ -257,32 +256,54 @@ samples_sf <- sits_stratified_sampling(
   progress = TRUE,
   multicores = 12)
 
-# 4.6 -- Total of each class
+# 3.4 -- Total of each class
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
-# 4.7 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-full-map_", version, "_", process_version, ".gpkg"))
+# 3.5 -- Define File Path
+samples_sf_file_path <- file.path(samples_dir, paste0("validation-samples_all-classes_", cube$tile,
+                                                      "_", version, "_", date_process, ".gpkg"))
 
-# 4.8 -- Save samples_sf object as GPKG file
+# 3.6 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
 
 # ============================================================
-# 5. PRODES Degradation Adjusted Map Accuracy
+# 4. PRODES Degradation Adjusted Map Accuracy
 # ============================================================
 
-# 5.1 -- Define the actual mask 
-counter_mask <- c("1" = "Non-Natural Vegetation",
+# 4.1 -- Reclassify classified cube
+counter_mask <- c("1" = "Natural Vegetation",
                   "0" = "Deforestation Mask")
 
 prodes_mask <- sits_cube(source = "BDC",
                          collection = "SENTINEL-2-16D",
+                         tiles = cube$tile,
                          data_dir = aux_dir,
-                         parse_info = c("X1", "X2", "tile", "start_date", "end_date", "band", "version"),
+                         parse_info = c("X1", "tile", "start_date",
+                                        "end_date", "band", "version"),
                          bands = "class",
-                         version = "v2024-epsg10857",
+                         version = "contra-mask-geral-amz",
                          labels = counter_mask)
 
-# 5.2 -- Reclassify adjusted classified cube
+# If you want to mosaic different tiles
+if(nrow(prodes_mask) > 1){
+  prodes_mask <-sits_mosaic(
+    prodes_mask,
+    multicores = 28,
+    output_dir = paste0(class_dir, "mosaic/mask"),
+    version = paste0(version,
+                     "-mosaic")
+  )
+}
+
+# 4.2 -- Detect tiles and period automatically
+dir_path <- file.path(
+  class_dir,
+  cube$tile,
+  "prodes"
+)
+
+fs::dir_create(dir_path, recurse = TRUE)
+
 cube_reclass <- sits_reclassify(
   cube = cube,
   mask = prodes_mask,
@@ -317,11 +338,11 @@ cube_reclass <- sits_reclassify(
   multicores = 24,
   memsize = 180,
   version = paste("prodes-degradation", version, sep = "-"),
-  output_dir = "data/class/all_tiles",
+  output_dir = dir_path,
   progress = TRUE
 )
 
-# 5.3 -- Sampling design degradation
+# 4.3 -- Sampling design degradation
 sampling_design <- sits_sampling_design(
   cube = cube_reclass,
   expected_ua = c(
@@ -335,23 +356,24 @@ sampling_design <- sits_sampling_design(
   rare_class_prop = 0.04
 )
 
-# 5.4 -- Show sampling design
+# 4.4 -- Show sampling design
 sampling_design
 
-# 5.5 -- Generate stratified samples
+# 4.5 -- Generate stratified samples
 samples_sf <- sits_stratified_sampling(
   cube = cube_reclass,
   sampling_design = sampling_design,
-  alloc = "alloc_120",
+  alloc = "alloc_100",
   overhead = 1.2, # overproportion to avoid border pixels
   progress = TRUE,
   multicores = 24)
 
-# 5.6 -- Total of each class
+# 4.6 -- Total of each class
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
-# 5.7 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("samples-validation-desmat-degrad_", version, "_", process_version, ".gpkg"))
+# 4.7 -- Define File Path
+samples_sf_file_path <- file.path(samples_dir, paste0("validation-samples-prodes_", cube_reclass$tile,
+                                                      "_", version, "_", date_process, ".gpkg"))
 
-# 5.8 -- Save samples_sf object as GPKG file
+# 4.8 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, delete_dsn = TRUE, append = FALSE)

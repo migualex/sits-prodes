@@ -14,11 +14,11 @@ library(stringr)
 library(purrr)
 
 # Define the parameters: These are user-defined variables
-model_name       <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-15_12h01m.rds"
+model_name      <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-15_12h01m.rds"
 
 # Date and time of the start of processing
-date_process <- format(Sys.Date(), "%Y-%m-%d_")
-time_process <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
+date_process    <- format(Sys.Date(), "%Y-%m-%d_")
+time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
 # File and folder paths
@@ -364,7 +364,7 @@ samples_sf <- sits_stratified_sampling(
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
 # 4.7 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("validation-samples-prodes_", cube_reclass$tile,
+samples_sf_file_path <- file.path(samples_dir, paste0("validation-samples_prodes_", cube_reclass$tile,
                                                       "_", version, "_", date_process, ".gpkg"))
 
 # 4.8 -- Save samples_sf object as GPKG file

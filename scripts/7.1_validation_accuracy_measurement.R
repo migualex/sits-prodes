@@ -15,7 +15,7 @@ library(stringr)
 tiles      = '012014'
 start_date = "2023-08-13"
 end_date   = "2025-07-28"
-model_name       <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-15_12h01m.rds"
+model_name <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-15_12h01m.rds"
 
 # File and folder paths
 models <- c("rf"   = "random_forest",
@@ -201,7 +201,7 @@ cube <- sits_cube(
                  "band", "version"))
 
 # Step 1.2 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("validation-samples_all-classes*",
+samples_validation <- st_read(grep("*all-classes*",
                                    samples_validation_list, value = TRUE))
 
 # Step 1.3 -- Calculate accuracy
@@ -247,7 +247,7 @@ class_cube <- sits_cube(
                  "band", "version"))
 
 # Step 2.2 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("validation-samples_prodes*",
+samples_validation <- st_read(grep("*prodes*",
                                    samples_validation_list, value = TRUE))
 
 # Step 2.3 -- Calculate accuracy

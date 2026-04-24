@@ -2,11 +2,7 @@
 #  Validation and accuracy measurement in Non-Forest Areas
 # ============================================================
 
-# ============================================================
-# 1. Libraries, paths and some initial parameters
-# ============================================================
-
-# Step 1.1 -- Load Required Libraries
+# Load required libraries
 library(tibble)
 library(sits)
 library(terra)
@@ -15,28 +11,41 @@ library(dplyr)
 library(ggplot2)
 library(stringr)
 
-# Step 1.2 -- Define the paths for files and folders needed in the processing
-model_name       <- "model-name.rds"
-model            <- readRDS(file.path("data/rds/model/random_forest", model_name))
+# Define the parameters: These are user-defined variables
+tiles      = '012014'
+start_date = "2023-08-13"
+end_date   = "2025-07-28"
+model_name <- "rf-model_2t_014002-015002_2y_2023-07-28_2025-07-28_com-nuvens-cheias_2026-04-07_14h45m.rds"
+
+# File and folder paths
+models <- c("rf"   = "random_forest",
+            "xgb"  = "xgboost",
+            "ltae" = "ltae",
+            "tcnn" = "temp_cnn",
+            "rnet" = "res_net",
+            "lstm" = "ltsm")
+model_type       <- stringr::str_split_i(model_name, "-", 1)
+model_path       <- file.path("data/rds/model", models[model_type], model_name)
+model            <- readRDS(model_path)
 class_dir        <- "data/class"
-samples_dir      <- "data/raw/samples/validation_samples/015002"
+samples_dir      <- "data/raw/samples/validation_samples"
 plots_dir        <- "data/plots"
 mask_dir         <- "data/raw/auxiliary/masks"
-version          <- "version"
+version          <- paste(stringr::str_split_i(model_name, "-", 1),
+                          stringr::str_split_i(model_name, "_", 4),
+                          stringr::str_split_i(model_name, "_", 7),
+                          sep = "-")
 
-# Step 1.3 -- Get the list of validation sample files matching the version pattern in the samples directory
+# List of validation sample files matching the version pattern in the samples directory
+pattern <- paste0(".*", tiles, ".*", ".*", version, ".*\\.gpkg$")
+
 samples_validation_list <- dir(
   samples_dir,
-  pattern = paste0(".*", str_split_i(version, pattern = "-", 3), ".*\\.gpkg$"),
+  pattern = pattern,
   full.names = TRUE
 )
 
-# Step 1.4 -- Define the list of tiles and period
-tiles = c('015002')
-start_date = "2023-08-13"
-end_date = "2025-07-28"
-
-# Step 1.5 -- Define plotting function
+# Plotting function
 plot_accuracy <- function(acc, version, tile, plots_dir, prefix) {
   
   today     <- format(Sys.Date(), "%Y-%m-%d")
@@ -151,11 +160,21 @@ plot_accuracy <- function(acc, version, tile, plots_dir, prefix) {
 }
 
 # ============================================================
-# 2. Accuracy assessment of Full Map classified images
+# 1. Accuracy assessment of Full Map classified images
 # ============================================================
 
-# Step 2.1 -- Retrieve local cube of Full Map classified
-full_map_cube <- sits_cube(
+# Step 1.1 -- Get labels associated to the trained model data set (Enumerate them in the order they appear according to "sits_labels(model)")
+cube_dirs <- list.dirs(class_dir, recursive = TRUE)
+
+cube_dirs <- cube_dirs[
+  sapply(cube_dirs, function(x) {
+    files <- list.files(x, pattern = "\\.tif$")
+    any(grepl(version, files))
+  })
+]
+
+# Step 1.2 -- Retrieve local cube of Full Map classified
+cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
@@ -176,41 +195,42 @@ full_map_cube <- sits_cube(
   tiles =  tiles,
   start_date = start_date,
   end_date = end_date,
-  version = "raster-version",
-  data_dir = "data/class/015002/original_class/015002/raster",
+  version = version,
+  data_dir = cube_dirs,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version"))
 
-# Step 2.2 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*full-map*", samples_validation_list, value = TRUE)[1]) #full map validation samples
+# Step 1.2 -- Get validation samples points (in geographical coordinates - lat/long)
+samples_validation <- st_read(grep("*all-classes*",
+                                   samples_validation_list, value = TRUE))
 
-# Step 2.3 -- Calculate accuracy
-full_map_acc <- sits_accuracy(full_map_cube,
+# Step 1.3 -- Calculate accuracy
+full_map_acc <- sits_accuracy(cube,
                               validation = samples_validation,
                               memsize = 180,
                               multicores = 28) # adapt to your computer CPU core availability
 
-# Step 2.4 -- Print the area estimated accuracy
+# Step 1.4 -- Print the area estimated accuracy
 full_map_acc
 
-# Step 2.5 -- Show confusion matrix
+# Step 1.5 -- Show confusion matrix
 full_map_acc$error_matrix
 
-# Step 2.6 -- Plotting Full Map Accuracy
+# Step 1.6 -- Plotting Full Map Accuracy
 plot_accuracy(
   acc       = full_map_acc,
-  version   = "model-version",
+  version   = version,
   tile      = tiles,
   plots_dir = plots_dir,
   prefix    = "full-map-acc"
 )
 
 # ============================================================
-# 3. Accuracy assessment of PRODES Adjusted Map classified
+# 2. Accuracy assessment of PRODES Adjusted Map classified
 # ============================================================
 
-# Step 3.1 -- Retrieve local cube of PRODES adjusted map classified
-prodes_adjusted_cube <- sits_cube(
+# Step 2.1 -- Retrieve local cube of PRODES adjusted map classified
+class_cube <- sits_cube(
   source = "BDC",
   collection = "SENTINEL-2-16D",
   bands = "class",
@@ -221,30 +241,31 @@ prodes_adjusted_cube <- sits_cube(
   tiles =  tiles,
   start_date = start_date,
   end_date = end_date,
-  version = "raster-version",
-  data_dir = "data/class/015002/original_class/015002/raster",
+  version = paste0(version, "-mosaic"),
+  data_dir = cube_dirs,
   parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
                  "band", "version"))
 
-# Step 3.2 -- Get validation samples points (in geographical coordinates - lat/long)
-samples_validation <- st_read(grep("*version*", samples_validation_list, value = TRUE))
+# Step 2.2 -- Get validation samples points (in geographical coordinates - lat/long)
+samples_validation <- st_read(grep("*prodes*",
+                                   samples_validation_list, value = TRUE))
 
-# Step 3.3 -- Calculate accuracy
-prodes_adjusted_acc <- sits_accuracy(prodes_adjusted_cube, 
-                                     validation = samples_validation,
-                                     memsize = 180,
-                                     multicores = 28) # adapt to your computer CPU core availability
+# Step 2.3 -- Calculate accuracy
+prodes_acc <- sits_accuracy(class_cube, 
+                            validation = samples_validation,
+                            memsize = 180,
+                            multicores = 28) # adapt to your computer CPU core availability
 
-# Step 3.4 -- Print the area estimated accuracy
-prodes_adjusted_acc
+# Step 2.4 -- Print the area estimated accuracy
+prodes_acc
 
-# Step 3.5 -- Show confusion matrix
-prodes_adjusted_acc$error_matrix
+# Step 2.5 -- Show confusion matrix
+prodes_acc$error_matrix
 
-# Step 3.6 -- Plotting PRODES Adjusted Map Accuracy
+# Step 2.6 -- Plotting PRODES Adjusted Map Accuracy
 plot_accuracy(
-  acc       = prodes_adjusted_acc,
-  version   = "model-version",
+  acc       = prodes_acc,
+  version   = paste0(version, "-mosaic"),
   tile      = tiles,
   plots_dir = plots_dir,
   prefix    = "prodes-acc"
