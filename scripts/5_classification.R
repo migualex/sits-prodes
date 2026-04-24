@@ -71,7 +71,8 @@ local_segs_cube <- sits_cube(
   vector_dir  = vector_path,
   vector_band = "segments",
   version     = seg_version, 
-  parse_info  = c("satellite", "sensor","tile", "start_date", "end_date", "band", "version"))
+  parse_info  = c("satellite", "sensor","tile", "start_date", 
+                  "end_date", "band", "version", "X1"))
 
 # Step 1.6 -- Create output directory per tile
 tile_period_dir <- file.path(class_path, tile, "original_class")
