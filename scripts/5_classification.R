@@ -218,5 +218,5 @@ compute_uncertainty_raster(
   version         = version,
   multicores      = 28, # adapt to your computer CPU core availability
   memsize         = 180, # adapt to your computer CPU core availability
-  delete_gpkg     = FALSE  # Keep the .gpkg file if you want to inspect it beforehand
+  delete_gpkg     = TRUE  # Keep the .gpkg file if you want to inspect it beforehand
 )
