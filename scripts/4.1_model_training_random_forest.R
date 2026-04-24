@@ -2,7 +2,7 @@
 # Train a Random Forest machine learning model
 # ============================================================
 
-# Load Required Libraries
+# Load required libraries
 library(sits)
 library(ggplot2)
 library(randomForestExplainer, lib.loc = "/opt/r/R/x86_64-pc-linux-gnu-library/4.4")
