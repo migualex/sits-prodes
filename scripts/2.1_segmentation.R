@@ -163,7 +163,6 @@ while (iter < max_iter) {
   cat(sprintf("\nIteration %d / %d\n", iter, max_iter))
   cat(sprintf("Period    : %s to %s\n", start_date_month, end_date_fixed))
   cat(sprintf("BBOX area : %d km2\n", bbox_area))
-  
   # Expand temporal window one month backward
   start_date_month <- floor_date(start_date_month - days(1), "month")
   cat(sprintf("Processing period: %s to %s\n",
