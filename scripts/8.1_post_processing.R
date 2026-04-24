@@ -15,17 +15,32 @@ library(units)
 library(smoothr)
 
 # Step 1.2 -- Define paths for files and folders
-mask_path <- "data/raw/auxiliary/mask_geral_nf.gpkg"
-sits_classification_path <- "data/class/012014/original_class/SENTINEL-2_MSI_012014_2024-08-13_2025-07-28_class_rf-2y-012014-novos-segmentos.gpkg"
-sits_classification_raw <- sf::st_read(sits_classification_path, quiet = TRUE)
-output_dir <- sub("/SENTINEL.*", "", sits_classification_path)
+tile            <- "012014"
+version         <- "rf-2y-novos-segmentos"
+class_path      <- "data/class"
+mask_path       <- "data/raw/auxiliary/masks" #nome da máscara em gpkg geral
+
+
+post_class_path <- file.path(class_path, tile, "post_processed")
+dir.create(post_class_path,
+           showWarnings = FALSE,
+           recursive = TRUE)
+
+pattern <- paste0(".*", tile, ".*", "class",
+                  ".*", version, ".*\\.gpkg$")
+
+raw_class_path <- list.files(class_path,
+                             pattern = pattern,
+                             full.names = TRUE)
+
+raw_class <- read_sf(raw_class_path)
 
 # ============================================================
 # 2. Probabilistic reclassification
 # ============================================================
 
-# Step 2.1 -- Create column "Suppression_sum"
-sits_classification_raw <- sits_classification_raw |>
+# Step 2.1 -- Create sum columns 
+raw_class <- raw_class |>
   mutate(
     Suppression_sum = rowSums(
       across(
@@ -37,12 +52,7 @@ sits_classification_raw <- sits_classification_raw |>
         ))
       ),
       na.rm = TRUE
-    )
-  )
-
-# Step 2.2 -- Create column "Degrad_sum"
-sits_classification_raw <- sits_classification_raw |>
-  mutate(
+    ),
     Degrad_sum = rowSums(
       across(
         all_of(c(
@@ -51,12 +61,7 @@ sits_classification_raw <- sits_classification_raw |>
         ))
       ),
       na.rm = TRUE
-    )
-  )
-
-# Step 2.3 -- Create column "Natural"
-sits_classification_raw <- sits_classification_raw |>
-  mutate(
+    ),
     Natural = rowSums(
       across(
         all_of(c(
@@ -70,7 +75,7 @@ sits_classification_raw <- sits_classification_raw |>
   )
 
 # Step 2.4 -- Reclassification
-sits_classification_raw <- sits_classification_raw |>
+raw_class <- raw_class |>
   mutate(
     class = if_else(
       Suppression_sum >= Degrad_sum &
@@ -82,8 +87,8 @@ sits_classification_raw <- sits_classification_raw |>
   )
 
 # Step 2.5 -- Filter only suppression-related classes
-sits_classification <- sits_classification_raw |>
-  dplyr::filter(
+post_class <- raw_class |>
+  filter(
     class %in% c(
       "Corte_Raso",
       "Corte_Raso_Com_Vegetacao",
@@ -91,20 +96,17 @@ sits_classification <- sits_classification_raw |>
       "Corte_Raso_Com_Arvores_Remanescentes",
       "Suppression_sum"
     )
-  )
-
-# Step 2.6 -- Standardize class nomenclature
-sits_reclassification <- sits_classification |>
-  dplyr::mutate(class = "supressao")
+  ) |>
+  mutate(class = "supressao")
 
 # Step 2.7 -- Dissolve and aggregate geometries
-sits_reclassification <- sits_reclassification |>
-  dplyr::group_by(class) |>
-  dplyr::summarise(
-    geometry = sf::st_union(geom),
+post_class <- post_class |>
+  group_by(class) |>
+  summarise(
+    geometry = st_union(geom),
     .groups = "drop"
   ) |>
-  sf::st_cast("MULTIPOLYGON")
+  st_cast("MULTIPOLYGON")
 
 # ============================================================
 # 3. Extraction of cloud features
@@ -213,7 +215,7 @@ extract_cloud_mask <- function(
   # ----------------------------------------------------------
   if (!is.null(output_dir)) {
     output_filename <- paste0(
-      "cloud_vec_", tile_id, "_", end_date_scl, ".gpkg"
+      "cloud-vec_", tile_id, "_", end_date_scl, ".gpkg"
     )
     
     output_path <- file.path(output_dir, output_filename)
@@ -241,15 +243,14 @@ extract_cloud_mask <- function(
 
 # Step 3.2 -- Apply function
 result <- extract_cloud_mask(
-  sits_classification_path = sits_classification_path,
-  sits_reclassification    = sits_reclassification,
+  sits_classification_path = raw_class_path,
+  sits_reclassification    = post_class,
   cloud_values             = c(3, 8, 9, 10),
-  output_dir               = output_dir
+  output_dir               = post_class_path
 )
 
 # Step 3.3 -- Extract outputs
 cloud_vec   <- result$cloud_vec
-tile_id     <- result$tile_id
 end_date_scl <- result$end_date_scl
 
 # ============================================================
@@ -260,27 +261,28 @@ Cloud_union <- sf::st_union(cloud_vec)
 
 cloud_vec_buffer <- sf::st_buffer(Cloud_union, dist = 100)
 
-sits_classification_cloud_cleaned <- sf::st_difference(
-  sits_reclassification,
-  cloud_vec_buffer
-) |>
-  sf::st_cast("MULTIPOLYGON")
+reclass_cloud_cleaned <- sf::st_difference(
+        post_class,
+        cloud_vec_buffer
+      ) |>
+      sf::st_cast("MULTIPOLYGON")
 
 # ============================================================
 # 5. Fill holes < 1 hectare (first round)
 # ============================================================
 
-mask <- sf::st_read(mask_path, quiet = TRUE) |>
-  dplyr::filter(tile == tile_id)
+query <- sprintf("SELECT * FROM  WHERE tile = '%s'", tile) #nome da máscara em gpkg geral
+prodes_mask <- read_sf(mask_path,
+                       query = query) 
 
-mask <- sf::st_transform(
-  mask,
-  sf::st_crs(sits_classification_cloud_cleaned)
+prodes_mask <- sf::st_transform(
+  prodes_mask,
+  sf::st_crs(reclass_cloud_cleaned)
 )
 
-merged <- list(sits_classification_cloud_cleaned, mask) |>
+merged <- list(reclass_cloud_cleaned, prodes_mask) |>
   purrr::map(sf::st_make_valid) |>
-  purrr::map(\(x) sf::st_transform(x, sf::st_crs(sits_classification_cloud_cleaned))) |>
+  purrr::map(\(x) sf::st_transform(x, sf::st_crs(reclass_cloud_cleaned))) |>
   purrr::map(\(x) {
     sf::st_geometry(x) <- "geom"
     x
@@ -298,12 +300,17 @@ smoothed <- smoothr::fill_holes(
 # 6. Difference with deforestation mask (first round)
 # ============================================================
 
-smoothed <- sf::st_transform(smoothed, sf::st_crs(mask))
+smoothed <- sf::st_transform(smoothed, sf::st_crs(prodes_mask))
 
-smoothed <- smoothed |> st_make_valid()
-mask     <- mask |> st_make_valid()
+smoothed <- smoothed |> 
+  st_make_valid()
 
-mask_union <- mask |> st_union() |> st_make_valid()
+prodes_mask <- prodes_mask |>
+  st_make_valid()
+
+mask_union <- prodes_mask |>
+  st_union() |>
+  st_make_valid()
 
 class_diff_mask <- sf::st_difference(
   smoothed,
@@ -313,7 +320,7 @@ class_diff_mask <- sf::st_difference(
   sf::st_sf()
 
 # ============================================================
-# 7. Fill bays and smooth edges
+# 7. Fill bays and smooth edges 
 # ============================================================
 
 class_diff_mask_filled_bays <- class_diff_mask |>
@@ -329,7 +336,7 @@ sf::st_write(
     paste0("class_diff_mask_filled_bays_", tile_id, "_", end_date_scl, ".gpkg")
   )
 )
-
+# vai salvar???????
 # ============================================================
 # 8. Fill holes < 1 hectare (second round)
 # ============================================================
@@ -357,7 +364,7 @@ sf::st_write(
     paste0("smoothed_2_", tile_id, "_", end_date_scl, ".gpkg")
   )
 )
-
+# vai salvar???????
 # ============================================================
 # 9. Difference with deforestation mask (second round)
 # ============================================================
@@ -376,6 +383,7 @@ sf::st_write(
     paste0("class_diff_mask_2_", tile_id, "_", end_date_scl, ".gpkg")
   )
 )
+#pra que recotar pela máscara de novo?????
 
 # ============================================================
 # 10. Remove polygons < 1 hectare
@@ -394,13 +402,15 @@ class_diff_mask_bigger_than_1ha <- class_diff_mask_2 |>
 poligonos_supressao <- st_transform(
   class_diff_mask_bigger_than_1ha,
   crs = 4674
-)
+) |>
+  sf::st_cast("POLYGON") 
 
 sf::st_write(
   poligonos_supressao,
   file.path(
-    output_dir,
-    paste0("sits-classification-post-processed_", tile_id, "_", end_date_scl, ".gpkg")
+    post_class_path,
+    paste0("sits-classification-post-processed_",
+           tile, "_", end_date_scl, ".gpkg")
   )
 )
 
