@@ -365,7 +365,7 @@ samples_sf%>% group_by(label) %>% summarise(num = n())
 
 # 4.7 -- Define File Path
 samples_sf_file_path <- file.path(samples_dir, paste0("validation-samples-prodes_", cube_reclass$tile,
-                                                      version, "_", date_process, ".gpkg"))
+                                                      "_", version, "_", date_process, ".gpkg"))
 
 # 4.8 -- Save samples_sf object as GPKG file
 sf::st_write(samples_sf, samples_sf_file_path, delete_dsn = TRUE, append = FALSE)
