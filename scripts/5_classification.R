@@ -185,8 +185,7 @@ compute_uncertainty_raster <- function(
   )
   
   # Save as .tif (UINT16, DEFLATE compressed)
-  tile_period_dir <- file.path(class_path, tile, "entropy")
-  dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
+  tile_period_dir <- file.path(class_path, tile, "original_class")
   
   tif_path <- file.path(
     tile_period_dir,
