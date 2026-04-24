@@ -1,31 +1,72 @@
-pt=en=hex
-Area_Inundavel=Wetland=#89E1E1
-Corpo_Dagua=Water=#0394F2
-Floresta=Forest=#1E8449
-Floresta_Transicional=Transition_Forest=#55AA52
-Vegetacao_Natural_Nao_Florestal=Non_Forest_Natural_Vegetation=#8BCF5B
-Degradacao=Degradation=#7D9D5A
-Degradacao_Por_Fogo=Degradation_Fire=#B82815
-Corte_Raso=Clear_Cut_Bare_Soil=#E3509F
-Corte_Raso_Com_Vegetacao=Clear_Cut_Vegetation=#EBEB1E
-Corte_Raso_Com_Fogo=Clear_Cut_Burned_Area=#3B1F1B
-Corte_Raso_Com_Arvores_Remanescentes=Clear_Cut_Trees=#A18675
-Corte_Raso_Antigo=Previous_Clear_Cut_Bare_Soil=#E3BCCD
-Corte_Raso_Antigo_Com_Vegetacao=Previous_Clear_Cut_Vegetation=#F4E4A6
-Lago=Lake=#2980B9
-Rio=River=#1F78B4
-Ecotono=Ecotone=#7FBF6A
-Herbacea_Seca_Mais_Biomassa=Herbaceous_Dry_High_Biomass=#E6C84F
-Herbacea_Seca_Menos_Biomassa=Herbaceous_Dry_Low_Biomass=#F2E8B3
-Herbacea_Seca_Pos_Fogo=Herbaceous_Dry_Post_Fire=#C97A3D
-Herbacea_Umida=Herbaceous_Wet=#C2D6A4
-Mata=Woodland=#1E8449
-Vereda=Palm_Swamps=#3ABABA
-Fogo_Recente=Burn_Scar=#CD6155
-Fogo_Antigo=Previous_Burn_Scar=#F2A7A0
-Supressao_Para_Agricultura=Clearing_For_Agriculture=#E6B97A
-Supressao_Para_Reservatorio=Clearing_For_Reservoir=#A9CCE3
-Supressao_Para_Solo_Exposto=Clearing_For_Bare_Soil=#D2A679
-Supressao_Antiga_Com_Agricultura=Previous_Clearing_For_Agriculture=#D68910
-Supressao_Antiga_Com_Reservatorio=Previous_Clearing_For_Reservoir=#7FB3D5
-Supressao_Antiga_Com_Solo_Exposto=Previous_Clearing_For_Bare_Soil=#BA4A00
+# =============================================================
+# Configuração de classes e cores
+# Edite este arquivo para atualizar traduções e paleta de cores
+# Formato:
+#   [CLASS_TRANSLATION]  -> Nome_Portugues = English_Name
+#   [COLORS]             -> English_Name = #hexcolor
+# Linhas começando com # são ignoradas
+# =============================================================
+
+[CLASS_TRANSLATION]
+Area_Inundavel                                                   = Wetland
+Corpo_Dagua                                                      = Water
+Floresta                                                         = Forest
+Floresta_Transicional                                            = Transition_Forest
+Vegetacao_Natural_Nao_Florestal                                  = Non_Forest_Natural_Vegetation
+Degradacao                                                       = Degradation
+Degradacao_Por_Fogo                                              = Degradation_Fire
+Corte_Raso                                                       = Clear_Cut_Bare_Soil
+Corte_Raso_Com_Vegetacao                                         = Clear_Cut_Vegetation
+Corte_Raso_Com_Fogo                                              = Clear_Cut_Burned_Area
+Corte_Raso_Com_Arvores_Remanescentes                             = Clear_Cut_Trees
+Corte_Raso_Antigo                                                = Previous_Clear_Cut_Bare_Soil
+Corte_Raso_Antigo_Com_Vegetacao                                  = Previous_Clear_Cut_Vegetation
+Lago                                                             = Lake
+Rio                                                              = River
+Ecótono                                                          = Ecotone
+Herbacea_Seca_Mais_Biomassa                                      = Herbaceous_Dry_High_Biomass
+Herbacea_Seca_Menos_Biomassa                                     = Herbaceous_Dry_Low_Biomass
+Herbacea_Seca_Pos_Fogo                                           = Herbaceous_Dry_Post_Fire
+Herbacea_Umida                                                   = Herbaceous_Wet
+Mata                                                             = Woodland
+Vereda                                                           = Palm_Swamps
+Fogo_Recente                                                     = Burn_Scar
+Fogo_Antigo                                                      = Previous_Burn_Scar
+Supressao_Para_Agricultura                                       = Clearing_For_Agriculture
+Supressao_Para_Reservatório                                      = Clearing_For_Reservoir
+Supressao_Para_Solo_Exposto                                      = Clearing_For_Bare_Soil
+Supressao_Antiga_Com_Agricultura                                 = Previous_Clearing_For_Agriculture
+Supressao_Antiga_Com_Reservatório                                = Previous_Clearing_For_Reservoir
+Supressao_Antiga_Com_Solo_Exposto                                = Previous_Clearing_For_Bare_Soil
+
+[COLORS]
+Wetland                                                         = #89e1e1
+Water                                                           = #0394f2
+Forest                                                          = #1E8449
+Transition_Forest                                               = #55AA52
+Non_Forest_Natural_Vegetation                                   = #8BCF5B
+Degradation                                                     = #7D9D5A
+Degradation_Fire                                                = #b82815
+Clear_Cut_Bare_Soil 						= #e3509f
+Clear_Cut_Vegetation 						= #ebeb1e
+Clear_Cut_Burned_Area 						= #3B1F1B
+Clear_Cut_Trees 						= #A18675
+Previous_Clear_Cut_Bare_Soil 					= #e3bccd
+Previous_Clear_Cut_Vegetation 					= #f4e4a6
+Lake                                                            = #2980B9
+River                                                           = #1f78b4
+Ecotone                                                         = #7FBF6A
+Herbaceous_Dry_High_Biomass                                     = #E6C84F
+Herbaceous_Dry_Low_Biomass                                      = #F2E8B3
+Herbaceous_Dry_Post_Fire                                        = #C97A3D
+Herbaceous_Wet                                                  = #C2D6A4
+Woodland                                                        = #1E8449
+Palm_Swamps                                                     = #3ABABA
+Burn_Scar                                                       = #CD6155
+Previous_Burn_Scar                                              = #F2A7A0
+Previous_Clearing_For_Agriculture                               = #D68910
+Previous_Clearing_For_Reservoir                                 = #7FB3D5
+Previous_Clearing_For_Bare_Soil                                 = #BA4A00
+Clearing_For_Agriculture                                        = #E6B97A
+Clearing_For_Reservoir                                          = #A9CCE3
+Clearing_For_Bare_Soil                                          = #D2A679
