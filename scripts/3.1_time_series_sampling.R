@@ -1,18 +1,21 @@
 # ============================================================
-#  Time series extraction from the training samples
+# Time series extraction from the training samples
 # ============================================================
 
-# ============================================================
-# 1. Libraries, paths and some initial parameters
-# ============================================================
-
-# Step 1.1 -- Load Required Libraries
+# Load required libraries
 library(sits)
 library(tibble)
 library(dplyr)
 library(ggplot2)
 
-# Step 1.2 -- Function to read class names and their colors::IMPORTANT
+# Define the parameters: These are user-defined variables
+tiles           <- c("012014","012015","013014","013015")
+start_date      <- "2024-08-01"
+end_date        <- "2025-07-31"
+var             <- "all-samples-new-pol-avg-false" #ALWAYS SPACE THE WORDS WITH "-"
+sampling_date   <- "2026-02-24"                    # Date of the sampling file (YYYY-MM-DD)
+
+# Function to read class names and their colors::IMPORTANT
 read_class_config <- function(config_file = "class_config.txt") {
   
   if (!file.exists(config_file)) {
@@ -61,27 +64,18 @@ read_class_config <- function(config_file = "class_config.txt") {
   ))
 }
 
-# Step 1.3 -- Define the paths for files and folders
-sample_path   <- "data/raw/samples" #add the sample file to the path
-ts_path      <- "data/rds/time_series/"
+# File and folder paths
+sample_path   <- "data/raw/samples"
+ts_path       <- "data/rds/time_series/"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 config_dir    <- "../scripts"
 
-# Step 1.4 -- Define time range and tiles
-start_date   <- "2024-08-01"
-end_date     <- "2025-07-31"
-tiles        <- c("012014","012015","013014","013015")
-
-# Step 1.5 -- Identifier to distinguish this model run
-var <- "all-samples-new-pol-avg-false" #ALWAYS SPACE THE WORDS WITH "-"
-sampling_date   <- "2026-02-24"       # Date of the sampling file (YYYY-MM-DD)
-
 # ============================================================
-# 2. Define and Load Data Cubes
+# 1. Define and Load Data Cubes
 # ============================================================
 
-# Step 2.1 -- Create a training cube from a collection
+# Step 1.1 -- Create a training cube from a collection
 cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
@@ -91,13 +85,13 @@ cube <- sits_cube(
   end_date    = end_date,
   progress    = TRUE)
 
-# Step 2.2 -- Calculate the number of years in the training cube
+# Step 1.2 -- Calculate the number of years in the training cube
 no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 
-# Step 2.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
+# Step 1.3 -- Concatenates all the names of the training tiles into a single string separated by '-'
 tiles_train <- paste(sort(tiles), collapse = "-")
 
-# Step 2.4 -- Retrieve Mixture Model Cube from a predefined repository
+# Step 1.4 -- Retrieve Mixture Model Cube from a predefined repository
 mm_cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
@@ -108,22 +102,22 @@ mm_cube <- sits_cube(
   end_date    = end_date,
   progress    = TRUE)
 
-# Step 2.5 -- Merge the Training Cube with Mixture Model Cube
+# Step 1.5 -- Merge the Training Cube with Mixture Model Cube
 cube_merge_lsmm_train <- sits_merge(mm_cube, cube)
 
 # ============================================================
-# 3. Load and Explore Training Sample Data
+# 2. Load and Explore Training Sample Data
 # ============================================================
 
-# Step 3.1 -- Read training samples (rewrite the name of your samples file)
-samples_name    <- paste("training-samples", tiles_train, var, sampling_date, sep = "-")
+# Step 2.1 -- Read training samples (rewrite the name of your samples file)
+samples_name    <- paste("training-samples", tiles_train, var, sampling_date, sep = "_")
 samples_train   <- sf::st_read(file.path(sample_path, paste0(samples_name, ".gpkg")))
 
-# Step 3.2 -- Load class translation from external config file
+# Step 2.2 -- Load class translation from external config file
 config     <- read_class_config(file.path(config_dir, "class_config.txt"))
 class_translation <- config$class_translation
 
-# Step 3.2.1 -- Apply translation: keep the original label if no translation is found
+# Step 2.2.1 -- Apply translation: keep the original label if no translation is found
 samples_train$label <- ifelse(
   samples_train$label %in% names(class_translation),
   class_translation[samples_train$label],
@@ -133,10 +127,10 @@ samples_train$label <- ifelse(
 print(table(samples_train$label))
 
 # ============================================================
-# 4. Time Series Extraction
+# 3. Time Series Extraction
 # ============================================================
 
-# Step 4.1 -- Extract Time Series from samples_train and calculate the process duration
+# Step 3.1 -- Extract Time Series from samples_train and calculate the process duration
 sits_get_data_start <- Sys.time()
 samples <- sits_get_data(
   cube        = cube_merge_lsmm_train,
@@ -153,7 +147,7 @@ sprintf("SITS get data process duration (HH:MM): %02d:%02d",
         as.integer((sits_get_data_time %% 3600) / 60))
 print("Time series extracted successfully!")
 
-# Step 4.2 -- Save the samples Time Series to a R file
+# Step 3.2 -- Save the samples Time Series to a R file
 saveRDS(samples, 
         paste0(ts_path,
                paste("TS-tiles", tiles_train,
@@ -161,14 +155,13 @@ saveRDS(samples,
                      end_date, var, format(Sys.Date(), "%Y-%m-%d"), 
                      format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo"),
                      sep = "_"),
-               ".rds")
-        )
+               ".rds"))
 
 # ============================================================
-# 5. Plotting Time Series Patterns
+# 4. Plotting Time Series Patterns
 # ============================================================
 
-# Step 5.1 -- Define function to visualize and save the plot of the time-spectral patterns of all features
+# Step 4.1 -- Define function to visualize and save the plot of the time-spectral patterns of all features
 save_sits_patterns_plot <- function(samples,
                                     start_date,
                                     end_date,
@@ -214,7 +207,7 @@ save_sits_patterns_plot <- function(samples,
     )
   }
   
-  # --- Optional theme customizations ---
+  # Optional theme customizations
   theme_args <- list()
   
   if (!is.null(legend_text_size))
@@ -238,7 +231,7 @@ save_sits_patterns_plot <- function(samples,
   # Renders on screen
   print(g)
   
-  # --- Set file name ---
+  # Set file name
   suffix <- ""
   
   if (!is.null(labels) && length(labels) == 1) {
@@ -271,7 +264,7 @@ save_sits_patterns_plot <- function(samples,
   invisible(full_path)
 }
 
-# Step 5.2 -- Run function to visualize and save the plot of the time-spectral patterns of all features
+# Step 4.2 -- Run function to visualize and save the plot of the time-spectral patterns of all features
 save_sits_patterns_plot(
   samples          = samples,
   start_date       = unique(samples$start_date),

@@ -2,16 +2,18 @@
 # Train a Random Forest machine learning model
 # ============================================================
 
-# ============================================================
-# 1. Libraries, paths and some initial parameters
-# ============================================================
-
-# Step 1.1 -- Load Required Libraries
+# Load Required Libraries
 library(sits)
 library(ggplot2)
 library(randomForestExplainer, lib.loc = "/opt/r/R/x86_64-pc-linux-gnu-library/4.4")
 
-# Step 1.2 -- Function to read class names and their colors::IMPORTANT
+# Define the parameters: These are user-defined variables
+time_series_name  <- "TS-tiles_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-22_10h46m.rds"
+start_date        <- "2024-08-01"
+end_date          <- "2025-07-31"
+tiles             <- c("012014","012015","013014","013015")
+
+# Function to read class names and their colors::IMPORTANT
 read_class_config <- function(config_file = "class_config.txt") {
   
   if (!file.exists(config_file)) {
@@ -60,31 +62,25 @@ read_class_config <- function(config_file = "class_config.txt") {
   ))
 }
 
-# Step 1.3 -- Define the date and time for the start of processing
+# Date and time of the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d_")
 time_process    <- format(Sys.time(), "%Hh%Mm", tz = "America/Sao_Paulo")
 process_version <- paste0(date_process, time_process)
 
-# Step 1.4 -- Define the paths for files and folders needed in the processing
-time_series_name  <- "TS-tiles_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-22_10h46m.rds"
+# File and folder paths
 time_series_path  <- file.path("data/rds/time_series/", time_series_name)
 rds_path          <- "data/rds/"
 plots_path        <- "data/plots/"
 config_dir        <- "../scripts"
 
-# Step 1.5 -- Define time range
-start_date   <- "2024-08-01"
-end_date     <- "2025-07-31"
-tiles        <- c("012014","012015","013014","013015")
-
-# Step 1.6 -- Identifier to distinguish this model run from previous versions
+# Identifier to distinguish this model run from previous versions
 var <- stringr::str_split_i(time_series_name, "_", 6)
 
 # ============================================================
-# 2. Define and Load Data Cubes
+# 1. Define and Load Data Cubes
 # ============================================================
 
-# Step 2.1 -- Create a training cube from a collection
+# Step 1.1 -- Create a training cube from a collection
 cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
@@ -94,24 +90,24 @@ cube <- sits_cube(
   end_date    = end_date,
   progress    = TRUE)
 
-# Step 2.2 -- Calculate the number of years in the training cube
+# Step 1.2 -- Calculate the number of years in the training cube
 no.years <- paste0(floor(lubridate::year(end_date) - lubridate::year(start_date)), "y")
 tiles_train <- paste(sort(tiles), collapse = "-")
 no.cubes <- paste0(length(cube$tile), "t")
 
 # ============================================================
-# 3. Cross-validation of training data
+# 2. Cross-validation of training data
 # ============================================================
 
-# Step 3.1 -- Reading training samples
+# Step 2.1 -- Reading training samples
 train_samples <- readRDS(time_series_path)
 
-# Step 3.2 -- Load color palette from external config file
+# Step 2.2 -- Load color palette from external config file
 config     <- read_class_config(file.path(config_dir, "class_config.txt"))
 my_colors  <- config$my_colors
 my_colors  <- my_colors[names(my_colors) %in% unique(train_samples$label)]
 
-# Step 3.3 -- Using k-fold validation
+# Step 2.3 -- Using k-fold validation
 sits_kfold_validate_start <- Sys.time()
 rfor_validate <- sits_kfold_validate(
   samples = train_samples,
@@ -125,42 +121,41 @@ sprintf("SITS kfold_validate process duration (HH:MM): %02d:%02d",
         s.integer(sits_kfold_validate_time / 3600),
         as.integer((sits_kfold_validate_time %% 3600) / 60))
 
-# Step 3.3.1 -- Plot the confusion matrix
+# Step 2.3.1 -- Plot the confusion matrix
 plot(rfor_validate, type = "confusion_matrix")
 
-# Step 3.3.2 -- Plot the metrics by class
+# Step 2.3.2 -- Plot the metrics by class
 plot(rfor_validate, type = "metrics")
 
 # ============================================================
-# 4. Training and saving model
+# 3. Training and saving model
 # ============================================================
 
-# Step 4.1 -- Set a seed of random number generator (RNG) for reproducibility
+# Step 3.1 -- Set a seed of random number generator (RNG) for reproducibility
 set.seed(88)
 
-# Step 4.2 -- Train the model
+# Step 3.2 -- Train the model
 rf_model <- sits_train(
   samples   = train_samples,
   ml_method = sits_rfor(num_trees = 100)
 )
 
-# Step 4.3 -- Save the ML model to a R file
+# Step 3.3 -- Save the ML model to a R file
 saveRDS(rf_model,
         paste0(rds_path, "model/random_forest/",
                paste("rf-model", no.cubes,
                      tiles_train, no.years,
                      start_date, end_date,
                      var, process_version, sep = "_"),
-               ".rds")
-        )
+               ".rds"))
 
 print("Model trained successfully!")
 
 # ============================================================
-# 5. Plotting Section
+# 4. Plotting Section
 # ============================================================
 
-# Step 5.1.1 -- Define the function to plot and save the most important variables of the model
+# Step 4.1 -- Define the function to plot and save the most important variables of the model
 save_rf_model_plot <- function(
     rf_model,
     plots_path,
@@ -175,13 +170,13 @@ save_rf_model_plot <- function(
     scale  = 1
 ) {
   
-  # Step 1 -- Generate the native sits/randomForestExplainer plot
+  # Generate the native sits/randomForestExplainer plot
   g <- plot(rf_model)
   
-  # Step 2 -- Render in RStudio
+  # Render in RStudio
   print(g)
   
-  # Step 3 -- Build file name
+  # Build file name
   tiles_str <- paste(tiles, collapse = "-")
   file_name <- paste0(
     "RF-minimal-tree-depth",
@@ -194,7 +189,7 @@ save_rf_model_plot <- function(
     ".png"
   )
   
-  # Step 4 -- Save
+  # Save
   dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
   full_path <- file.path(plots_path, file_name)
   
@@ -205,7 +200,7 @@ save_rf_model_plot <- function(
   invisible(full_path)
 }
 
-# Step 5.1.2 -- Run the function to plot and save the most important variables of the model
+# Step 4.2 -- Run the function to plot and save the most important variables of the model
 save_rf_model_plot(
   rf_model   = rf_model,
   plots_path = plots_path,
@@ -220,7 +215,7 @@ save_rf_model_plot(
   scale = 0.5          # increases all elements proportionally  
 )
 
-# Step 5.2.1 --  Define the function to plot and save Out of Box error by the number of trees
+# Step 4.3 --  Define the function to plot and save Out of Box error by the number of trees
 save_rf_oob_plot <- function(
     rf_model,
     plots_path,
@@ -235,10 +230,10 @@ save_rf_oob_plot <- function(
     scale  = 1
 ) {
   
-  # Step 1 -- Export the model object
+  # Export the model object
   rf_model2 <- environment(rf_model)$model
   
-  # Step 2 -- Convert err.rate matrix to tidy data frame for ggplot
+  # Convert err.rate matrix to tidy data frame for ggplot
   err_df <- as.data.frame(rf_model2$err.rate)
   err_df$ntree <- seq_len(nrow(err_df))
   
@@ -249,7 +244,7 @@ save_rf_oob_plot <- function(
     values_to = "OOB_Error"
   )
   
-  # Step 3 -- Build ggplot
+  # Build ggplot
   g <- ggplot2::ggplot(err_long, ggplot2::aes(x = ntree, y = OOB_Error, color = Class)) +
     ggplot2::geom_line(linewidth = 0.9) +
     ggplot2::labs(
@@ -268,7 +263,7 @@ save_rf_oob_plot <- function(
     )
   print(g)
   
-  # Step 4 -- Build file name
+  # Build file name
   tiles_str <- paste(tiles, collapse = "-")
   file_name <- paste0(
     "RF-oob-ntree-mde",
@@ -281,7 +276,7 @@ save_rf_oob_plot <- function(
     ".png"
   )
   
-  # Step 5 -- Save
+  # Save
   dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
   full_path <- file.path(plots_path, file_name)
   
@@ -292,7 +287,7 @@ save_rf_oob_plot <- function(
   invisible(full_path)
 }
 
-# Step 5.2.2 --  Define the function to plot and save Out of Box error by the number of trees
+# Step 4.4 --  Define the function to plot and save Out of Box error by the number of trees
 save_rf_oob_plot(
   rf_model   = rf_model,
   plots_path = plots_path,

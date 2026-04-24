@@ -6,7 +6,7 @@
 library(sits)
 library(tibble)
 
-# Define the paths for files and folders needed in the processing
+# Paths for files and folders
 mixture_path <- "data/raw/mixture_model"
 
 # ============================================================
