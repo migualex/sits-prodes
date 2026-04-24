@@ -69,7 +69,7 @@ sample_path   <- "data/raw/samples"
 ts_path       <- "data/rds/time_series/"
 mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
-config_dir    <- "../scripts"
+config_dir    <- ".."
 
 # ============================================================
 # 1. Define and Load Data Cubes
