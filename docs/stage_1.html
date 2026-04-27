@@ -468,8 +468,8 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 
   <p>
     The concept of spectral mixture in remote sensing imagery was first formally articulated by Shimabukuro <sup><a href="#ref1" id="cite1">[1]</a></sup>,
-    building on earlier observations by researchers such as Horwitz et al. (1971) and Detchmendy and Pace (1972). The core challenge arises when
-    attempting to correctly classify pixels that contain a mixture of surface materials rather than
+    building on earlier observations by researchers such as Horwitz et al. <sup><a href="#ref2" id="cite2">[2]</a></sup> and Detchmendy &amp; Pace <sup><a href="#ref3" id="cite3">[3]</a></sup>. 
+    The core challenge arises when attempting to correctly classify pixels that contain a mixture of surface materials rather than
     a single, spectrally pure cover type. Because most natural landscapes are inherently heterogeneous, a single pixel routinely captures contributions
     from multiple surface components, each present in varying proportions.
   </p>
@@ -477,7 +477,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
    <p>
     Fraction images generated through spectral mixture analysis have found application in a wide range of environmental monitoring programs.
     In Brazil, they have been central to large-scale initiatives such as Digital Prodes and Deter. Beyond deforestation monitoring, fraction images
-    have also been used in regional projects such as PANAMAZONIA II and AMAZONICA to quantify burned areas across the Amazon biome.
+    have also been used in regional projects such as PANAMAZONIA II and AMAZONICA to quantify burned areas across the Amazon biome <sup><a href="#ref4" id="cite4">[4]</a></sup>.
     The value of fraction images in these contexts lies in their ability to reduce the volume of multispectral data while simultaneously highlighting
     the specific land-surface information required for a given application. When operating at the temporal and spatial scales demanded by large-area
     monitoring programs this data compression without information loss becomes operationally indispensable.
@@ -487,7 +487,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     In practice, the linear spectral mixture model decomposes each pixel's reflectance spectrum into the fractional contributions of a small number
     of spectrally pure components. The function <code>sits_mixture_model()</code> implements this approach by estimating, for every pixel, the proportions
     of three endmembers — <strong>Soil, Vegetation, and Dark (SVD)</strong> — using Non-Negative Least Squares (NNLS) optimization
-    <sup><a href="#ref2" id="cite2">[2]</a></sup>. The resulting fraction bands enrich the feature space available for segmentation and classification,
+    <sup><a href="#ref5" id="cite5">[5]</a></sup>. The resulting fraction bands enrich the feature space available for segmentation and classification,
     improving the separability of mixed and transitional land cover types that are especially prevalent across the Amazon.
   </p>
 
@@ -507,7 +507,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 
   <p>
     In the present analysis, rather than deriving endmembers directly from the imagery, we adopted the globally standardized endmembers proposed
-    by Small &amp; Sousa <sup><a href="#ref3" id="cite3">[3]</a></sup>, which offer a physically grounded and sensor-specific framework for spectral
+    by Small &amp; Sousa <sup><a href="#ref6" id="cite6">[6]</a></sup>, which offer a physically grounded and sensor-specific framework for spectral
     unmixing of Sentinel-2/MSI data. Their study assembled a composite spectral feature space from 110 image tiles collected at spectral diversity
     hotspots distributed worldwide, encompassing more than 13 billion individual spectra across a broad range of terrestrial biomes, land cover types,
     and climatic regions. Crucially, their analysis demonstrated that the spectral mixing space is effectively three-dimensional,
@@ -592,7 +592,9 @@ fetch(url)
 </figure>
 
 <p>
-  The <strong>Dark fraction</strong> encompasses surface elements that absorb most incoming solar radiation and reflect very little back to the sensor (Figure <a href="#fig-dark">1.4</a>). It captures a diverse set of targets, including water bodies (rivers, lakes, and reservoirs), recently burned areas (charcoal and ash deposits), and shadows — whether cast by terrain relief, cloud cover, or tree canopies within dense forest stands. In the imagery used here, where shadowing is minimal due to the predominantly flat terrain of the study area, this fraction responds primarily to open water surfaces such as rivers and lakes.
+  The <strong>Dark fraction</strong> encompasses surface elements that absorb most incoming solar radiation and reflect very little back to the sensor (Figure <a href="#fig-dark">1.4</a>). 
+  It captures a diverse set of targets, including water bodies (rivers, lakes, and reservoirs), recently burned areas (charcoal and ash deposits), and shadows.
+  In the imagery used here, where shadowing is minimal due to the predominantly flat terrain of the study area, this fraction responds primarily to open water surfaces such as rivers and lakes.
 </p>
 
 <figure id="fig-dark" style="text-align: center;">
@@ -625,13 +627,20 @@ fetch(url)
     <h1 class="page-title">References</h1>
   </div>
   <div style="font-family:var(--sans);font-size:.9rem;line-height:1.9">
-    <div id="ref1"><a href="#cite1">[1] </a>Shimabukuro, Y. E., Dutra, A. C., &amp; Arai, E.</strong> (2020). Modelo Linear de Mistura Espectral: Conceitos Teóricos, Algoritmos e Aplicações em Estudos na Amazônia Legal. 
+     <div id="ref1"><a href="#cite1">[1] </a>Shimabukuro, Y. E. (1987). <em>Shade images derived from linear mixing models of multispectral measurements of forested areas</em> (274 p.).
+       Thesis (Doctor of Philosophy) – Colorado State University, Fort Collins.</div>
+    <div id="ref2"><a href="#cite2">[2] </a>Horwitz, H. M., Nalepka, R. F., Ryde, P. D., &amp; Morgenstern, J. P. (1971). 
+      Estimating the proportions of objects within a single resolution element of a multispectral scanner. In <em>Proceedings of the 7th International Symposium on Remote Sensing of Environment, May 7–21, 1971</em> (pp. 1307–1320). Ann Arbor: Willow Run Laboratories.</div>
+    <div id="ref3"><a href="#cite3">[3] </a>Detchmendy, D. M., &amp; Pace, W. H. (1972). 
+      A model spectral signature variability for mixtures. In F. Shahrokhi (Ed.), <em>Remote sensing of Earth resources</em> (Vol. 1, pp. 596–620). 
+      Tullahoma: The University of Tennessee.</div>
+    <div id="ref4"><a href="#cite4">[4] </a>Shimabukuro, Y. E., Dutra, A. C., &amp; Arai, E.</strong> (2020). Modelo Linear de Mistura Espectral: Conceitos Teóricos, Algoritmos e Aplicações em Estudos na Amazônia Legal. 
       <em>Revista Brasileira de Cartografia, 72</em>, 1140–1169. <a href="https://doi.org/10.14393/rbcv72nespecial50anos-56559" target="_blank">doi:10.14393/rbcv72nespecial50anos-56559</a></div>
-    <div id="ref2"><a href="#cite2">[2] </a>Simões, R., Câmara, G., Queiroz, G., Souza, F., Andrade, P., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021).
+    <div id="ref5"><a href="#cite5">[5] </a>Simões, R., Câmara, G., Queiroz, G., Souza, F., Andrade, P., Santos, L., Carvalho, A., &amp; Ferreira, K.</strong> (2021).
       Satellite Image Time Series Analysis for Big Earth Observation Data.<em> Remote Sensing, 13</em> (13), 2428.</div>
-    <div id="ref3"><a href="#cite3">[3] </a>Small, C., &amp; Sousa, D. (2022). The Sentinel-2 MSI Spectral Mixing Space. 
+    <div id="ref6"><a href="#cite6">[6] </a>Small, C., &amp; Sousa, D. (2022). The Sentinel-2 MSI Spectral Mixing Space. 
       <em>Remote Sensing, 14 </em>(22), 5748. <a href="https://doi.org/10.3390/rs14225748" target="_blank">doi:10.3390/rs14225748</a></div>
-</section>
+  </section>
 
   <div class="page-nav">
     <a class="pnav-btn" href="index.html#setup"><span class="pnav-dir">← Previous</span><span class="pnav-title">Setup</span></a>
