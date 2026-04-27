@@ -431,7 +431,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   <div class="sb-submenu">
   <a href="stage_3.html#sampling"    class="sb-subitem">3.1 Sampling Protocol</a>
   <a href="stage_3.html#time_series" class="sb-subitem">3.2 Time Series Extraction</a>
-  <a href="stage_3.html#som"         class="sb-subitem">3.3 Samples Quality Assessment</a>
+  <!--<a href="stage_3.html#som"         class="sb-subitem">3.3 Samples Quality Assessment</a>-->
   </div>
   <a href="stage_4.html" class="sb-item sb-has-sub"><span class="sb-item-num">4</span>Model Training<span class="sb-chevron">›</span></a>
   <div class="sb-submenu">
@@ -467,26 +467,61 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   </div>
 
   <p>
-  <code>sits_mixture_model()</code> decomposes each pixel's reflectance spectrum into proportions of three pure spectral <em>endmembers</em> —
-  <strong>Soil, Vegetation, and Dark (SVD)</strong> — using Non-Negative Least Squares (NNLS) <a href="#ref2" id="cite2">[2]</a>. The resulting fraction
-  bands enrich the feature space used for segmentation and classification, improving separability in mixed and transitional land cover areas common in the Amazon.
-</p>
+    The concept of spectral mixture in remote sensing imagery was first formally articulated by Shimabukuro <sup><a href="#ref1" id="cite1">[1]</a></sup>,
+    building on earlier observations by researchers such as Horwitz et al. (1971) and Detchmendy and Pace (1972). The core challenge arises when
+    attempting to correctly classify pixels that contain a mixture of surface materials rather than
+    a single, spectrally pure cover type. Because most natural landscapes are inherently heterogeneous, a single pixel routinely captures contributions
+    from multiple surface components, each present in varying proportions.
+  </p>
 
-<p>
-  The spectral <em>endmembers</em> used in this analysis were not collected directly from the imagery. Instead, we adopted the globally standardized
-  endmembers proposed by Small &amp; Sousa <a href="#ref3" id="cite3">[3]</a>, which provides a physically grounded and sensor-specific framework for spectral unmixing of Sentinel-2/MSI data. 
-  In that study, the authors assembled a composite spectral feature space from 110 image tiles collected from spectral diversity hotspots distributed worldwide,
-  encompassing more than 13 billion individual spectra across a wide range of terrestrial biomes, land cover types, and climatic regions. Their analysis
-  demonstrated that the spectral mixing space of Sentinel-2 is effectively three-dimensional, with 99% of total spectral variance captured within three low-order principal component dimensions.
-</p>
+   <p>
+    Fraction images generated through spectral mixture analysis have found application in a wide range of environmental monitoring programs.
+    In Brazil, they have been central to large-scale initiatives such as Digital Prodes and Deter. Beyond deforestation monitoring, fraction images
+    have also been used in regional projects such as PANAMAZONIA II and AMAZONICA to quantify burned areas across the Amazon biome.
+    The value of fraction images in these contexts lies in their ability to reduce the volume of multispectral data while simultaneously highlighting
+    the specific land-surface information required for a given application. When operating at the temporal and spatial scales demanded by large-area
+    monitoring programs this data compression without information loss becomes operationally indispensable.
+  </p>
 
-<p>
-  The geometry of this mixing space can be intuitively understood through a two-dimensional scatterplot of pixel reflectances. Figure
-  <a href="#fig-svd">1.1</a> illustrates the distribution of image pixels in a feature space defined by the Red (x-axis) and Near-Infrared (y-axis) spectral
-  bands, expressed as digital numbers (DNs). Considering the spectral properties of the three SVD endmembers, each surface type occupies a characteristic region of this space: pixels dominated by
-  <strong>water or shadow</strong> cluster near the origin, reflecting low energy in both bands; pixels dominated by <strong>exposed soil</strong> scatter toward higher values along both axes; and pixels dominated by
-  <strong>green vegetation</strong> shift strongly toward the y-axis, owing to the characteristically high NIR reflectance and low red reflectance produced by chlorophyll absorption. Each of these regions corresponds directly to one of the three fraction images described below.
-</p>
+  <p>
+    In practice, the linear spectral mixture model decomposes each pixel's reflectance spectrum into the fractional contributions of a small number
+    of spectrally pure components. The function <code>sits_mixture_model()</code> implements this approach by estimating, for every pixel, the proportions
+    of three endmembers — <strong>Soil, Vegetation, and Dark (SVD)</strong> — using Non-Negative Least Squares (NNLS) optimization
+    <sup><a href="#ref2" id="cite2">[2]</a></sup>. The resulting fraction bands enrich the feature space available for segmentation and classification,
+    improving the separability of mixed and transitional land cover types that are especially prevalent across the Amazon.
+  </p>
+
+  <p>
+    The quality of any unmixing result depends critically on the selection of appropriate endmembers. By definition, an endmember is simply a spectral component 
+    that contributes to the observed mixture; selecting endmembers that are physically meaningful for the scene under study, and that satisfy the mathematical constraints of the mixture equations,
+    is therefore a prerequisite for obtaining interpretable fraction images.
+  </p>
+ 
+  <p>  
+    Endmembers can be identified in two principal ways: directly from the imagery itself, or from spectral libraries assembled through field campaigns
+    and laboratory measurements. In well-studied areas under continuous environmental monitoring, the choice of endmembers is often relatively
+    straightforward, since representative surface types are already known. In contrast, when working with unfamiliar scenes or attempting to extract
+    specific information not previously characterized, systematic experimentation is required. Users working with surface reflectance data generally
+    find the process more intuitive, as the shape of reflectance curves provides direct physical insight into the nature of candidate pure pixels.
+  </p>
+
+  <p>
+    In the present analysis, rather than deriving endmembers directly from the imagery, we adopted the globally standardized endmembers proposed
+    by Small &amp; Sousa <sup><a href="#ref3" id="cite3">[3]</a></sup>, which offer a physically grounded and sensor-specific framework for spectral
+    unmixing of Sentinel-2/MSI data. Their study assembled a composite spectral feature space from 110 image tiles collected at spectral diversity
+    hotspots distributed worldwide, encompassing more than 13 billion individual spectra across a broad range of terrestrial biomes, land cover types,
+    and climatic regions. Crucially, their analysis demonstrated that the spectral mixing space is effectively three-dimensional,
+    with 99% of total spectral variance captured within three low-order principal component dimensions.
+  </p>
+
+  <p>
+    Figure <a href="#fig-svd">1.1</a> illustrates this geometry through a scatterplot of pixel reflectances in the Red (x-axis) and Near-Infrared
+    (y-axis) feature space, expressed as digital numbers (DNs). Considering the spectral properties of the three SVD endmembers, each surface type
+    occupies a characteristic region of this space: pixels dominated by <strong>water or shadow</strong> cluster near the origin, reflecting low energy
+    in both bands; pixels dominated by <strong>exposed soil</strong> scatter toward higher values along both axes; and pixels dominated by
+    <strong>green vegetation</strong> shift strongly toward the y-axis, owing to the characteristically high NIR reflectance and low red reflectance
+    produced by chlorophyll absorption. Each of these regions corresponds directly to one of the three fraction images output by the model.
+  </p>
 
 <figure id="fig-svd" style="text-align: center;">
   <figcaption style="margin-bottom: 6px;">
@@ -499,8 +534,10 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
   </figcaption>
 </figure>
 
-<p>We used the inner endmembers (Si and Vi) recommended by the authors, which are derived from the interior apexes of the mixing space rather than from extreme outlier pixels.
- This choice produces more physically plausible fraction estimates and avoids the dynamic range compression that occurs when high-albedo sand spectra are used as the Substrate endmember.<p>
+<p>
+  We used the inner endmembers (Si and Vi) recommended by the authors, which are derived from the interior apexes of the mixing space rather than from extreme outlier pixels.
+  This choice produces more physically plausible fraction estimates and avoids the dynamic range compression that occurs when high-albedo sand spectra are used as the Substrate endmember.
+</p>
 
 <div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val"><code>SENTINEL-2-16D</code> cube<br>Tiles: 012014, 012015, 013014, 013015<br>Period: 2024-08-01 → 2025-07-31</div></div>
@@ -541,7 +578,7 @@ fetch(url)
 </figure>
   
 <p>
-  The <strong>Vegetation fraction</strong> captures the proportion of each pixel covered by green, photosynthetically active vegetation (Figure <a href="#fig-veg">1.3</a>). Elevated values indicate dense forest canopy, vigorous pastureland, or crops at peak growth stages. This fraction is particularly sensitive to vegetation health and canopy density, making it a valuable proxy for biomass and land cover monitoring.
+  The Vegetation fraction</strong> captures the proportion of each pixel covered by green, photosynthetically active vegetation (Figure <a href="#fig-veg">1.3</a>). Elevated values indicate dense forest canopy, vigorous pastureland, or crops at peak growth stages. This fraction is particularly sensitive to vegetation health and canopy density, making it a valuable proxy for biomass and land cover monitoring.
 </p>
 
 <figure id="fig-veg" style="text-align: center;">
