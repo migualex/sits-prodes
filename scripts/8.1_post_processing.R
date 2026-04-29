@@ -191,6 +191,18 @@ extract_cloud_mask <- function(
     rcl = cbind(cloud_values, rep(1, length(cloud_values))),
     others = NA
   )
+
+  # ---------------------------------------------------------------------------
+  # 4.1 Check if any cloud values were found
+  # ---------------------------------------------------------------------------
+  if (all(is.na(terra::values(scl_mask)))) {
+    message("  -> No clouds identified")
+    return(invisible(list(
+      cloud_vec    = NULL,
+      tile_id      = tile_id,
+      end_date_scl = end_date_scl
+    )))
+  }
   
   # ----------------------------------------------------------
   # 5. Crop to classification extent
@@ -257,15 +269,40 @@ end_date_scl <- result$end_date_scl
 # 4. Cloud/shadow difference
 # ============================================================
 
-Cloud_union <- sf::st_union(cloud_vec)
+# Step 4.1 -- Defining the 'remove_cloud_areas' function
+remove_cloud_areas <- function(
+    sits_reclassification,
+    cloud_vec,
+    buffer_dist = buffer_dist
+) {
+  # Check if cloud_vec exists and has features
+  if (is.null(cloud_vec) || nrow(cloud_vec) == 0) {
+    message("  -> No cloud vectors were found")
+    return(invisible(sits_reclassification))
+  }
+  
+  # Dissolve
+  cloud_union <- sf::st_union(cloud_vec) 
+ 
+   # Buffer
+  cloud_vec_buffer <- sf::st_buffer(cloud_union, dist = buffer_dist) 
+  
+  # Remove cloud/shadow areas from classification
+  sits_classification_cloud_cleaned <- sf::st_difference(
+    sits_reclassification,
+    cloud_vec_buffer
+  ) |>
+    sf::st_cast("MULTIPOLYGON")
+  
+  return(invisible(sits_classification_cloud_cleaned))
+}
 
-cloud_vec_buffer <- sf::st_buffer(Cloud_union, dist = 100)
-
-reclass_cloud_cleaned <- sf::st_difference(
-        post_class,
-        cloud_vec_buffer
-      ) |>
-      sf::st_cast("MULTIPOLYGON")
+# Step 4.2 -- Run 'remove_cloud_areas' function
+sits_classification_cloud_cleaned <- remove_cloud_areas(
+  sits_reclassification = sits_reclassification,
+  cloud_vec             = cloud_vec,  # NULL if there are no clouds
+  buffer_dist           = 100
+)
 
 # ============================================================
 # 5. Fill holes < 1 hectare (first round)
@@ -329,14 +366,6 @@ class_diff_mask_filled_bays <- class_diff_mask |>
   sf::st_cast("POLYGON") |>
   tibble::rowid_to_column("id")
 
-sf::st_write(
-  class_diff_mask_filled_bays,
-  file.path(
-    output_dir,
-    paste0("class_diff_mask_filled_bays_", tile_id, "_", end_date_scl, ".gpkg")
-  )
-)
-# vai salvar???????
 # ============================================================
 # 8. Fill holes < 1 hectare (second round)
 # ============================================================
@@ -357,14 +386,6 @@ smoothed_2 <- smoothr::fill_holes(
   threshold = units::set_units(10000, "m^2")
 )
 
-sf::st_write(
-  smoothed_2,
-  file.path(
-    output_dir,
-    paste0("smoothed_2_", tile_id, "_", end_date_scl, ".gpkg")
-  )
-)
-# vai salvar???????
 # ============================================================
 # 9. Difference with deforestation mask (second round)
 # ============================================================
@@ -383,7 +404,6 @@ sf::st_write(
     paste0("class_diff_mask_2_", tile_id, "_", end_date_scl, ".gpkg")
   )
 )
-#pra que recotar pela máscara de novo?????
 
 # ============================================================
 # 10. Remove polygons < 1 hectare
@@ -453,4 +473,3 @@ if (nrow(arvore_remanesce) > 0 && nrow(outras_classes) > 0) {
 } else {
   final_result <- result_filtered
 }
-
