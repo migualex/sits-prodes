@@ -118,7 +118,7 @@ rfor_validate <- sits_kfold_validate(
 sits_kfold_validate_end <- Sys.time()
 sits_kfold_validate_time <- as.numeric(sits_kfold_validate_end - sits_kfold_validate_start, units = "secs")
 sprintf("SITS kfold_validate process duration (HH:MM): %02d:%02d", 
-        s.integer(sits_kfold_validate_time / 3600),
+        as.integer(sits_kfold_validate_time / 3600),
         as.integer((sits_kfold_validate_time %% 3600) / 60))
 
 # Step 2.3.1 -- Plot the confusion matrix
