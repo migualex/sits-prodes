@@ -164,6 +164,18 @@ extract_cloud_mask <- function(
     rcl    = cbind(cloud_values, rep(1, length(cloud_values))),
     others = NA
   )
+
+  # ---------------------------------------------------------------------------
+  # 4.1 Check if any cloud values were found
+  # ---------------------------------------------------------------------------
+  if (all(is.na(terra::values(scl_mask)))) {
+    message("  -> No clouds identified")
+    return(invisible(list(
+      cloud_vec    = NULL,
+      tile_id      = tile_id,
+      end_date_scl = end_date_scl
+    )))
+  }
   
   # ---------------------------------------------------------------------------
   # 4.1 Check if any cloud values were found
