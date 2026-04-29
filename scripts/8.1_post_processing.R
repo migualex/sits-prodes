@@ -191,6 +191,18 @@ extract_cloud_mask <- function(
     rcl = cbind(cloud_values, rep(1, length(cloud_values))),
     others = NA
   )
+
+  # ---------------------------------------------------------------------------
+  # 4.1 Check if any cloud values were found
+  # ---------------------------------------------------------------------------
+  if (all(is.na(terra::values(scl_mask)))) {
+    message("  -> No clouds identified")
+    return(invisible(list(
+      cloud_vec    = NULL,
+      tile_id      = tile_id,
+      end_date_scl = end_date_scl
+    )))
+  }
   
   # ----------------------------------------------------------
   # 5. Crop to classification extent
@@ -257,15 +269,40 @@ end_date_scl <- result$end_date_scl
 # 4. Cloud/shadow difference
 # ============================================================
 
-Cloud_union <- sf::st_union(cloud_vec)
+# Step 4.1 -- Defining the 'remove_cloud_areas' function
+remove_cloud_areas <- function(
+    sits_reclassification,
+    cloud_vec,
+    buffer_dist = buffer_dist
+) {
+  # Check if cloud_vec exists and has features
+  if (is.null(cloud_vec) || nrow(cloud_vec) == 0) {
+    message("  -> No cloud vectors were found")
+    return(invisible(sits_reclassification))
+  }
+  
+  # Dissolve
+  cloud_union <- sf::st_union(cloud_vec) 
+ 
+   # Buffer
+  cloud_vec_buffer <- sf::st_buffer(cloud_union, dist = buffer_dist) 
+  
+  # Remove cloud/shadow areas from classification
+  sits_classification_cloud_cleaned <- sf::st_difference(
+    sits_reclassification,
+    cloud_vec_buffer
+  ) |>
+    sf::st_cast("MULTIPOLYGON")
+  
+  return(invisible(sits_classification_cloud_cleaned))
+}
 
-cloud_vec_buffer <- sf::st_buffer(Cloud_union, dist = 100)
-
-reclass_cloud_cleaned <- sf::st_difference(
-        post_class,
-        cloud_vec_buffer
-      ) |>
-      sf::st_cast("MULTIPOLYGON")
+# Step 4.2 -- Run 'remove_cloud_areas' function
+sits_classification_cloud_cleaned <- remove_cloud_areas(
+  sits_reclassification = sits_reclassification,
+  cloud_vec             = cloud_vec,  # NULL if there are no clouds
+  buffer_dist           = 100
+)
 
 # ============================================================
 # 5. Fill holes < 1 hectare (first round)
