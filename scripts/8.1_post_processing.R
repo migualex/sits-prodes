@@ -366,14 +366,6 @@ class_diff_mask_filled_bays <- class_diff_mask |>
   sf::st_cast("POLYGON") |>
   tibble::rowid_to_column("id")
 
-sf::st_write(
-  class_diff_mask_filled_bays,
-  file.path(
-    output_dir,
-    paste0("class_diff_mask_filled_bays_", tile_id, "_", end_date_scl, ".gpkg")
-  )
-)
-# vai salvar???????
 # ============================================================
 # 8. Fill holes < 1 hectare (second round)
 # ============================================================
@@ -394,14 +386,6 @@ smoothed_2 <- smoothr::fill_holes(
   threshold = units::set_units(10000, "m^2")
 )
 
-sf::st_write(
-  smoothed_2,
-  file.path(
-    output_dir,
-    paste0("smoothed_2_", tile_id, "_", end_date_scl, ".gpkg")
-  )
-)
-# vai salvar???????
 # ============================================================
 # 9. Difference with deforestation mask (second round)
 # ============================================================
@@ -420,7 +404,6 @@ sf::st_write(
     paste0("class_diff_mask_2_", tile_id, "_", end_date_scl, ".gpkg")
   )
 )
-#pra que recotar pela máscara de novo?????
 
 # ============================================================
 # 10. Remove polygons < 1 hectare
@@ -490,4 +473,3 @@ if (nrow(arvore_remanesce) > 0 && nrow(outras_classes) > 0) {
 } else {
   final_result <- result_filtered
 }
-

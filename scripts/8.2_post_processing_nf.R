@@ -178,6 +178,18 @@ extract_cloud_mask <- function(
   }
   
   # ---------------------------------------------------------------------------
+  # 4.1 Check if any cloud values were found
+  # ---------------------------------------------------------------------------
+  if (all(is.na(terra::values(scl_mask)))) {
+    message("  -> No clouds identified")
+    return(invisible(list(
+      cloud_vec    = NULL,
+      tile_id      = tile_id,
+      end_date_scl = end_date_scl
+    )))
+  }
+  
+  # ---------------------------------------------------------------------------
   # 5. Crop by the classification extent
   # ---------------------------------------------------------------------------
   class_bbox <- sits_reclassification |>
