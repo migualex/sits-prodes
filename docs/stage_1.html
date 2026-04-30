@@ -477,7 +477,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
    <p>
     Fraction images generated through spectral mixture analysis have found application in a wide range of environmental monitoring programs.
     In Brazil, they have been central to large-scale initiatives such as Digital Prodes and Deter. Beyond deforestation monitoring, fraction images
-    have also been used in regional projects such as PANAMAZONIA II and AMAZONICA to quantify burned areas across the Amazon biome <sup><a href="#ref4" id="cite4">[4]</a></sup>.
+    have also been used in regional projects to quantify burned areas across the Amazon biome <sup><a href="#ref4" id="cite4">[4]</a></sup>.
     The value of fraction images in these contexts lies in their ability to reduce the volume of multispectral data while simultaneously highlighting
     the specific land-surface information required for a given application. When operating at the temporal and spatial scales demanded by large-area
     monitoring programs this data compression without information loss becomes operationally indispensable.
@@ -493,8 +493,8 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
 
   <p>
     The quality of any unmixing result depends critically on the selection of appropriate endmembers. By definition, an endmember is simply a spectral component 
-    that contributes to the observed mixture; selecting endmembers that are physically meaningful for the scene under study, and that satisfy the mathematical constraints of the mixture equations,
-    is therefore a prerequisite for obtaining interpretable fraction images.
+    that contributes to the observed mixture; selecting endmembers that are physically meaningful for the scene under study, and that satisfy the mathematical 
+    constraints of the mixture equations,  is therefore a prerequisite for obtaining interpretable fraction images.
   </p>
  
   <p>  
@@ -511,7 +511,7 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     unmixing of Sentinel-2/MSI data. Their study assembled a composite spectral feature space from 110 image tiles collected at spectral diversity
     hotspots distributed worldwide, encompassing more than 13 billion individual spectra across a broad range of terrestrial biomes, land cover types,
     and climatic regions. Crucially, their analysis demonstrated that the spectral mixing space is effectively three-dimensional,
-    with 99% of total spectral variance captured within three low-order principal component dimensions.
+    with 99% of total spectral variance captured within three low-order principal component dimensions. 
   </p>
 
   <p>
@@ -520,7 +520,11 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     occupies a characteristic region of this space: pixels dominated by <strong>water or shadow</strong> cluster near the origin, reflecting low energy
     in both bands; pixels dominated by <strong>exposed soil</strong> scatter toward higher values along both axes; and pixels dominated by
     <strong>green vegetation</strong> shift strongly toward the y-axis, owing to the characteristically high NIR reflectance and low red reflectance
-    produced by chlorophyll absorption. Each of these regions corresponds directly to one of the three fraction images output by the model.
+    produced by chlorophyll absorption. Each of these regions corresponds directly to one of the three fraction images output by the model.</p>
+
+  <p>
+  We used the inner endmembers (Si and Vi) recommended by the authors, which are derived from the interior apexes of the mixing space rather than from extreme outlier pixels.
+  This choice produces more physically plausible fraction estimates and avoids the dynamic range compression that occurs when high-albedo sand spectra are used as the Substrate endmember.
   </p>
 
 <figure id="fig-svd" style="text-align: center;">
@@ -533,11 +537,6 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     Source: Small &amp; Sousa (2022).
   </figcaption>
 </figure>
-
-<p>
-  We used the inner endmembers (Si and Vi) recommended by the authors, which are derived from the interior apexes of the mixing space rather than from extreme outlier pixels.
-  This choice produces more physically plausible fraction estimates and avoids the dynamic range compression that occurs when high-albedo sand spectra are used as the Substrate endmember.
-</p>
 
 <div class="io-grid">
     <div class="io-box"><div class="io-label">Input</div><div class="io-val"><code>SENTINEL-2-16D</code> cube<br>Tiles: 012014, 012015, 013014, 013015<br>Period: 2024-08-01 → 2025-07-31</div></div>
@@ -580,8 +579,8 @@ fetch(url)
   
 <p>
   The <strong>Vegetation fraction</strong> captures the proportion of each pixel covered by green, photosynthetically active vegetation (Figure <a href="#fig-veg">1.3</a>). 
-    Elevated values indicate dense forest canopy, vigorous pastureland, or crops at peak growth stages. 
-      This fraction is particularly sensitive to vegetation health and canopy density, making it a valuable proxy for biomass and land cover monitoring.
+  Elevated values indicate dense forest canopy, vigorous pastureland, or crops at peak growth stages. This fraction is particularly sensitive to vegetation health and canopy density, 
+  making it a valuable proxy for biomass and land cover monitoring.
 </p>
 
 <figure id="fig-veg" style="text-align: center;">
@@ -610,7 +609,10 @@ fetch(url)
 </figure>
 
 <p>
-  Together, these three fractions can be combined into a single, expressive visualization. By assigning the Soil, Vegetation, and Dark fractions to the Red, Green, and Blue channels, respectively, a false-color composite known as the <strong>SVD composition</strong> is produced (Figure <a href="#fig-comp">1.5</a>). This representation offers an intuitive and powerful summary of landscape dynamics: forested areas appear in vivid green, exposed or degraded land in reddish tones, and water bodies or burned areas in dark blue to black. The SVD composite is widely used in deforestation monitoring, land use mapping, and change detection over Brazilian biomes.
+  Together, these three fractions can be combined into a single, expressive visualization. By assigning the Soil, Vegetation, and Dark fractions to the Red, Green, and Blue channels, 
+  respectively, a false-color composite known as the <strong>SVD composition</strong> is produced (Figure <a href="#fig-comp">1.5</a>). 
+  This representation offers an intuitive and powerful summary of landscape dynamics: forested areas appear in vivid green, exposed or degraded land in reddish tones, 
+  and water bodies or burned areas in dark blue to black. The SVD composite is widely used in deforestation monitoring, land use mapping, and change detection over Brazilian biomes.
 </p>
 
 <figure id="fig-comp" style="text-align: center;">

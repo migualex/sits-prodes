@@ -464,17 +464,20 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     </div>
   </div>
 
-  <p>This guide documents the complete processing pipeline of the <strong>Prodes-AMZ</strong> project, an application of the <a href="https://github.com/e-sensing/sits" target="_blank"><code>sits</code></a> R package for annual deforestation and forest degradation monitoring in the Brazilian Legal Amazon. 
-      The pipeline processes Sentinel-2 16-day composites from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a>, covering neighboring tiles: <code>012014</code>, <code>012015</code>, <code>013014</code>, and <code>013015</code> for the 2024-08 to 2025-07 reference period.</p>
+  <p>
+  This guide documents the complete processing pipeline of the <strong>Prodes-AMZ</strong> project, an application of the <a href="https://github.com/e-sensing/sits" target="_blank"><code>sits</code></a> R package for annual deforestation and forest degradation monitoring in the Brazilian Legal Amazon. 
+  The pipeline processes Sentinel-2 16-day composites from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a>, covering neighboring tiles: <code>012014</code>, <code>012015</code>, <code>013014</code>, and <code>013015</code> for the 2024-08 to 2025-07 reference period.</p>
 
-  <p>The pipeline follows a <strong>time-first, space-later</strong> paradigm: each spatial unit is associated with a multivariate time series of spectral bands, 
-      a machine learning model classifies those time series, and spatial post-processing rules produce Prodes-compatible polygon outputs. 
-        Classification is performed at <strong>segment level</strong> (Object-Based Image Analysis) using vector data cubes.</p>
+  <p>
+  The pipeline follows a <strong>time-first, space-later</strong> paradigm: each spatial unit is associated with a multivariate time series of spectral bands, 
+  a machine learning model classifies those time series, and spatial post-processing rules produce Prodes-compatible polygon outputs. 
+  Classification is performed at <strong>segment level</strong> (Object-Based Image Analysis) using vector data cubes.</p>
 
   <h2 id="agradecimentos"></span>Acknowledgements</h2>
-  <p>This project was developed by members of the Amazon team: Guilherme Correa, Gustavo Salgado, Igor Cunha, and Miguel Alexandre da Cunha, under the supervision of Cassiano Messias, Luciana Soler, and Claudio Almeida.
-      We extend our sincere gratitude to the Brazil Data Cube team, with special thanks to Gilberto Câmara for his invaluable contributions and support.
-        This work was supported by the National Council for Scientific and Technological Development (CNPq) under project number 422354/2023-6 in partnership with the National Institute for Space Research (INPE).<p>
+  <p>
+  This project was developed by members of the Amazon team: Guilherme Correa, Gustavo Salgado, Igor Cunha, and Miguel Alexandre da Cunha, under the supervision of Cassiano Messias, Luciana Soler, and Claudio Almeida.
+  We extend our sincere gratitude to the Brazil Data Cube team, with special thanks to Gilberto Câmara for his invaluable contributions and support.
+  This work was supported by the National Council for Scientific and Technological Development (CNPq) under project number 422354/2023-6 in partnership with the National Institute for Space Research (INPE).<p>
 
   <div class="callout note">
     <div class="callout-title">📖 Note</div>
@@ -522,28 +525,31 @@ footer{background:var(--sidebar-bg);border-top:1px solid var(--border);padding:1
     defined as primary forest removed within each August-to-July reference year, firstly using Landsat-8 imagery and then substituido por Sentinel-2 and polygon-based shapefiles with a 1 ha minimum mapping unit. 
     This pipeline extends Prodes-compatible mapping to include <strong>forest degradation</strong> classes (<code>Degradation</code>, <code>Fire Degradation</code>) alongside the standard deforestation classes, 
     using Sentinel-2 time series and object-based classification.</p>-->
-    <p>The <strong>Prodes Project</strong>, operated by the BiomasBR project at INPE, has continuously monitored deforestation in the Brazilian Legal Amazon since 1988. 
-      Prodes tracks gross annual deforestation, defined as the removal of primary forest within each reference year (from August to July). 
-        Previously, the methodology was based on Landsat-8 imagery, with a spatial resolution of 30 meters <a href="#ref2" id="cite2">[2]</a>. 
-        It has now transitioned to Sentinel-2 data, with a 10-meter spatial resolution, enabling more detailed and accurate mapping.
-          In addition, Prodes uses polygon-based shapefiles with a minimum mapping unit of 1 hectare. 
-          This processing pipeline has been expanded to include <strong>forest degradation</strong> classes (<code>Degradation</code> and <code>Fire Degradation</code>), 
-            alongside the standard deforestation classes, using Sentinel-2 time series and object-based classification.</p>
+  <p>The <strong>Prodes Project</strong>, operated by the BiomasBR project at INPE, has continuously monitored deforestation in the Brazilian Legal Amazon since 1988. 
+  Prodes tracks gross annual deforestation, defined as the removal of primary forest within each reference year (from August to July). 
+  Previously, the methodology was based on Landsat-8 imagery, with a spatial resolution of 30 meters <a href="#ref2" id="cite2">[2]</a>. 
+  It has now transitioned to Sentinel-2 data, with a 10-meter spatial resolution, enabling more detailed and accurate mapping.
+  In addition, Prodes uses polygon-based shapefiles with a minimum mapping unit of 1 hectare. 
+  This processing pipeline has been expanded to include <strong>forest degradation</strong> classes (<code>Degradation</code> and <code>Fire Degradation</code>), 
+  alongside the standard deforestation classes, using Sentinel-2 time series and object-based classification.</p>
 
   <h2 id="time-first"><span class="sec-num">1.2</span>Time-First, Space-Later</h2>
   <p>The <code>sits</code> package implements the <strong>time-first, space-later</strong> paradigm <a href="#ref1" id="cite1">[1]</a>. 
-    In the <em>time-first</em> phase, each pixel or segment is represented as a multivariate time series across all acquisition dates.
-      A machine or deep learning model then classifies these time series. In the <em>space-later</em> phase, spatial post-processing rules refine the map. 
-        This approach captures seasonal phenological signals, such as the NDVI cycle of pasture versus native vegetation, that single-date composites cannot discriminate.</p>
+  In the <em>time-first</em> phase, each pixel or segment is represented as a multivariate time series across all acquisition dates.
+  A machine or deep learning model then classifies these time series. In the <em>space-later</em> phase, spatial post-processing rules refine the map. 
+  This approach captures seasonal phenological signals, such as the NDVI cycle of pasture versus native vegetation, that single-date composites cannot discriminate.</p>
 
   <h2 id="obia-concept"><span class="sec-num">1.3</span>Object-Based Classification with Vector Data Cubes</h2>
   <p>Rather than classifying individual pixels, this pipeline segments the image into spatially homogeneous objects (SNIC superpixels), 
-      assembles them into a <strong>vector data cube</strong> (SITS Book, Ch. 25), and classifies the time series extracted per segment. 
-        This eliminates salt-and-pepper noise, produces polygon outputs compatible with the PRODES data model, 
-          and allows enforcing the minimum mapping unit before classification by controlling segment size.</p>
+  assembles them into a <strong>vector data cube</strong> (SITS Book, Ch. 25), and classifies the time series extracted per segment. 
+  This eliminates salt-and-pepper noise, produces polygon outputs compatible with the PRODES data model, 
+  and allows enforcing the minimum mapping unit before classification by controlling segment size.</p>
 
   <h2 id="bdc-source"><span class="sec-num">1.4</span>Brazil Data Cube as Data Source</h2>
-  <p>All imagery is sourced from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a> collection <code>SENTINEL-2-16D</code>, which provides analysis-ready 16-day best-pixel composites at 10 m resolution. The BDC applies cloud masking and compositing, making the cubes directly suitable for time series analysis without additional preprocessing. Bands used: B02, B03, B04, B05, B06, B07, B08, B8A, B11, B12, NDVI, NBR, EVI, CLOUD.</p>
+  <p>All imagery is sourced from the <a href="https://data.inpe.br/bdc/" target="_blank">Brazil Data Cube (BDC)</a> collection <code>SENTINEL-2-16D</code>, 
+  which provides analysis-ready 16-day best-pixel composites at 10 m resolution. The BDC applies cloud masking and compositing, 
+  making the cubes directly suitable for time series analysis without additional preprocessing. 
+  Bands used: B02, B03, B04, B05, B06, B07, B08, B8A, B11, B12, NDVI, NBR, EVI, CLOUD.</p>
 
   <div class="page-nav">
     <a class="pnav-btn" href="#preface"><span class="pnav-dir">← Previous</span><span class="pnav-title">Preface</span></a>
