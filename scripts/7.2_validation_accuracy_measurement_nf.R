@@ -13,9 +13,11 @@ library(stringr)
 
 # Define the parameters: These are user-defined variables
 tiles      = '012014'
-start_date = "2023-08-13"
-end_date   = "2025-07-28"
 model_name <- "rf-model_2t_014002-015002_2y_2023-07-28_2025-07-28_com-nuvens-cheias_2026-04-07_14h45m.rds"
+
+# Extract the date of the string separated by "_"
+start_date <- stringr::str_split_i(model_name, "_", 5)
+end_date   <- stringr::str_split_i(model_name, "_", 6)
 
 # File and folder paths
 models <- c("rf"   = "random_forest",
@@ -29,12 +31,16 @@ model_path       <- file.path("data/rds/model", models[model_type], model_name)
 model            <- readRDS(model_path)
 class_dir        <- "data/class"
 samples_dir      <- "data/raw/samples/validation_samples"
-plots_dir        <- "data/plots"
+plots_path       <- "data/plots"
 mask_dir         <- "data/raw/auxiliary/masks"
 version          <- paste(stringr::str_split_i(model_name, "-", 1),
                           stringr::str_split_i(model_name, "_", 4),
                           stringr::str_split_i(model_name, "_", 7),
                           sep = "-")
+
+# Plots organized by version
+plots_dir <- file.path(plots_path, version)
+dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
 
 # List of validation sample files matching the version pattern in the samples directory
 pattern <- paste0(".*", tiles, ".*", ".*", version, ".*\\.gpkg$")

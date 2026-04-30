@@ -71,6 +71,10 @@ mixture_path  <- "data/raw/mixture_model"
 plots_path    <- "data/plots/"
 config_dir    <- ".."
 
+# Plots organized by var
+plot_dir <- file.path(plots_path, var)
+dir.create(plot_dir, showWarnings = FALSE, recursive = TRUE)
+
 # ============================================================
 # 1. Define and Load Data Cubes
 # ============================================================
@@ -165,7 +169,7 @@ saveRDS(samples,
 save_sits_patterns_plot <- function(samples,
                                     start_date,
                                     end_date,
-                                    plots_path,
+                                    plots_dir,
                                     tiles,
                                     var,
                                     labels          = NULL,
@@ -254,9 +258,9 @@ save_sits_patterns_plot <- function(samples,
                       suffix,
                       ".png")
   
-  dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
+  dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
   
-  full_path <- file.path(plots_path, file_name)
+  full_path <- file.path(plots_dir, file_name)
   ggplot2::ggsave(full_path, plot = g, width = width, height = height,
                   units = "px", dpi = res)
   
@@ -269,7 +273,7 @@ save_sits_patterns_plot(
   samples          = samples,
   start_date       = unique(samples$start_date),
   end_date         = unique(samples$end_date),
-  plots_path       = plots_path,
+  plots_path       = plots_dir,
   tiles            = tiles,
   var              = var,
   bands            = c('B12','B11','B04'), # NULL to plot and save all bands patterns

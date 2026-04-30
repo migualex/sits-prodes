@@ -12,9 +12,11 @@ library(RColorBrewer)
 # Define the parameters: These are user-defined variables
 model_name    <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-15_12h01m.rds"
 seg_version   <- "lsmm-snic-spac10-comp03-pad0-rectangular"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
-start_date    <- "2024-08-01"
-end_date      <- "2025-07-31"
 tile          <- "012014" # one tile per classification run
+
+# Extract the date of the string separated by "_"
+start_date <- stringr::str_split_i(model_name, "_", 5)
+end_date   <- stringr::str_split_i(model_name, "_", 6)
 
 # File and folder paths 
 models <- c("rf"   = "random_forest",

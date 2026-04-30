@@ -9,9 +9,11 @@ library(randomForestExplainer, lib.loc = "/opt/r/R/x86_64-pc-linux-gnu-library/4
 
 # Define the parameters: These are user-defined variables
 time_series_name  <- "TS-tiles_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-22_10h46m.rds"
-start_date        <- "2024-08-01"
-end_date          <- "2025-07-31"
 tiles             <- c("012014","012015","013014","013015")
+
+# Extract the date of the string separated by "_"
+start_date <- stringr::str_split_i(time_series_name, "_", 4)
+end_date   <- stringr::str_split_i(time_series_name, "_", 5)
 
 # Function to read class names and their colors::IMPORTANT
 read_class_config <- function(config_file = "class_config.txt") {
@@ -75,6 +77,10 @@ config_dir        <- ".."
 
 # Identifier to distinguish this model run from previous versions
 var <- stringr::str_split_i(time_series_name, "_", 6)
+
+# Plots organized by var
+plots_dir <- file.path(plots_path, var)
+dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ============================================================
 # 1. Define and Load Data Cubes
@@ -158,7 +164,7 @@ print("Model trained successfully!")
 # Step 4.1 -- Define the function to plot and save the most important variables of the model
 save_rf_model_plot <- function(
     rf_model,
-    plots_path,
+    plots_dir,
     tiles,
     no.years,
     start_date,
@@ -190,8 +196,8 @@ save_rf_model_plot <- function(
   )
   
   # Save
-  dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
-  full_path <- file.path(plots_path, file_name)
+  dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
+  full_path <- file.path(plots_dir, file_name)
   
   ggplot2::ggsave(full_path, plot = g, width = width, height = height,
                   units = "px", dpi = res, scale = scale)
@@ -203,7 +209,7 @@ save_rf_model_plot <- function(
 # Step 4.2 -- Run the function to plot and save the most important variables of the model
 save_rf_model_plot(
   rf_model   = rf_model,
-  plots_path = plots_path,
+  plots_path = plots_dir,
   tiles      = tiles,
   no.years   = no.years,
   start_date = start_date,
@@ -218,7 +224,7 @@ save_rf_model_plot(
 # Step 4.3 --  Define the function to plot and save Out of Box error by the number of trees
 save_rf_oob_plot <- function(
     rf_model,
-    plots_path,
+    plots_dir,
     tiles,
     no.years,
     start_date,
@@ -277,8 +283,8 @@ save_rf_oob_plot <- function(
   )
   
   # Save
-  dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
-  full_path <- file.path(plots_path, file_name)
+  dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
+  full_path <- file.path(plots_dir, file_name)
   
   ggplot2::ggsave(full_path, plot = g, width = width, height = height,
                   units = "px", dpi = res, scale = scale)
@@ -290,7 +296,7 @@ save_rf_oob_plot <- function(
 # Step 4.4 --  Define the function to plot and save Out of Box error by the number of trees
 save_rf_oob_plot(
   rf_model   = rf_model,
-  plots_path = plots_path,
+  plots_path = plots_dir,
   tiles      = tiles,
   no.years   = no.years,
   start_date = start_date,
