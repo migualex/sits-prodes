@@ -15,7 +15,7 @@ library(openxlsx)
 
 # Define the parameters: These are user-defined variables
 tiles      = '012014'
-model_name <- "rf-model_4t_012015-012014-013015-013014_1y_2024-07-27_2025-07-28_all-samples-new-pol-avg-false_2026-02-25_21h03m.rds"
+model_name <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_new-deforestation_2026-05-07_09h38m.rds"
 
 # Extract the date of the string separated by "_"
 start_date <- stringr::str_split_i(model_name, "_", 5)
@@ -336,9 +336,16 @@ for(i in seq(length(metricas))){
   r_df <- rbind(r_df, r)
 }
 
-writeData(resumo_metricas, nome_seg, r_df, rowNames = TRUE)
+writeData(resumo_metricas, 1, r_df, rowNames = TRUE)
 
 path <- file.path(dirname(pol_class_path),
                   sprintf("metricas_%s.xlsx", tiles))
 
 saveWorkbook(resumo_metricas, path, overwrite = TRUE)
+
+# interseção
+
+st_make_valid(pol_class)
+st_make_valid(pol_ref) 
+
+st_area(st_intersection(pol_ref, pol_class))
