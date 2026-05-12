@@ -16,9 +16,9 @@ library(smoothr)
 
 # Step 1.2 -- Define paths for files and folders
 tile            <- "012014"
-version         <- "rf-2y-novos-segmentos"
+version         <- "new-deforestation"
 class_path      <- "data/class"
-mask_path       <- "data/raw/auxiliary/masks" #nome da máscara em gpkg geral
+mask_path       <- "data/raw/auxiliary/mask_geral_amz_v2024.gpkg" #nome da máscara em gpkg geral
 
 
 post_class_path <- file.path(class_path, tile, "post_processed")
@@ -27,11 +27,12 @@ dir.create(post_class_path,
            recursive = TRUE)
 
 pattern <- paste0(".*", tile, ".*", "class",
-                  ".*", version, ".*\\.gpkg$")
+                  "*.*", version, ".*\\.gpkg$")
 
 raw_class_path <- list.files(class_path,
                              pattern = pattern,
-                             full.names = TRUE)
+                             full.names = TRUE,
+                             recursive = TRUE)
 
 raw_class <- read_sf(raw_class_path)
 
@@ -45,10 +46,9 @@ raw_class <- raw_class |>
     Suppression_sum = rowSums(
       across(
         all_of(c(
-          "Corte_Raso",
-          "Corte_Raso_Com_Vegetacao",
-          "Corte_Raso_Com_Fogo",
-          "Corte_Raso_Com_Arvores_Remanescentes"
+          "Clear_Cut_Bare_Soil",
+          "Clear_Cut_Vegetation",
+          "Clear_Cut_Trees"
         ))
       ),
       na.rm = TRUE
@@ -56,18 +56,19 @@ raw_class <- raw_class |>
     Degrad_sum = rowSums(
       across(
         all_of(c(
-          "Degradacao",
-          "Degradacao_Por_Fogo"
+          "Degradation",
+          "Degradation_Fire"
         ))
       ),
       na.rm = TRUE
     ),
     Natural = rowSums(
-      across(
+     across(
         all_of(c(
-          "Floresta",
-          "Floresta_Transicional",
-          "Vegetacao_Natural_Nao_Florestal"
+          "Forest",
+          "Non_Forest_Natural_Vegetation",
+          "Transition_Forest",
+          "Wetland"
         ))
       ),
       na.rm = TRUE
@@ -80,8 +81,8 @@ raw_class <- raw_class |>
     class = if_else(
       Suppression_sum >= Degrad_sum &
         Suppression_sum >= Natural &
-        Suppression_sum >= Corpo_Dagua,
-      "Soma_Supressao",
+        Suppression_sum >= Water,
+      "Suppression_sum",
       class
     )
   )
@@ -90,14 +91,14 @@ raw_class <- raw_class |>
 post_class <- raw_class |>
   filter(
     class %in% c(
-      "Corte_Raso",
-      "Corte_Raso_Com_Vegetacao",
-      "Corte_Raso_Com_Fogo",
-      "Corte_Raso_Com_Arvores_Remanescentes",
+      "Clear_Cut_Bare_Soil",
+      "Clear_Cut_Vegetation",
+      "Clear_Cut_Burned_Area",
+      "Clear_Cut_Trees",
       "Suppression_sum"
     )
   ) |>
-  mutate(class = "supressao")
+  mutate(class = "supression")
 
 # Step 2.7 -- Dissolve and aggregate geometries
 post_class <- post_class |>
@@ -299,7 +300,7 @@ remove_cloud_areas <- function(
 
 # Step 4.2 -- Run 'remove_cloud_areas' function
 sits_classification_cloud_cleaned <- remove_cloud_areas(
-  sits_reclassification = sits_reclassification,
+  sits_reclassification = post_class,
   cloud_vec             = cloud_vec,  # NULL if there are no clouds
   buffer_dist           = 100
 )
@@ -314,12 +315,12 @@ prodes_mask <- read_sf(mask_path,
 
 prodes_mask <- sf::st_transform(
   prodes_mask,
-  sf::st_crs(reclass_cloud_cleaned)
+  sf::st_crs(sits_classification_cloud_cleaned)
 )
 
-merged <- list(reclass_cloud_cleaned, prodes_mask) |>
+merged <- list(sits_classification_cloud_cleaned, prodes_mask) |>
   purrr::map(sf::st_make_valid) |>
-  purrr::map(\(x) sf::st_transform(x, sf::st_crs(reclass_cloud_cleaned))) |>
+  purrr::map(\(x) sf::st_transform(x, sf::st_crs(sits_classification_cloud_cleaned))) |>
   purrr::map(\(x) {
     sf::st_geometry(x) <- "geom"
     x
@@ -370,16 +371,15 @@ class_diff_mask_filled_bays <- class_diff_mask |>
 # 8. Fill holes < 1 hectare (second round)
 # ============================================================
 
-merged_2 <- list(class_diff_mask_filled_bays, mask) |>
-  purrr::map(sf::st_make_valid) |>
-  purrr::map(\(x) sf::st_transform(x, sf::st_crs(class_diff_mask_filled_bays))) |>
-  purrr::map(\(x) {
-    sf::st_geometry(x) <- "geom"
-    x
-  }) |>
-  purrr::map(\(x) sf::st_cast(x, "MULTIPOLYGON")) |>
-  dplyr::bind_rows() |>
-  sf::st_union()
+merged_2 <- sf::st_union(
+  c(
+    sf::st_geometry(sf::st_make_valid(class_diff_mask_filled_bays)),
+    sf::st_geometry(sf::st_make_valid(mask_union))
+  )
+) |>
+  sf::st_collection_extract("POLYGON") |>  # pull only polygon parts
+  sf::st_union() |>                         # re-union into one geometry
+  sf::st_make_valid()
 
 smoothed_2 <- smoothr::fill_holes(
   merged_2,
@@ -396,14 +396,6 @@ class_diff_mask_2 <- sf::st_difference(
 ) |>
   sf::st_cast("POLYGON") |>
   sf::st_sf()
-
-sf::st_write(
-  class_diff_mask_2,
-  file.path(
-    output_dir,
-    paste0("class_diff_mask_2_", tile_id, "_", end_date_scl, ".gpkg")
-  )
-)
 
 # ============================================================
 # 10. Remove polygons < 1 hectare
@@ -423,7 +415,8 @@ poligonos_supressao <- st_transform(
   class_diff_mask_bigger_than_1ha,
   crs = 4674
 ) |>
-  sf::st_cast("POLYGON") 
+  sf::st_cast("POLYGON") |>
+  sf::st_make_valid()
 
 sf::st_write(
   poligonos_supressao,
