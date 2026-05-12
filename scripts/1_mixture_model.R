@@ -7,9 +7,9 @@ library(sits)
 library(tibble)
 
 # Paths for files and folders
-mixture_path <- "data/raw/mixture_model",
-tiles      = c('012014', '012015', '013014', '013015'),
-start_date = '2024-08-01',
+mixture_path <- "data/raw/mixture_model"
+tiles      = c('012014', '012015', '013014', '013015')
+start_date = '2024-08-01'
 end_date   = '2025-07-31'
 
 # ============================================================
