@@ -405,8 +405,12 @@ class_diff_mask_bigger_than_1ha <- class_diff_mask_2 |>
 poligonos_supressao <- st_transform(class_diff_mask_bigger_than_1ha, crs = 4674)
 
 # Step 11.2 -- Save the final result
-sf::st_write(poligonos_supressao, 
-             file.path(
-               output_dir,
-               paste0("sits-classification-post-processed_", tile_id, "_", end_date_scl, ".gpkg")
-             ))
+sf::st_write(
+  poligonos_supressao,
+  file.path(
+    output_dir,
+    paste0("class-post-processed_",
+           tile,"_XY_",
+           end_date_scl,"_",
+           ,".gpkg")
+  )
