@@ -16,25 +16,26 @@ library(smoothr)
 
 # Step 1.2 -- Define paths for files and folders
 tile            <- "012014"
-         <- "new-deforestation"
+version         <- "rf-3y-all-samples-new-pol-avg-false"
 class_path      <- "data/class"
 mask_path       <- "data/raw/auxiliary/mask_geral_amz_v2024.gpkg" #nome da máscara em gpkg geral
 
+# Step 1.3 -- define raw classification path and load the file
+raw_class_path <- list.files(class_path,
+                             pattern = paste0(".*", tile, ".*", "class",
+                                              "*.*", version, ".*\\.gpkg$"),
+                             full.names = TRUE,
+                             recursive = TRUE)
+raw_class <- read_sf(raw_class_path)
 
+# Step 1.4 -- extract the number of 'years'
+years <- regmatches(version, regexpr("\\d+y", version))
+
+# Step 1.5 -- define and create post classification path
 post_class_path <- file.path(class_path, tile, "post_processed")
 dir.create(post_class_path,
            showWarnings = FALSE,
            recursive = TRUE)
-
-pattern <- paste0(".*", tile, ".*", "class",
-                  "*.*", version, ".*\\.gpkg$")
-
-raw_class_path <- list.files(class_path,
-                             pattern = pattern,
-                             full.names = TRUE,
-                             recursive = TRUE)
-
-raw_class <- read_sf(raw_class_path)
 
 # ============================================================
 # 2. Probabilistic reclassification
@@ -423,9 +424,9 @@ sf::st_write(
   file.path(
     post_class_path,
     paste0("class-post-processed_",
-           tile,"_XY_",
+           tile,"_",years,"_",
            end_date_scl,"_",
-           ,".gpkg")
+           version,".gpkg")
   )
 )
 
