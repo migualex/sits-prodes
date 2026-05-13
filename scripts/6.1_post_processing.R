@@ -16,7 +16,7 @@ library(smoothr)
 
 # Step 1.2 -- Define paths for files and folders
 tile            <- "012014"
-version         <- "new-deforestation"
+         <- "new-deforestation"
 class_path      <- "data/class"
 mask_path       <- "data/raw/auxiliary/mask_geral_amz_v2024.gpkg" #nome da máscara em gpkg geral
 
@@ -422,8 +422,10 @@ sf::st_write(
   poligonos_supressao,
   file.path(
     post_class_path,
-    paste0("sits-classification-post-processed_",
-           tile, "_", end_date_scl, ".gpkg")
+    paste0("class-post-processed_",
+           tile,"_XY_",
+           end_date_scl,"_",
+           ,".gpkg")
   )
 )
 
