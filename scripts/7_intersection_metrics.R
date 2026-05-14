@@ -41,40 +41,42 @@ compute_metrics <- function(ref_prodes,
                                 n_workers = max(1L, floor(parallelly::availableCores() / 1.5))) {
   
   # --- Configure parallelization ----------------------------
-  plan(multisession, workers = n_workers)
+  plan(multisession, workers = n_workers) # Configure the execution plan in parallel using multiple sessions
   on.exit(plan(sequential), add = TRUE)
   message(sprintf("[PARALLEL] Using %d workers.", n_workers))
   
   # --- Helper: secure reading with correction via GEOS --------
-  safe_read_sf <- function(path, layer_name) {
-    sf::sf_use_s2(FALSE)
-    on.exit(sf::sf_use_s2(TRUE), add = TRUE)
+  safe_read_sf <- function(path, layer_name) { # Creates an internal function to read spatial files
+    sf::sf_use_s2(FALSE) # Disables spherical geometry (S2) from the sf package, using planar geometry (GEOS) instead
+    on.exit(sf::sf_use_s2(TRUE), add = TRUE) # Ensures that spherical geometry is reactivated when this auxiliary function finishes
     
-    layer <- sf::read_sf(path)
+    layer <- sf::read_sf(path) # Reads the spatial file at the specified path and stores it in the 'layer' object
     
-    # Corrige topologia via GEOS (funciona em lon/lat com s2 desligado)
-    layer <- sf::st_make_valid(layer)
-    
-    # Remove geometrias ainda inválidas ou vazias
-    valid_mask <- sf::st_is_valid(layer) & !sf::st_is_empty(layer)
+    layer <- sf::st_make_valid(layer) # Corrects topology via GEOS (works on lon/lat with s2 disabled)
+   
+    valid_mask <- sf::st_is_valid(layer) & !sf::st_is_empty(layer) # Remove geometries that are still invalid or empty
     n_dropped  <- sum(!valid_mask)
     if (n_dropped > 0)
-      warning(sprintf("[%s] %d geometria(s) inválida(s) removida(s) após correção.",
+      warning(sprintf("[%s] %d Invalid geometry(ies) removed after correction.",
                       layer_name, n_dropped))
     
     layer[valid_mask, ]
   }
  
-  # --- Load PRODES -------------------------------------
+  # --- Load PRODES (Reference) -------------------------------------
+  # Checks if the user passed more than one reference file
   if (length(ref_prodes) > 1)
     warning(sprintf("[PRODES] %d files found; using the first one.", length(ref_prodes)))
-  
+
+  # Read and correct the first PRODES file using the auxiliary function created above
   pol_ref <- safe_read_sf(ref_prodes[1], "PRODES")
   
   # --- Load SITS classification -------------------------
+  # Checks if the user has passed more than one classification file
   if (length(class) > 1)
     warning(sprintf("[SITS] %d files found; using the first one.", length(class)))
-  
+
+  # Read and correct the first classification file using the auxiliary function created above
   pol_class <- safe_read_sf(class[1], "SITS")
   
   # --- Align CRS -----------------------------------------
@@ -84,6 +86,7 @@ compute_metrics <- function(ref_prodes,
   }
   
   # --- Segmetric Object -----------------------
+  # Creates a base object from the 'segmetric' package by crossing the reference polygons and segmentation/classification
   seg_obj <- segmetric::sm_read(ref_sf = pol_ref, seg_sf = pol_class)
   
   # --- Calculate metrics in parallel (segmetric) -----------
@@ -91,21 +94,23 @@ compute_metrics <- function(ref_prodes,
     "OS2", "US2", "AFI", "D_index",
     "precision", "recall", "M", "IoU", "Dice"
   )
-  
+
+  # Maps (iterates) the calculation of each metric in parallel using the 'furrr' package
   metricas_list <- furrr::future_map(
     metricas_ids,
-    .f        = \(m) list(name = m, result = segmetric::sm_compute(seg_obj, m)),
-    .options  = furrr::furrr_options(seed = TRUE),
+    .f        = \(m) list(name = m, result = segmetric::sm_compute(seg_obj, m)), # For each metric 'm', create a list with the metric name and the result of the calculation via segmetric
+    .options  = furrr::furrr_options(seed = TRUE), # Ensures reproducibility with reliable parallel generation of random numbers
     .progress = TRUE
   )
   
   # --- Summarize metrics in data.frame (structure: 1 line per metric) ----
-  r_df <- do.call(rbind, lapply(metricas_list, function(x) {
+  r_df <- do.call(rbind, lapply(metricas_list, function(x) { # Combines the list of results into a single data frame by joining the rows
     
-    # Extracts only the numeric values from the segmetric object 
+    # Extracts only the numeric values from the segmetric object (remove infinites (Inf) or NA values)
     vals <- unlist(x$result[sapply(x$result, is.numeric)])
     vals <- vals[is.finite(vals)]   # remove NA/Inf
-    
+
+    # Creates a data frame row with descriptive statistics for each metric's values
     data.frame(
       Minimo        = min(vals,            na.rm = TRUE),
       Maximo        = max(vals,            na.rm = TRUE),
@@ -127,10 +132,10 @@ compute_metrics <- function(ref_prodes,
   areas_ha     <- areas_m2 / 10000
   total_area_ha <- sum(areas_ha, na.rm = TRUE)
   
-  # % da interseção em relação ao PRODES  → recall geométrico
+  # Percentage of intersection relative to PRODES → geometric recall
   pct_ref   <- (total_area_ha / area_ref_ha)   * 100
   
-  # % da interseção em relação à classificação → precisão geométrica
+  # Percentage of intersection relative to classification → geometric precision
   pct_class <- (total_area_ha / area_class_ha) * 100
   
   area_df <- data.frame(
@@ -140,11 +145,11 @@ compute_metrics <- function(ref_prodes,
   
   summary_area_df <- data.frame(
     descricao = c(
-      "Area PRODES (ha)",
-      "Area classificacao (ha)",
-      "Area intersecao total (ha)",
-      "Intersecao / PRODES (%)",
-      "Intersecao / Classificacao (%)"
+      "PRODES area (ha)",
+      "Classification area (ha)",
+      "Intersection area (ha)",
+      "Intersection / PRODES (%)",
+      "Intersection / Classificacao (%)"
     ),
     valor = c(
       area_ref_ha,
@@ -162,28 +167,35 @@ compute_metrics <- function(ref_prodes,
   message(sprintf("intersection / Class.:  %.2f %%", pct_class))
 
   # --- Export to Excel ---------------------------------
-  class_filename <- tools::file_path_sans_ext(basename(class[1]))
-  metrics_filename <- sub("^class", "metrics", class_filename)
+  class_filename <- tools::file_path_sans_ext(basename(class[1])) # Extracts the original sorting filename, without the full path and without the extension
+  metrics_filename <- sub("^class", "metrics", class_filename) # Replace the "class" prefix (if it exists at the beginning of the string) with "metrics" to generate the new filename
   
-  wb <- openxlsx::createWorkbook()
-  
-  sheet_name <- tools::file_path_sans_ext(basename(ref_prodes[1]))
+  wb <- openxlsx::createWorkbook() # Creates a new "Workbook" (blank Excel file in memory) from the openxlsx package
+
+  # Extract the name of the PRODES file (without extension) to use as the name of the first spreadsheet tab, add a new tab to Excel with the name of the reference file, and write the data frame with the statistics for the 'r_df' metrics in the created tab
+  sheet_name <- tools::file_path_sans_ext(basename(ref_prodes[1])) 
   openxlsx::addWorksheet(wb, sheet_name)
   openxlsx::writeData(wb, sheet_name, r_df, rowNames = TRUE)
-  
-  openxlsx::addWorksheet(wb, "Polygons_Intersection")
-  openxlsx::writeData(wb, "Polygons_Intersection", area_df)
-  
-  openxlsx::addWorksheet(wb, "Summary_Intersection")
+
+  # Add a second tab to Excel called "Polygons_Intersection" and write the data frame with the detailed area of ​​each polygon in the second tab
+  openxlsx::addWorksheet(wb, "Polygons_Intersection") 
+  openxlsx::writeData(wb, "Polygons_Intersection", area_df) # 
+
+  # Add a third tab called "Summary_Intersection" and write the data frame with the summary of total areas and percentages in the third tab
+  openxlsx::addWorksheet(wb, "Summary_Intersection") 
   openxlsx::writeData(wb, "Summary_Intersection", summary_area_df)
-  
+
+  # Defines the full path where the Excel file will be saved (in the same directory as the input sorting file)
   out_path <- file.path(
-    dirname(class[1]),
-    paste0(metrics_filename, ".xlsx")
+    dirname(class[1]), # Get the folder where the 'class' file is located
+    paste0(metrics_filename, ".xlsx") # Attach the Excel file name
   )
+  
+  # It physically saves the Excel file to the hard drive, overwriting any that already exist
   openxlsx::saveWorkbook(wb, out_path, overwrite = TRUE)
   message(sprintf("[OK] File saved in: %s", out_path))
-  
+
+  # Returns a list in 'invisible' form
   invisible(list(
     metricas        = r_df,
     area_intersecao = area_df,
