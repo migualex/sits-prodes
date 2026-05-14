@@ -310,7 +310,7 @@ sits_classification_cloud_cleaned <- remove_cloud_areas(
 # 5. Fill holes < 1 hectare (first round)
 # ============================================================
 
-query <- sprintf("SELECT * FROM  WHERE tile = '%s'", tile) #nome da máscara em gpkg geral
+query <- sprintf("SELECT * FROM mask_geral_amz_v2024 WHERE tile = '%s'", tile) #nome da máscara em gpkg geral
 prodes_mask <- read_sf(mask_path,
                        query = query) 
 
