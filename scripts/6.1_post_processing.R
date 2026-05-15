@@ -385,7 +385,8 @@ merged_2 <- sf::st_union(
 smoothed_2 <- smoothr::fill_holes(
   merged_2,
   threshold = units::set_units(10000, "m^2")
-)
+) |>
+  sf::st_make_valid()
 
 # ============================================================
 # 9. Difference with deforestation mask (second round)
