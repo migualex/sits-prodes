@@ -45,22 +45,27 @@ compute_metrics <- function(ref_prodes,
   on.exit(plan(sequential), add = TRUE)
   message(sprintf("[PARALLEL] Using %d workers.", n_workers))
   
+  old_s2_state <- sf::sf_use_s2()
+  sf::sf_use_s2(FALSE) # Disables spherical geometry (S2) from the sf package, using planar geometry (GEOS) instead
+  on.exit(sf::sf_use_s2(old_s2_state), add = TRUE) # Ensures that spherical geometry is reactivated when this auxiliary function finishes
+  
   # --- Helper: secure reading with correction via GEOS --------
   safe_read_sf <- function(path, layer_name) { # Creates an internal function to read spatial files
-    sf::sf_use_s2(FALSE) # Disables spherical geometry (S2) from the sf package, using planar geometry (GEOS) instead
-    on.exit(sf::sf_use_s2(TRUE), add = TRUE) # Ensures that spherical geometry is reactivated when this auxiliary function finishes
-    
     layer <- sf::read_sf(path) # Reads the spatial file at the specified path and stores it in the 'layer' object
     
     layer <- sf::st_make_valid(layer) # Corrects topology via GEOS (works on lon/lat with s2 disabled)
-   
+
+    layer <- sf::st_collection_extract(layer, "POLYGON")
+    
     valid_mask <- sf::st_is_valid(layer) & !sf::st_is_empty(layer) # Remove geometries that are still invalid or empty
     n_dropped  <- sum(!valid_mask)
-    if (n_dropped > 0)
+    if (n_dropped > 0){
       warning(sprintf("[%s] %d Invalid geometry(ies) removed after correction.",
                       layer_name, n_dropped))
     
-    layer[valid_mask, ]
+    layer <- layer[valid_mask, ]}
+    
+    return(layer)
   }
  
   # --- Load PRODES (Reference) -------------------------------------
@@ -98,7 +103,9 @@ compute_metrics <- function(ref_prodes,
   # Maps (iterates) the calculation of each metric in parallel using the 'furrr' package
   metricas_list <- furrr::future_map(
     metricas_ids,
-    .f        = \(m) list(name = m, result = segmetric::sm_compute(seg_obj, m)), # For each metric 'm', create a list with the metric name and the result of the calculation via segmetric
+    .f        = \(m) {sf::sf_use_s2(FALSE)
+                      list(name = m,
+                           result = segmetric::sm_compute(seg_obj, m))}, # For each metric 'm', create a list with the metric name and the result of the calculation via segmetric
     .options  = furrr::furrr_options(seed = TRUE), # Ensures reproducibility with reliable parallel generation of random numbers
     .progress = TRUE
   )
