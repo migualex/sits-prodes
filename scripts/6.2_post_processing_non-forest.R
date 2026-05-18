@@ -401,29 +401,43 @@ class_diff_mask_2 <- sf::st_difference(
   sf::st_sf()
 
 # ============================================================
-# 10. Exclude polygons < 1 hectares
+# 10. Remove polygons outside the biome border
 # ============================================================
 
-# Step 10.1 -- Calculate the area of each polygon (in m²)
-class_diff_mask_2$area_m2 <- as.numeric(sf::st_area(class_diff_mask_2))
+biome <- read_sf("data/raw/amazon-biome-border-epsg10857.gpkg") |>
+  st_make_valid()
 
-# Step 10.2 -- Convert square meters to hectares
-class_diff_mask_2$area_ha <- class_diff_mask_2$area_m2 / 10000
+class_biome <- st_intersection(class_diff_mask_2, biome)
 
-# Step 10.3 -- Keep only polygons with an area greater than or equal to 1 hectare
-class_diff_mask_bigger_than_1ha <- class_diff_mask_2 |>
+# ============================================================
+# 11. Remove polygons < 1 hectare
+# ============================================================
+
+# Step 11.1 -- Calculate the area of each polygon (in m²)
+class_biome$area_m2 <- as.numeric(sf::st_area(class_biome))
+
+# Step 11.2 -- Convert square meters to hectares
+class_biome$area_ha <- class_biome$area_m2 / 10000
+
+# Step 11.3 -- Keep only polygons with an area greater than or equal to 1 hectare
+class_biome_bigger_than_1ha <- class_diff_mask_2 |>
   dplyr::filter(area_ha >= 1)
 
 # ============================================================
-# 11. Save the final result
+# 12. Save final result
 # ============================================================
 
-# Step 11.1 -- Reproject to EPSG:4674 (SIRGAS 2000)
-poligonos_supressao <- st_transform(class_diff_mask_bigger_than_1ha, crs = 4674)
+# Step 12.1 -- Reproject to EPSG:4674 (SIRGAS 2000)
+supression_polygons <- st_transform(
+  class_biome_bigger_than_1ha,
+  crs = 4674
+) |>
+  sf::st_cast("POLYGON") |>
+  sf::st_make_valid()
 
-# Step 11.2 -- Save the final result
-  sf::st_write(
-  poligonos_supressao,
+# Step 12.2 -- Save the final result
+sf::st_write(
+  supression_polygons,
   file.path(
     post_class_path,
     paste0("class-post-processed_",
