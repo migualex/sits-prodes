@@ -38,7 +38,7 @@ ref_prodes <- list.files(
 
 compute_metrics <- function(ref_prodes,
                                 class,
-                                n_workers = max(1L, floor(parallelly::availableCores() / 1.5))) {
+                                n_workers = floor(parallelly::availableCores() / 2)) {
   
   # --- Configure parallelization ----------------------------
   plan(multisession, workers = n_workers) # Configure the execution plan in parallel using multiple sessions
