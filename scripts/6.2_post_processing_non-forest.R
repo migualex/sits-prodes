@@ -404,7 +404,7 @@ class_diff_mask_2 <- sf::st_difference(
 # 10. Remove polygons outside the biome border
 # ============================================================
 
-biome <- read_sf("data/raw/amazon-biome-border-epsg10857.gpkg") |>
+biome <- read_sf("data/raw/amazon-nf-biome-border-epsg10857.gpkg") |>
   st_make_valid()
 
 class_biome <- st_intersection(class_diff_mask_2, biome)
