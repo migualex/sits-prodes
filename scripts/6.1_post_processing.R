@@ -397,31 +397,41 @@ class_diff_mask_2 <- sf::st_difference(
   mask_union
 ) |>
   sf::st_cast("POLYGON") |>
-  sf::st_sf()
+  sf::st_sf()|>
+  st_make_valid()
 
 # ============================================================
-# 10. Remove polygons < 1 hectare
+# 10. Remove polygons outside the biome border
 # ============================================================
 
-class_diff_mask_2$area_m2 <- as.numeric(sf::st_area(class_diff_mask_2))
-class_diff_mask_2$area_ha <- class_diff_mask_2$area_m2 / 10000
+biome <- read_sf("data/raw/amazon-biome-border-epsg10857.gpkg") |>
+  st_make_valid()
 
-class_diff_mask_bigger_than_1ha <- class_diff_mask_2 |>
+class_biome <- st_intersection(class_diff_mask_2, biome)
+
+# ============================================================
+# 11. Remove polygons < 1 hectare
+# ============================================================
+
+class_biome$area_m2 <- as.numeric(sf::st_area(class_biome))
+class_biome$area_ha <- class_biome$area_m2 / 10000
+
+class_biome_bigger_than_1ha <- class_diff_mask_2 |>
   dplyr::filter(area_ha >= 1)
 
 # ============================================================
-# 11. Save final result
+# 12. Save final result
 # ============================================================
 
-poligonos_supressao <- st_transform(
-  class_diff_mask_bigger_than_1ha,
+supression_polygons <- st_transform(
+  class_biome_bigger_than_1ha,
   crs = 4674
 ) |>
   sf::st_cast("POLYGON") |>
   sf::st_make_valid()
 
 sf::st_write(
-  poligonos_supressao,
+  supression_polygons,
   file.path(
     post_class_path,
     paste0("class-post-processed_",
@@ -432,7 +442,7 @@ sf::st_write(
 )
 
 # ============================================================
-# 12. Spatial logic (adapted for sf)
+# xx. Spatial logic (adapted for sf)
 # ============================================================
 
 # Step A: Separate classes
