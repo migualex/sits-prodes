@@ -53,20 +53,6 @@ samples_validation_list <- dir(
   full.names = TRUE
 )
 
-prodes_avaliation <- function(x){
-  data.frame(
-    t(
-      c(
-        Mínimo = format(min(x, na.rm = TRUE), digits = 3),
-        Máximo = format(max(x, na.rm = TRUE), digits = 3),
-        Média  = format(mean(x, na.rm = TRUE), digits = 3),
-        Mediana = format(median(x, na.rm = TRUE), digits = 3),
-        Desvio_Padrão = format(sd(x, na.rm = TRUE), digits = 3)
-      )
-    )
-  )
-}
-
 # Plotting function
 plot_accuracy <- function(acc, version, tile, plots_dir, prefix) {
   
