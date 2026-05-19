@@ -15,6 +15,7 @@ library(purrr)
 
 # Define the parameters: These are user-defined variables
 model_name      <- "rf-model_4t_012015-012014-013015-013014_1y_2024-07-27_2025-07-28_all-samples-new-pol-avg-false_2026-02-25_21h03m.rds"
+tiles           <- c("012014", "012015")
 
 # Date and time of the start of processing
 date_process    <- format(Sys.Date(), "%Y-%m-%d")
@@ -38,7 +39,10 @@ version          <- paste(stringr::str_split_i(model_name, "-", 1),
                           stringr::str_split_i(model_name, "_", 4),
                           stringr::str_split_i(model_name, "_", 7),
                           sep = "-")
-
+pattern          <- sprintf(".*_(%s)_", paste(tiles, collapse = "|"))
+seg_path         <- list.files("data/segments",
+                               pattern = pattern,
+                               full.names = TRUE)
 # ============================================================
 # 1. Create raster file from classified vector map
 # ============================================================
@@ -179,8 +183,11 @@ cube_dirs <- list.dirs(class_dir, recursive = TRUE)
 
 cube_dirs <- cube_dirs[
   sapply(cube_dirs, function(x) {
-    files <- list.files(x, pattern = "\\.tif$")
-    any(grepl(version, files))
+    files <- list.files(x, pattern = paste0(pattern,
+                                            ".*_class",
+                                            ".*\\.tif$"),
+                        full.names = TRUE)
+    return(length(files) > 0)
   })
 ]
 
@@ -190,16 +197,25 @@ labels <- c(
 names(labels) <- 1:length(labels)
 
 # Step 2.2 -- Load the original cube with classified raster file
-cube <- sits_cube(
-  source = "BDC",
-  collection = "SENTINEL-2-16D",
-  bands = "class",
-  labels = labels,
-  data_dir = cube_dirs, # classified raster file cannot be in the same folder as the classified gpkg file
-  version = version,
-  parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
-                 "band", "version"))
+cube_list <- map(cube_dirs, function(dir) {
+  sits_cube(
+    source      = "BDC",
+    collection  = "SENTINEL-2-16D",
+    bands       = "class",
+    labels      = labels,
+    data_dir    = dir, # Takes one path from 'cube_dirs' at a time
+    version     = version,
+    parse_info  = c("satellite", "sensor", "tile", "start_date", "end_date", 
+                    "band", "version")
+  )
+})
 
+# 2. Combine the list of tibbles into a single multi-row sits cube
+cube <- do.call(rbind, cube_list)
+
+polygons <- seg_path |> 
+  map(read_sf) |> 
+  bind_rows()
 # ============================================================
 # 3. Full Map Stratified Random Sampling
 # ============================================================
@@ -232,8 +248,11 @@ sampling_design
 # 3.3 -- Save sampling design as a CSV data frame 
 write.csv(
   as.data.frame(sampling_design),
-  file = file.path(samples_dir, paste0("validation-samples_all-classes_", cube$tile,
-                                       "_", version, "_", date_process, ".txt")),
+  file = file.path(samples_dir,
+                   paste0("validation-samples_all-classes_",
+                          paste(cube$tile, collapse = "-"),
+                          "_", version, "_",
+                          date_process, ".txt")),
   row.names = TRUE  # TRUE para manter os nomes das classes como linha
 )
 
@@ -249,12 +268,32 @@ samples_sf <- sits_stratified_sampling(
 # 3.5 -- Total of each class
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
+
 # 3.6 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("validation-samples_all-classes_", cube$tile,
-                                                      "_", version, "_", date_process, ".gpkg"))
+samples_sf_file_path <- file.path(samples_dir,
+                                  paste0("validation-samples_all-classes_",
+                                         paste(cube$tile, collapse = "-"),
+                                         "_", version, "_",
+                                         date_process, ".gpkg"))
 
 # 3.7 -- Save samples_sf object as GPKG file
-sf::st_write(samples_sf, samples_sf_file_path, append = FALSE)
+sf::st_write(samples_sf,
+             samples_sf_file_path,
+             delete_dsn = TRUE, append = FALSE)
+
+# 3.8 -- Polygons Samples
+validation_polygons <- st_filter(polygons,
+                                 samples_sf)
+
+polygons_sf_file_path <- file.path(samples_dir,
+                                   paste0("validation-samples-polygons_all-classes_",
+                                          paste(cube$tile, collapse = "-"),
+                                          "_", version, "_",
+                                          date_process, ".gpkg"))
+
+sf::st_write(validation_polygons,
+             polygons_sf_file_path,
+             delete_dsn = TRUE, append = FALSE)
 
 # ============================================================
 # 4. PRODES Degradation Adjusted Map Accuracy
@@ -335,8 +374,10 @@ sampling_design
 # 4.5 -- Save sampling design as a CSV data frame 
 write.csv(
   as.data.frame(sampling_design),
-  file = file.path(samples_dir, paste0("validation-samples_prodes_", cube$tile,
-                                       "_", version, "_", date_process, ".txt")),
+  file = file.path(samples_dir,
+                   paste0("validation-samples_prodes_",
+                          paste(cube_reclass$tile, collapse = "-"),
+                          "_", version, "_", date_process, ".txt")),
   row.names = TRUE  # TRUE para manter os nomes das classes como linha
 )
 
@@ -353,8 +394,27 @@ samples_sf <- sits_stratified_sampling(
 samples_sf%>% group_by(label) %>% summarise(num = n())
 
 # 4.8 -- Define File Path
-samples_sf_file_path <- file.path(samples_dir, paste0("validation-samples_prodes_", cube_reclass$tile,
-                                                      "_", version, "_", date_process, ".gpkg"))
+samples_sf_file_path <- file.path(samples_dir,
+                                  paste0("validation-samples_prodes_",
+                                         paste(cube_reclass$tile, collapse = "-"),
+                                         "_", version, "_",
+                                         date_process, ".gpkg"))
 
 # 4.9 -- Save samples_sf object as GPKG file
-sf::st_write(samples_sf, samples_sf_file_path, delete_dsn = TRUE, append = FALSE)
+sf::st_write(samples_sf,
+             samples_sf_file_path,
+             delete_dsn = TRUE, append = FALSE)
+
+# 4.10 -- Polygons Samples
+validation_polygons <- st_filter(polygons,
+                                 samples_sf)
+
+polygons_sf_file_path <- file.path(samples_dir,
+                                   paste0("validation-samples-polygons_prodes_",
+                                          paste(cube_reclass$tile, collapse = "-"),
+                                          "_", version, "_",
+                                          date_process, ".gpkg"))
+
+sf::st_write(validation_polygons,
+             polygons_sf_file_path,
+             delete_dsn = TRUE, append = FALSE)
