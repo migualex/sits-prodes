@@ -247,7 +247,11 @@ save_rf_model_plot(
   width      = 1600,   # width in pixels
   height     = 1000,   # height in pixels
   res        = 200,    # DPI
+<<<<<<< Updated upstream:scripts/04.1_model_training_random-forest.R
   scale      = 1       # increases all elements proportionally  
+=======
+  scale      = 1          # increases all elements proportionally  
+>>>>>>> Stashed changes:scripts/4.1_model_training_random_forest.R
 )
 
 # Step 3.3 --  Define the function to plot and save Out of Box error by the number of trees
