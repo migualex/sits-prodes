@@ -14,6 +14,7 @@ library(stringr)
 library(purrr)
 
 # Define the parameters: These are user-defined variables
+
 model_name      <- "rf-model_4t_012015-012014-013015-013014_1y_2024-07-27_2025-07-28_all-samples-new-pol-avg-false_2026-02-25_21h03m.rds"
 tiles           <- c("012014", "012015")
 
@@ -302,7 +303,7 @@ sf::st_write(validation_polygons,
 
 # 4.1 -- Reclassify classified cube
 counter_mask <- c("1" = "Natural Vegetation",
-                "0" = "Deforestation Mask")
+                  "0" = "Deforestation Mask")
 
 prodes_mask <- sits_cube(source = "BDC",
                          collection = "SENTINEL-2-16D",

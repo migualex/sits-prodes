@@ -15,8 +15,8 @@ library(units)
 library(smoothr)
 
 # Step 1.2 -- Define paths for files and folders
-tile            <- "012014"
-version         <- "rf-3y-all-samples-new-pol-avg-false"
+tile            <- "010015"
+version         <- "rf-1y-all-samples-new-pol-avg-false"
 class_path      <- "data/class"
 mask_path       <- "data/raw/auxiliary/mask_geral_amz_v2024.gpkg" #nome da máscara em gpkg geral
 
@@ -40,8 +40,17 @@ dir.create(post_class_path,
 # ============================================================
 # 2. Probabilistic reclassification
 # ============================================================
+ raw_class$class <- ifelse(
+       raw_class$class %in% names(class_translation),
+       class_translation[raw_class$class],
+       raw_class$class
+   )
 
-# Step 2.1 -- Create sum columns 
+raw_class <- raw_class |>
+  rename_with(~ class_translation[.x],
+              .cols = any_of(names(class_translation)))
+
+# Step 2.1 -- Create sum columns
 raw_class <- raw_class |>
   mutate(
     Suppression_sum = rowSums(
@@ -95,8 +104,8 @@ post_class <- raw_class |>
       "Clear_Cut_Bare_Soil",
       "Clear_Cut_Vegetation",
       "Clear_Cut_Burned_Area",
-      "Clear_Cut_Trees",
-      "Suppression_sum"
+      "Clear_Cut_Trees"
+      #"Suppression_sum"
     )
   ) |>
   mutate(class = "supression")
@@ -354,7 +363,7 @@ mask_union <- prodes_mask |>
 class_diff_mask <- sf::st_difference(
   smoothed,
   mask_union
-) |>
+) |> sf::st_collection_extract("POLYGON") |> 
   sf::st_cast("POLYGON") |>
   sf::st_sf()
 
@@ -375,7 +384,7 @@ class_diff_mask_filled_bays <- class_diff_mask |>
 merged_2 <- sf::st_union(
   c(
     sf::st_geometry(sf::st_make_valid(class_diff_mask_filled_bays)),
-    sf::st_geometry(sf::st_make_valid(mask_union))
+    sf::st_geometry(mask_union)
   )
 ) |>
   sf::st_collection_extract("POLYGON") |>  # pull only polygon parts
@@ -396,6 +405,8 @@ class_diff_mask_2 <- sf::st_difference(
   smoothed_2,
   mask_union
 ) |>
+  sf::st_make_valid() |>
+  sf::st_collection_extract(type = "POLYGON") |>
   sf::st_cast("POLYGON") |>
   sf::st_sf()|>
   st_make_valid()
@@ -437,10 +448,11 @@ sf::st_write(
     paste0("class-post-processed_",
            tile,"_",years,"_",
            end_date_scl,"_",
-           version,".gpkg")
+           version, "_reclass", ".gpkg")
   )
 )
 
+#, "_reclass"
 # ============================================================
 # xx. Spatial logic (adapted for sf)
 # ============================================================

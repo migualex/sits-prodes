@@ -17,7 +17,7 @@ version     <- "rf-1y-all-classes"
 date_process    <- format(Sys.Date(), "%Y-%m-%d")
 
 # File and folder paths
-samples_dir       <- "data/raw/samples/validation_samples"
+samples_dir       <- "data/raw/samples/uncertainty_samples"
 uncertainty_dir   <- "data/class"
 pattern           <- sprintf(".*_(%s)_", paste(tiles, collapse = "|"))
 seg_path          <- list.files("data/segments",
