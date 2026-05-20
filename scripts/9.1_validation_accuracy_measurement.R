@@ -174,35 +174,34 @@ plot_accuracy <- function(acc, version, tile, plots_dir, prefix) {
 # Step 1.1 -- Get labels associated to the trained model data set (Enumerate them in the order they appear according to "sits_labels(model)")
 pattern <- paste0(".*", tiles, ".*", version, ".*\\.tif$")
 
-cube_dirs <- list.dirs(class_dir, recursive = TRUE) |> 
-  purrr::keep(~ length(list.files(.x, pattern = pattern)) > 0)
+cube_dirs <- grep("accuracy",
+                  list.dirs(class_dir, recursive = TRUE) |> 
+                  purrr::keep(~ length(list.files(.x, pattern = pattern)) > 0),
+          value = TRUE)
+
+labels <- c(
+  x = sits_labels(model)
+)
+names(labels) <- 1:length(labels)
 
 # Step 1.2 -- Retrieve local cube of Full Map classified
-cube <- sits_cube(
-  source = "BDC",
-  collection = "SENTINEL-2-16D",
-  bands = "class",
-  labels = c("1"  = "Wetland", # List the classes according to the number sequence in which they appear in your raster
-             "2"  = "Water",
-             "3"  = "Forest",
-             "4"  = "Transition_Forest",
-             "5"  = "Non_Forest_Natural_Vegetation",
-             "6"  = "Degradation",
-             "7"  = "Degradation_Fire",
-             "8"  = "Clear_Cut_Bare_Soil",
-             "9"  = "Clear_Cut_Vegetation",
-             "10" = "Clear_Cut_Burned_Area",
-             "11" = "Clear_Cut_Trees",
-             "12" = "Previous_Clear_Cut_Bare_Soil",
-             "13" = "Previous_Clear_Cut_Vegetation"
-             ),
-  tiles =  tiles,
-  start_date = start_date,
-  end_date = end_date,
-  version = version,
-  data_dir = cube_dirs,
-  parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
-                 "band", "version"))
+cube_list <- map(cube_dirs, function(dir) {
+  sits_cube(
+    source = "BDC",
+    collection = "SENTINEL-2-16D",
+    bands = "class",
+    labels = labels,
+    tiles =  tiles,
+    start_date = start_date,
+    end_date = end_date,
+    version = version,
+    data_dir = dir,
+    parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
+                   "band", "version"))
+})
+
+# 2. Combine the list of tibbles into a single multi-row sits cube
+cube <- do.call(rbind, cube_list)
 
 # Step 1.2 -- Get validation samples points (in geographical coordinates - lat/long)
 samples_validation <- st_read(grep(".*_all-classes_*.",
@@ -233,22 +232,31 @@ plot_accuracy(
 # 2. Accuracy assessment of PRODES Adjusted Map classified
 # ============================================================
 
+cube_dirs <- grep("prodes",
+                      list.dirs(class_dir, recursive = TRUE) |> 
+                      purrr::keep(~ length(list.files(.x, pattern = pattern)) > 0),
+                  value = TRUE)
+
 # Step 2.1 -- Retrieve local cube of PRODES adjusted map classified
-class_cube <- sits_cube(
-  source = "BDC",
-  collection = "SENTINEL-2-16D",
-  bands = "class",
-  labels = c("14" = "Deforestation",
-             "15" = "Degradation",
-             "16" = "Other_Classes",
-             ),
-  tiles =  tiles,
-  start_date = start_date,
-  end_date = end_date,
-  version = paste0(version, "-mosaic"),
-  data_dir = cube_dirs,
-  parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
-                 "band", "version"))
+cube_list <- map(cube_dirs, function(dir) {
+  sits_cube(
+    source = "BDC",
+    collection = "SENTINEL-2-16D",
+    bands = "class",
+    labels = c("23" = "supression",
+               "24" = "other_classes"
+               ),
+    tiles =  tiles,
+    start_date = start_date,
+    end_date = end_date,
+    version = paste("supression", version, sep = "-"),
+    data_dir = dir,
+    parse_info = c("satellite", "sensor", "tile", "start_date", "end_date", 
+                   "band", "version"))
+})
+
+# 2. Combine the list of tibbles into a single multi-row sits cube
+class_cube <- do.call(rbind, cube_list)
 
 # Step 2.2 -- Get validation samples points (in geographical coordinates - lat/long)
 samples_validation <- st_read(grep(".*_prodes_*.",
@@ -269,8 +277,8 @@ prodes_acc$error_matrix
 # Step 2.6 -- Plotting PRODES Adjusted Map Accuracy
 plot_accuracy(
   acc       = prodes_acc,
-  version   = paste0(version, "-mosaic"),
+  version   = version,
   tile      = tiles,
   plots_dir = plots_dir,
-  prefix    = "prodes-acc"
+  prefix    = "supression"
 )

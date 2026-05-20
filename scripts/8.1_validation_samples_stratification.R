@@ -283,7 +283,8 @@ sf::st_write(samples_sf,
 
 # 3.8 -- Polygons Samples
 validation_polygons <- st_filter(polygons,
-                                 samples_sf)
+                                 st_transform(samples_sf, crs(polygons))
+                                )
 
 polygons_sf_file_path <- file.path(samples_dir,
                                    paste0("validation-samples-polygons_all-classes_",
@@ -407,7 +408,8 @@ sf::st_write(samples_sf,
 
 # 4.10 -- Polygons Samples
 validation_polygons <- st_filter(polygons,
-                                 samples_sf)
+                                 st_transform(samples_sf, crs(polygons))
+                                )
 
 polygons_sf_file_path <- file.path(samples_dir,
                                    paste0("validation-samples-polygons_prodes_",
