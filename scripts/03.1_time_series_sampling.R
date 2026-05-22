@@ -68,7 +68,7 @@ read_class_config <- function(config_file = "class_config.txt") {
 sample_path   <- "data/raw/samples"
 ts_path       <- "data/rds/time_series/"
 mixture_path  <- "data/raw/mixture_model"
-plots_path    <- "data/plots/"
+plots_path    <- "data/plots/time_series"
 config_dir    <- ".."
 
 # Plots organized by var
