@@ -81,7 +81,7 @@ sits_validation_sampling <- function(
   # ── 2. Save points (gpkg) ──────────────────────────────────────────────────
   points_path <- file.path(
     output_dir,
-    paste0("validation-samples-points_", file_suffix, ".gpkg")
+    paste0("validation-samples_points_", file_suffix, ".gpkg")
   )
   
   cli::cli_inform("Saving points: {fs::path_file(points_path)}")
@@ -105,7 +105,7 @@ sits_validation_sampling <- function(
     
     polygons_path <- file.path(
       output_dir,
-      paste0("validation-samples-polygons_", file_suffix, ".gpkg")
+      paste0("validation-samples_polygons_", file_suffix, ".gpkg")
     )
     
     sf::st_write(validation_polygons, polygons_path, delete_dsn = TRUE, append = FALSE)
