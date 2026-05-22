@@ -13,7 +13,7 @@ library(openxlsx)
 tile <- "012014"
 version <- "camara-agrupado-reclassificado"
 
-prodes_dir  <- "data/raw/samples/prodes-2025"
+prodes_dir  <- "data/raw/prodes-2025"
 class_dir   <- paste0("data/class/",tile,"/post_processed")
 
 # List the classified polygons 
