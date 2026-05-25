@@ -361,7 +361,7 @@ plot_uncertainty_boxplot <- function(
     ) +
     ggplot2::scale_fill_manual(values = colors, guide = "none") +
     ggplot2::labs(
-      title    = "Mean Entropy Distribution by Class",
+      title    = "Entropy Distribution by Class",
       subtitle = "Red dashed line = high uncertainty threshold",
       x        = NULL,
       y        = "Centroid Entropy"
