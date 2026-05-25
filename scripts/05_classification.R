@@ -224,12 +224,11 @@ compute_uncertainty_raster(
 
 # Step 4.1 -- Define function to plot uncertainty by class box-plots
 plot_uncertainty_boxplot <- function(
-    output_dir,                 # diretório com os arquivos .tif e .gpkg
+    output_dir,
     band_uncertainty  = "entropy",
     class_column      = "class",
     tile,
     version,
-    sample_frac       = 0.10,
     high_uncert_perc  = 0.90,
     scale_factor      = 10000,
     save_plot         = TRUE,
@@ -296,44 +295,35 @@ plot_uncertainty_boxplot <- function(
   }
   
   # ---------------------------------------------------------------------------
-  # 3. Sampling and extraction of mean entropy per segment
+  # 3. Extraction of entropy at segment centroids
   # ---------------------------------------------------------------------------
-  if (verbose) message("[3/3] Sampling ", sample_frac*100, "% of segments...")
-  
-  set.seed(88)
-  n_sample <- min(nrow(sf_cls), max(10000, round(nrow(sf_cls) * sample_frac)))
-  idx_sample <- sample(nrow(sf_cls), n_sample)
-  sf_cls_sampled <- sf_cls[idx_sample, ]
-  if (verbose) message("  Sampled segments: ", nrow(sf_cls_sampled))
-  
-  if (verbose) message("  Extracting entropy at segment centroids...")
-  centroids <- sf::st_centroid(sf_cls_sampled)
+  if (verbose) message("[3/3] Extracting entropy at segment centroids...")
+  centroids <- sf::st_centroid(sf_cls)
   ent_vals  <- terra::extract(
     r_ent,
     terra::vect(centroids)
   )
-  sf_cls_sampled$entropy_raw <- ent_vals$entropy
-
-  valid <- !is.na(sf_cls_sampled$entropy_raw)
-  sf_cls_sampled <- sf_cls_sampled[valid, ]
-  if (verbose) message("  Segments with valid entropy: ", nrow(sf_cls_sampled))
+  sf_cls$entropy_raw <- ent_vals$entropy
+  
+  sf_cls <- sf_cls[!is.na(sf_cls$entropy_raw), ]
+  if (verbose) message("  Segments with valid entropy: ", nrow(sf_cls))
   
   # ---------------------------------------------------------------------------
   # 4. Scale entropy values if necessary
   # ---------------------------------------------------------------------------
-  max_val <- max(sf_cls_sampled$entropy_raw, na.rm = TRUE)
+  max_val <- max(sf_cls$entropy_raw, na.rm = TRUE)
   if (max_val > 10 && scale_factor != 1) {
     if (verbose) message("  Entropy values appear scaled (max = ", max_val,
                          "), dividing by ", scale_factor, "...")
-    sf_cls_sampled$entropy <- sf_cls_sampled$entropy_raw / scale_factor
+    sf_cls$entropy <- sf_cls$entropy_raw / scale_factor
   } else {
-    sf_cls_sampled$entropy <- sf_cls_sampled$entropy_raw
+    sf_cls$entropy <- sf_cls$entropy_raw
   }
   
   # ---------------------------------------------------------------------------
   # 5. Prepare data for plotting
   # ---------------------------------------------------------------------------
-  pts <- sf_cls_sampled |>
+  pts <- sf_cls |>
     sf::st_drop_geometry() |>
     dplyr::select(class, entropy) |>
     dplyr::mutate(class = as.factor(class))
@@ -364,7 +354,7 @@ plot_uncertainty_boxplot <- function(
       title    = "Entropy Distribution by Class",
       subtitle = "Red dashed line = high uncertainty threshold",
       x        = NULL,
-      y        = "Centroid Entropy"
+      y        = "Entropy distribution"
     ) +
     ggplot2::theme_minimal(base_size = 12) +
     ggplot2::theme(
@@ -388,10 +378,10 @@ plot_uncertainty_boxplot <- function(
 
 # Step 4.2 -- Run function
 plot_uncertainty_boxplot(
-  output_dir   = tile_period_dir,
-  tile         = tile,
-  version      = version,
-  sample_frac  = 0.10,
-  plots_path   = plots_path,
-  verbose      = TRUE
+  output_dir        = tile_period_dir,
+  tile              = tile,
+  version           = version,
+  high_uncert_perc  = 0.90,
+  plots_path        = plots_path,
+  verbose           = TRUE
 )
