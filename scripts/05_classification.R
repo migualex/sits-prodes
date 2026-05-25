@@ -10,7 +10,7 @@ library(terra)
 library(RColorBrewer)
 
 # Define the parameters: These are user-defined variables
-model_name    <- "rf-model_4t_012014-012015-013014-013015_1y_2024-08-01_2025-07-31_all-samples-new-pol-avg-false_2026-04-15_12h01m.rds"
+model_name    <- "rf-model_4t_012014-012015-013014-013015_1y_2024-07-27_2025-07-28_all-samples-new-pol-avg-false_2026-02-25_21h03m.rds"
 seg_version   <- "lsmm-snic-spac10-comp03-pad0-rectangular"# SITS recognizes "underline" as a separator of information. Use only for this purpose.
 tile          <- "012014" # one tile per classification run
 
@@ -30,6 +30,7 @@ model_path    <- file.path("data/rds/model", models[model_type], model_name)
 vector_path   <- "data/segments"
 class_path    <- "data/class"
 mixture_path  <- "data/raw/mixture_model"
+plots_path    <- "data/plots/accuracy"
 
 # Identifier to distinguish this model run from previous runs
 var <- stringr::str_split_i(model_name, "_", 7)
@@ -72,7 +73,7 @@ local_segs_cube <- sits_cube(
   raster_cube = cube_merge_lsmm_class,
   vector_dir  = vector_path,
   vector_band = "segments",
-  version     = seg_version, 
+  version     = seg_version,
   parse_info  = c("satellite", "sensor","tile", "start_date", 
                   "end_date", "band", "version", "X1"))
 
@@ -91,11 +92,10 @@ model <- readRDS(model_path)
 version <- paste(model_type, no.years, var, sep = "-")
 
 # Step 2.3 -- Classify segments according to the probabilities and calculate the process duration
-sits_classify_start <- Sys.time()
 class_prob <- sits_classify(
   data        = local_segs_cube,
   ml_model    = model,
-  multicores  = 28,  # adapt to your computer CPU core availability
+  multicores  = 1,  # adapt to your computer CPU core availability
   memsize     = 180, # adapt to your computer memory availability
   output_dir  = tile_period_dir,
   version     = version,
@@ -103,11 +103,6 @@ class_prob <- sits_classify(
   verbose     = TRUE,
   progress    = TRUE
 )
-sits_classify_end <- Sys.time()
-sits_classify_time <- as.numeric(sits_classify_end - sits_classify_start, units = "secs")
-sprintf("SITS classify process duration (HH:MM): %02d:%02d",
-        as.integer(sits_classify_time / 3600),
-        as.integer((sits_classify_time %% 3600) / 60))
 
 # Step 2.4 -- Reconstruct vector cube with classification probabilities 
 vector_cube <- sits_cube(
@@ -137,12 +132,12 @@ print("Classification finished!")
 
 # Step 3.1 -- Define function to calculate entropy, rasterize and exclude .gpkg
 compute_uncertainty_raster <- function(
-  vector_cube,
-  tile_period_dir,
-  version,
-  multicores = 28,
-  memsize    = 180,
-  delete_gpkg = TRUE
+    vector_cube,
+    tile_period_dir,
+    version,
+    multicores = 28,
+    memsize    = 180,
+    delete_gpkg = TRUE
 ) {
   
   # Calculate uncertainty vector cube
@@ -221,4 +216,182 @@ compute_uncertainty_raster(
   multicores      = 28, # adapt to your computer CPU core availability
   memsize         = 180, # adapt to your computer CPU core availability
   delete_gpkg     = TRUE  # Keep the .gpkg file if you want to inspect it beforehand
+)
+
+# ============================================================
+# 4. Plot Uncertainty Blox-Plots
+# ============================================================
+
+# Step 4.1 -- Define function to plot uncertainty by class box-plots
+plot_uncertainty_boxplot <- function(
+    output_dir,                 # diretório com os arquivos .tif e .gpkg
+    band_uncertainty  = "entropy",
+    class_column      = "class",
+    tile,
+    version,
+    sample_frac       = 0.10,
+    high_uncert_perc  = 0.90,
+    scale_factor      = 10000,
+    save_plot         = TRUE,
+    plots_path,
+    width             = 12,
+    height            = 6,
+    dpi               = 150,
+    verbose           = TRUE
+)
+{
+  
+  # ---------------------------------------------------------------------------
+  # Helper: robust conversion of class_map to an sf object
+  # ---------------------------------------------------------------------------
+  read_class_map <- function(x) {
+    if (inherits(x, "sf")) return(x)
+    if (is.character(x) && file.exists(x)) return(sf::st_read(x, quiet = TRUE))
+    stop("class_map must be a file path (.gpkg) or an sf object.")
+  }
+  
+  # ---------------------------------------------------------------------------
+  # 0. Find entropy .tif and class .gpkg from output_dir
+  # ---------------------------------------------------------------------------
+  ent_files <- list.files(output_dir, pattern = paste0(tile, ".*entropy.*", version, "\\.tif$"),
+                          full.names = TRUE, ignore.case = TRUE)
+  if (length(ent_files) == 0) stop("No entropy .tif found for tile '", tile, "' version '", version, "' in: ", output_dir)
+  raster_uncertainty <- ent_files[which.max(file.info(ent_files)$mtime)]
+  if (verbose) message("  Using entropy raster: ", basename(raster_uncertainty))
+  
+  cls_files <- list.files(output_dir, pattern = paste0(tile, ".*class.*", version, "\\.gpkg$"),
+                          full.names = TRUE, ignore.case = TRUE)
+  if (length(cls_files) == 0) stop("No class .gpkg found for tile '", tile, "' version '", version, "' in: ", output_dir)
+  class_map <- cls_files[which.max(file.info(cls_files)$mtime)]
+  if (verbose) message("  Using class map: ", basename(class_map))
+  
+  # ---------------------------------------------------------------------------
+  # 1. Read entropy raster
+  # ---------------------------------------------------------------------------
+  if (verbose) message("[1/3] Reading entropy raster...")
+  r_ent <- terra::rast(raster_uncertainty)
+  idx   <- grep(band_uncertainty, names(r_ent), ignore.case = TRUE)
+  if (length(idx) == 0)
+    stop("Band '", band_uncertainty, "' not found. Available bands: ",
+         paste(names(r_ent), collapse = ", "))
+  r_ent        <- r_ent[[idx[1]]]
+  names(r_ent) <- "entropy"
+  
+  # ---------------------------------------------------------------------------
+  # 2. Read classification map using the robust helper
+  # ---------------------------------------------------------------------------
+  if (verbose) message("[2/3] Reading classification map...")
+  sf_cls <- read_class_map(class_map)
+  
+  if (verbose) message("  Class column: '", class_column, "'")
+  
+  sf_cls <- sf_cls |>
+    dplyr::rename(class = dplyr::all_of(class_column)) |>
+    dplyr::mutate(class = as.character(class))
+  
+  if (verbose) {
+    unique_classes <- sort(unique(sf_cls$class))
+    message("  Classes: ", paste(unique_classes, collapse = ", "))
+    message("  Total segments: ", nrow(sf_cls))
+  }
+  
+  # ---------------------------------------------------------------------------
+  # 3. Sampling and extraction of mean entropy per segment
+  # ---------------------------------------------------------------------------
+  if (verbose) message("[3/3] Sampling ", sample_frac*100, "% of segments...")
+  
+  set.seed(88)
+  n_sample <- min(nrow(sf_cls), max(10000, round(nrow(sf_cls) * sample_frac)))
+  idx_sample <- sample(nrow(sf_cls), n_sample)
+  sf_cls_sampled <- sf_cls[idx_sample, ]
+  if (verbose) message("  Sampled segments: ", nrow(sf_cls_sampled))
+  
+  if (verbose) message("  Extracting entropy at segment centroids...")
+  centroids <- sf::st_centroid(sf_cls_sampled)
+  ent_vals  <- terra::extract(
+    r_ent,
+    terra::vect(centroids)
+  )
+  sf_cls_sampled$entropy_raw <- ent_vals$entropy
+
+  valid <- !is.na(sf_cls_sampled$entropy_raw)
+  sf_cls_sampled <- sf_cls_sampled[valid, ]
+  if (verbose) message("  Segments with valid entropy: ", nrow(sf_cls_sampled))
+  
+  # ---------------------------------------------------------------------------
+  # 4. Scale entropy values if necessary
+  # ---------------------------------------------------------------------------
+  max_val <- max(sf_cls_sampled$entropy_raw, na.rm = TRUE)
+  if (max_val > 10 && scale_factor != 1) {
+    if (verbose) message("  Entropy values appear scaled (max = ", max_val,
+                         "), dividing by ", scale_factor, "...")
+    sf_cls_sampled$entropy <- sf_cls_sampled$entropy_raw / scale_factor
+  } else {
+    sf_cls_sampled$entropy <- sf_cls_sampled$entropy_raw
+  }
+  
+  # ---------------------------------------------------------------------------
+  # 5. Prepare data for plotting
+  # ---------------------------------------------------------------------------
+  pts <- sf_cls_sampled |>
+    sf::st_drop_geometry() |>
+    dplyr::select(class, entropy) |>
+    dplyr::mutate(class = as.factor(class))
+  
+  threshold <- stats::quantile(pts$entropy, high_uncert_perc, na.rm = TRUE)
+  
+  n_cls <- nlevels(pts$class)
+  colors <- scales::hue_pal()(n_cls)
+  
+  p <- pts |>
+    dplyr::mutate(
+      class = forcats::fct_reorder(class, entropy, .fun = stats::median, .desc = TRUE)
+    ) |>
+    ggplot2::ggplot(ggplot2::aes(x = class, y = entropy, fill = class)) +
+    ggplot2::geom_violin(alpha = 0.35, color = NA) +
+    ggplot2::geom_boxplot(width = 0.3, outlier.size = 0.4, outlier.alpha = 0.3) +
+    ggplot2::geom_hline(
+      yintercept = threshold, linetype = "dashed",
+      color = "red", linewidth = 0.8
+    ) +
+    ggplot2::annotate(
+      "text", x = Inf, y = threshold, hjust = 1.05, vjust = -0.5,
+      label = paste0("P", high_uncert_perc * 100),
+      color = "red", size = 3.2
+    ) +
+    ggplot2::scale_fill_manual(values = colors, guide = "none") +
+    ggplot2::labs(
+      title    = "Mean Entropy Distribution by Class",
+      subtitle = "Red dashed line = high uncertainty threshold",
+      x        = NULL,
+      y        = "Centroid Entropy"
+    ) +
+    ggplot2::theme_minimal(base_size = 12) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 35, hjust = 1),
+      plot.title  = ggplot2::element_text(face = "bold")
+    )
+  
+  # ---------------------------------------------------------------------------
+  # 6. Save plot
+  # ---------------------------------------------------------------------------
+  if (save_plot) {
+    dir.create(plots_path, showWarnings = FALSE, recursive = TRUE)
+    file_name <- paste0("bxplt-uncertainty-by-class_", tile, "_", version, ".png")
+    file_path <- file.path(plots_path, file_name)
+    ggplot2::ggsave(file_path, p, width = width, height = height, dpi = dpi, bg = "white")
+    if (verbose) message("Plot saved to: ", normalizePath(file_path))
+  }
+  print(p)
+  invisible(p)
+}
+
+# Step 4.2 -- Run function
+plot_uncertainty_boxplot(
+  output_dir   = tile_period_dir,
+  tile         = tile,
+  version      = version,
+  sample_frac  = 0.10,
+  plots_path   = plots_path,
+  verbose      = TRUE
 )
