@@ -33,16 +33,12 @@ model_path       <- file.path("data/rds/model", models[model_type], model_name)
 model            <- readRDS(model_path)
 class_dir        <- "data/class"
 samples_dir      <- "data/raw/samples/validation_samples"
-plots_path       <- "data/plots"
+plots_dir       <- "data/plots/accuracy"
 mask_dir         <- "data/raw/auxiliary/masks"
 version          <- paste(stringr::str_split_i(model_name, "-", 1),
                           stringr::str_split_i(model_name, "_", 4),
                           stringr::str_split_i(model_name, "_", 7),
                           sep = "-")
-
-# Plots organized by version
-plots_dir <- file.path(plots_path, version)
-dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
 
 # List of validation sample files matching the version pattern in the samples directory
 pattern <- paste0(".*", tiles, ".*", version, ".*\\.gpkg$")
