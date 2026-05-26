@@ -15,10 +15,10 @@ library(units)
 library(smoothr)
 
 # Step 1.2 -- Define paths for files and folders
-tile            <- "010015"
-version         <- "rf-1y-all-samples-new-pol-avg-false"
-class_path      <- "data/class"
-mask_path       <- "data/raw/auxiliary/mask_geral_amz_v2024.gpkg" #nome da máscara em gpkg geral
+tile            <- "012014"
+version         <- "rf-1y-all-samples-new-pol-avg-false-menos-amostras-desmat"
+class_path      <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz/data/class"
+mask_path       <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz/data/raw/auxiliary/mask_geral_amz_v2024.gpkg" #nome da máscara em gpkg geral
 
 # Step 1.3 -- define raw classification path and load the file
 raw_class_path <- list.files(class_path,
@@ -415,8 +415,9 @@ class_diff_mask_2 <- sf::st_difference(
 # 10. Remove polygons outside the biome border
 # ============================================================
 
-biome <- read_sf("data/raw/amazon-biome-border-epsg10857.gpkg") |>
-  st_make_valid()
+biome <- read_sf("~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz/data/raw/auxiliary/borders/amazon-biome-border-epsg10857.gpkg") |>
+  st_make_valid() |>
+  st_transform(st_crs(class_diff_mask_2))
 
 class_biome <- st_intersection(class_diff_mask_2, biome)
 
@@ -427,7 +428,7 @@ class_biome <- st_intersection(class_diff_mask_2, biome)
 class_biome$area_m2 <- as.numeric(sf::st_area(class_biome))
 class_biome$area_ha <- class_biome$area_m2 / 10000
 
-class_biome_bigger_than_1ha <- class_diff_mask_2 |>
+class_biome_bigger_than_1ha <- class_biome |>
   dplyr::filter(area_ha >= 1)
 
 # ============================================================
@@ -448,47 +449,6 @@ sf::st_write(
     paste0("class-post-processed_",
            tile,"_",years,"_",
            end_date_scl,"_",
-           version, "_reclass", ".gpkg")
+           version, ".gpkg")
   )
 )
-
-#, "_reclass"
-# ============================================================
-# xx. Spatial logic (adapted for sf)
-# ============================================================
-
-# Step A: Separate classes
-arvore_remanesce <- result_filtered %>%
-  filter(class == "DESMAT_ARVORE_REMANESCE")
-
-outras_classes <- result_filtered %>%
-  filter(class != "DESMAT_ARVORE_REMANESCE")
-
-if (nrow(arvore_remanesce) > 0 && nrow(outras_classes) > 0) {
-  
-  message("Calculating spatial relationships...")
-  
-  # Step B: Reference geometry
-  outras_classes_union <- st_union(outras_classes)
-  
-  # Step C: Disjoint test
-  matriz_disjoint <- st_disjoint(
-    arvore_remanesce,
-    outras_classes_union,
-    sparse = FALSE
-  )
-  
-  is_separated <- matriz_disjoint[, 1]
-  
-  # Step D: Filter (keep intersecting)
-  arvore_remanesce_limpas <- arvore_remanesce[!is_separated, ]
-  
-  # Step E: Merge results
-  final_result <- bind_rows(
-    outras_classes,
-    arvore_remanesce_limpas
-  )
-  
-} else {
-  final_result <- result_filtered
-}
