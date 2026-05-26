@@ -22,8 +22,7 @@ mask_path       <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz/data/raw/a
 
 # Step 1.3 -- define raw classification path and load the file
 raw_class_path <- list.files(class_path,
-                             pattern = paste0(".*", tile, ".*", "class",
-                                              "*.*", version, ".*\\.gpkg$"),
+                             pattern <- paste0(".*_", tile, "_.*_class_", version, "\\.gpkg$"),
                              full.names = TRUE,
                              recursive = TRUE)
 raw_class <- read_sf(raw_class_path)
