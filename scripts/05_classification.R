@@ -43,7 +43,8 @@ var <- stringr::str_split_i(model_name, "_", 7)
 cube <- sits_cube(
   source      = "BDC",
   collection  = "SENTINEL-2-16D",
-  bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
+  bands       = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A',
+                  'B11', 'B12', 'NDVI', 'NBR', 'EVI', 'CLOUD'),
   tiles       = tile,
   start_date  = start_date,
   end_date    = end_date,
@@ -77,8 +78,13 @@ local_segs_cube <- sits_cube(
   parse_info  = c("satellite", "sensor","tile", "start_date", 
                   "end_date", "band", "version", "X1"))
 
+
 # Step 1.6 -- Create output directory per tile
-tile_period_dir <- file.path(class_path, tile, "original_class")
+tile_period_dir <- file.path(class_path, tile, "original_class",
+                             models[model_type], paste(no.years,
+                                                       var,
+                                                       sep = "-")
+                             )
 dir.create(tile_period_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ============================================================
@@ -112,7 +118,8 @@ vector_cube <- sits_cube(
   vector_dir  = tile_period_dir,
   vector_band = "probs",
   version     = version, # do not use underline character
-  parse_info  = c("X1", "X2", "tile", "start_date", "end_date", "band", "version")
+  parse_info  = c("X1", "X2", "tile", "start_date",
+                  "end_date", "band", "version")
 )
 
 # Step 2.5 -- Generate Final Classified Map of Segments
@@ -141,7 +148,7 @@ compute_uncertainty_raster <- function(
 ) {
   
   # Calculate uncertainty vector cube
-  uncertainty <- sits_uncertainty(
+  sits_uncertainty(
     vector_cube,
     type       = "entropy",
     multicores = multicores,
@@ -182,8 +189,6 @@ compute_uncertainty_raster <- function(
   )
   
   # Save as .tif (UINT16, DEFLATE compressed)
-  tile_period_dir <- file.path(class_path, tile, "original_class")
-  
   tif_path <- file.path(
     tile_period_dir,
     paste0(tools::file_path_sans_ext(basename(uncertainty_file)), ".tif")

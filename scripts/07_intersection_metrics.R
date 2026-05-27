@@ -9,10 +9,10 @@ library(dplyr)
 # ============================================================
 
 tile <- "012014"
-version <- "rf-1y-all-samples-new-pol-avg-false"
+version <- "rf-1y-all-samples-new-pol-avg-false-pixel-mode"
 
-prodes_dir  <- "~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz/data/raw/prodes-2025"
-class_dir   <- paste0("~/grupos/biomasbr/amazonia/sits-prodes/prodes.amz/data/class/",tile,"/post_processed")
+prodes_dir  <- "data/raw/prodes-2025"
+class_dir   <- file.path("data/class", tile, "post_processed")
 
 # List the classified polygons 
 class_files <- list.files(
@@ -219,9 +219,7 @@ compute_metrics <- function(ref_prodes, class_files, overwrite = TRUE) {
 # ============================================================
 # Use intersection metrics function
 # ============================================================
-
 metrics_results <- compute_metrics(
   ref_prodes  = ref_prodes,
   class_files = class_files,
-  overwrite   = TRUE
-)
+  overwrite   = TRUE)
