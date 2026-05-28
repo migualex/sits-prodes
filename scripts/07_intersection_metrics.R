@@ -161,8 +161,8 @@ compute_metrics <- function(ref_prodes, class_files, overwrite = TRUE) {
   summary_area_df <- data.frame(
     descricao = c(
       "PRODES area (ha)",
-      "Classification area (ha)",
-      "Intersection area (ha)",
+      "Total Classification Area (ha)",
+      "Total Intersection Area (ha)",
       "Intersection / PRODES (%)",
       "Intersection / Classification (%)"
     ),
