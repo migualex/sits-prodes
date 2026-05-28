@@ -31,7 +31,7 @@ raw_class <- read_sf(raw_class_path)
 years <- regmatches(version, regexpr("\\d+y", version))
 
 # Step 1.5 -- define and create post classification path
-post_class_path <- file.path(class_path, tile, "post_processed")
+post_class_path <- file.path(class_path, tile, "post_processed", version)
 dir.create(post_class_path,
            showWarnings = FALSE,
            recursive = TRUE)
