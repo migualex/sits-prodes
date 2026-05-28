@@ -37,8 +37,9 @@ dir.create(post_class_path,
            recursive = TRUE)
 
 # ============================================================
-# 2. Probabilistic reclassification
+# . Translation Stage
 # ============================================================
+
  raw_class$class <- ifelse(
        raw_class$class %in% names(class_translation),
        class_translation[raw_class$class],
@@ -48,6 +49,10 @@ dir.create(post_class_path,
 raw_class <- raw_class |>
   rename_with(~ class_translation[.x],
               .cols = any_of(names(class_translation)))
+
+# ============================================================
+# 2. Probabilistic reclassification
+# ============================================================
 
 # Step 2.1 -- Create sum columns
 raw_class <- raw_class |>
