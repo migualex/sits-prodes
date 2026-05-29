@@ -108,8 +108,8 @@ post_class <- raw_class |>
       "Clear_Cut_Bare_Soil",
       "Clear_Cut_Vegetation",
       "Clear_Cut_Burned_Area",
-      "Clear_Cut_Trees"
-      #"Suppression_sum"
+      "Clear_Cut_Trees",
+      "Suppression_sum"
     )
   ) |>
   mutate(class = "supression")
